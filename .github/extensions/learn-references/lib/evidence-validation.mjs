@@ -26,6 +26,17 @@ export const MAX_FETCHED_MARKDOWN_LENGTH = 262_144;
 export const MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH = 12_000;
 export const MAX_EVIDENCE_CAPTURES = 500;
 
+const MIN_VERIFIED_EMBEDDED_SPAN = 32;
+const MAX_DECORATION_CANDIDATES = 16;
+const MAX_DECORATION_STRIDE = 8;
+const MAX_DECORATION_ALIGNMENT_STATES = 250_000;
+const MAX_RETENTION_ALLOCATION_STATES = 250_000;
+const NEAR_FULL_CONTENT_NUMERATOR = 9;
+const NEAR_FULL_CONTENT_DENOMINATOR = 10;
+const DECORATION_CHARACTER_PATTERN = /[\p{P}\p{S}\p{Z}\p{M}\p{Cf}\s]|\p{Default_Ignorable_Code_Point}/u;
+const CONTROL_CHARACTER_PATTERN = /\p{Cc}/u;
+const DEFAULT_IGNORABLE_PATTERN = /\p{Default_Ignorable_Code_Point}/u;
+
 const CAPTURE_KEYS = Object.freeze([
     "schemaVersion",
     "captureId",
@@ -74,6 +85,19 @@ function normalizeFetchedMarkdown(value, path) {
             "INVALID_LENGTH",
             path,
             `must contain 1 through ${MAX_FETCHED_MARKDOWN_LENGTH} characters`,
+        );
+    }
+    if (Array.from(value).some((character) => (
+        (
+            CONTROL_CHARACTER_PATTERN.test(character)
+            && !["\t", "\n", "\r"].includes(character)
+        )
+        || DEFAULT_IGNORABLE_PATTERN.test(character)
+    ))) {
+        fail(
+            "UNSAFE_FETCHED_MARKDOWN",
+            path,
+            "cannot contain hidden control or default-ignorable characters",
         );
     }
     const trimmed = value.trim();
@@ -292,124 +316,775 @@ function mergeIntervals(markdown, intervals) {
     }));
 }
 
-function isSubsequence(needle, haystack) {
+function allOccurrences(value, needle) {
+    const positions = [];
+    let start = value.indexOf(needle);
+    while (start >= 0) {
+        positions.push(start);
+        start = value.indexOf(needle, start + 1);
+    }
+    return positions;
+}
+
+function allocateVerifiedOccurrence(text, positions, states, covered) {
+    const state = states.get(text) ?? { used: new Set() };
+    const available = positions.filter((position) => !state.used.has(position));
+    const candidates = available.length > 0 ? available : positions;
+    const prefix = new Uint32Array(covered.length + 1);
+    for (let index = 0; index < covered.length; index += 1) {
+        prefix[index + 1] = prefix[index] + covered[index];
+    }
+    let selected = candidates[0];
+    let greatestGain = -1;
+    for (const position of candidates) {
+        const overlap = prefix[position + text.length] - prefix[position];
+        const gain = text.length - overlap;
+        if (gain > greatestGain) {
+            selected = position;
+            greatestGain = gain;
+        }
+    }
+    for (let index = selected; index < selected + text.length; index += 1) {
+        covered[index] = 1;
+    }
+    state.used.add(selected);
+    states.set(text, state);
+    return selected;
+}
+
+function markCovered(covered, intervals) {
+    for (const interval of intervals) {
+        for (let index = interval.start; index < interval.end; index += 1) {
+            covered[index] = 1;
+        }
+    }
+}
+
+function greedyVerifiedRequests(markdown, requests, initialIntervals, ordered) {
+    const covered = new Uint8Array(markdown.length);
+    markCovered(covered, initialIntervals);
+    const states = new Map();
+    const intervals = [];
+    for (const request of ordered) {
+        for (let index = 0; index < request.count; index += 1) {
+            const start = allocateVerifiedOccurrence(
+                request.text,
+                request.positions,
+                states,
+                covered,
+            );
+            if (start !== undefined) {
+                intervals.push({ start, end: start + request.text.length });
+            }
+        }
+    }
+    return intervals;
+}
+
+function intervalCoverage(markdown, intervals) {
+    return mergeIntervals(markdown, intervals).reduce(
+        (total, interval) => total + interval.end - interval.start,
+        0,
+    );
+}
+
+function maximumGroupCoverage(request) {
+    const occurrenceIntervals = request.positions.map((start) => ({
+        start,
+        end: start + request.text.length,
+    }));
+    const union = occurrenceIntervals
+        .sort((left, right) => left.start - right.start)
+        .reduce((merged, interval) => {
+            const previous = merged.at(-1);
+            if (previous && interval.start <= previous.end) {
+                previous.end = Math.max(previous.end, interval.end);
+            } else {
+                merged.push({ ...interval });
+            }
+            return merged;
+        }, [])
+        .reduce((total, interval) => total + interval.end - interval.start, 0);
+    return Math.min(request.count * request.text.length, union);
+}
+
+function optimisticCandidateCoverage(markdown, initialIntervals, groups) {
+    const changes = new Int32Array(markdown.length + 1);
+    const include = (start, end) => {
+        changes[start] += 1;
+        changes[end] -= 1;
+    };
+    for (const interval of initialIntervals) {
+        include(interval.start, interval.end);
+    }
+    for (const group of groups) {
+        for (const start of group.positions) {
+            include(start, start + group.text.length);
+        }
+    }
+    let active = 0;
+    let coverage = 0;
+    for (let index = 0; index < markdown.length; index += 1) {
+        active += changes[index];
+        if (active > 0) {
+            coverage += 1;
+        }
+    }
+    return coverage;
+}
+
+function allocateVerifiedRequests(markdown, requests, initialIntervals) {
+    const constrainedFirst = [...requests].sort((left, right) => (
+        left.positions.length - right.positions.length
+        || right.text.length - left.text.length
+        || left.text.localeCompare(right.text)
+    ));
+    const longestFirst = [...requests].sort((left, right) => (
+        right.text.length - left.text.length
+        || left.positions.length - right.positions.length
+        || left.text.localeCompare(right.text)
+    ));
+    const greedyCandidates = [
+        greedyVerifiedRequests(markdown, requests, initialIntervals, constrainedFirst),
+        greedyVerifiedRequests(markdown, requests, initialIntervals, longestFirst),
+    ];
+    let best = greedyCandidates[0];
+    let greatestCoverage = intervalCoverage(markdown, [
+        ...initialIntervals,
+        ...best,
+    ]);
+    for (const candidate of greedyCandidates.slice(1)) {
+        const coverage = intervalCoverage(markdown, [
+            ...initialIntervals,
+            ...candidate,
+        ]);
+        if (coverage > greatestCoverage) {
+            best = candidate;
+            greatestCoverage = coverage;
+        }
+    }
+    const safeCoverageLimit = Math.min(
+        markdown.length - 1,
+        MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
+        Math.ceil(
+            markdown.length
+            * NEAR_FULL_CONTENT_NUMERATOR
+            / NEAR_FULL_CONTENT_DENOMINATOR,
+        ) - 1,
+    );
+    if (greatestCoverage > safeCoverageLimit) {
+        return best;
+    }
+
+    const groups = [...requests]
+        .map((request) => ({
+            ...request,
+            selectedCount: Math.min(request.count, request.positions.length),
+            maximumCoverage: maximumGroupCoverage(request),
+        }))
+        .sort((left, right) => (
+            left.positions.length - right.positions.length
+            || right.text.length - left.text.length
+            || left.text.localeCompare(right.text)
+        ));
+    const remainingPotential = new Uint32Array(groups.length + 1);
+    for (let index = groups.length - 1; index >= 0; index -= 1) {
+        remainingPotential[index] = Math.min(
+            markdown.length,
+            remainingPotential[index + 1] + groups[index].maximumCoverage,
+        );
+    }
+    const coverageCounts = new Uint32Array(markdown.length);
+    let currentCoverage = 0;
+    const apply = (start, end, delta) => {
+        for (let index = start; index < end; index += 1) {
+            if (delta > 0 && coverageCounts[index] === 0) {
+                currentCoverage += 1;
+            } else if (delta < 0 && coverageCounts[index] === 1) {
+                currentCoverage -= 1;
+            }
+            coverageCounts[index] += delta;
+        }
+    };
+    for (const interval of initialIntervals) {
+        apply(interval.start, interval.end, 1);
+    }
+    const selected = [];
+    let explored = 0;
+    let truncated = false;
+
+    const searchGroup = (groupIndex) => {
+        if (truncated) {
+            return;
+        }
+        if (
+            Math.min(
+                markdown.length,
+                currentCoverage + remainingPotential[groupIndex],
+            ) <= greatestCoverage
+        ) {
+            return;
+        }
+        if (groupIndex === groups.length) {
+            greatestCoverage = currentCoverage;
+            best = selected.map((interval) => ({ ...interval }));
+            return;
+        }
+        const group = groups[groupIndex];
+        const choose = (positionIndex, remaining) => {
+            if (truncated) {
+                return;
+            }
+            if (remaining === 0) {
+                searchGroup(groupIndex + 1);
+                return;
+            }
+            const lastStart = group.positions.length - remaining;
+            for (let index = positionIndex; index <= lastStart; index += 1) {
+                explored += 1;
+                if (explored > MAX_RETENTION_ALLOCATION_STATES) {
+                    truncated = true;
+                    return;
+                }
+                const start = group.positions[index];
+                const interval = { start, end: start + group.text.length };
+                apply(interval.start, interval.end, 1);
+                selected.push(interval);
+                choose(index + 1, remaining - 1);
+                selected.pop();
+                apply(interval.start, interval.end, -1);
+            }
+        };
+        choose(0, group.selectedCount);
+    };
+    searchGroup(0);
+    if (
+        truncated
+        && optimisticCandidateCoverage(
+            markdown,
+            initialIntervals,
+            groups,
+        ) > safeCoverageLimit
+    ) {
+        fail(
+            "RETENTION_ALLOCATION_AMBIGUOUS",
+            "$",
+            "verified repeated spans have too many valid placements to prove the retention budget",
+        );
+    }
+    return best;
+}
+
+function buildVerifiedWindowIndex(markdown) {
+    const windows = new Map();
+    for (
+        let index = 0;
+        index <= markdown.length - MIN_VERIFIED_EMBEDDED_SPAN;
+        index += 1
+    ) {
+        const window = markdown.slice(index, index + MIN_VERIFIED_EMBEDDED_SPAN);
+        const positions = windows.get(window) ?? [];
+        positions.push(index);
+        windows.set(window, positions);
+    }
+    return windows;
+}
+
+function longestVerifiedExactSpan(markdown, text, textStart, pagePositions) {
+    let best;
+    for (const pagePosition of pagePositions) {
+        let left = 0;
+        while (
+            textStart - left > 0
+            && pagePosition - left > 0
+            && text[textStart - left - 1] === markdown[pagePosition - left - 1]
+        ) {
+            left += 1;
+        }
+        let right = MIN_VERIFIED_EMBEDDED_SPAN;
+        while (
+            textStart + right < text.length
+            && pagePosition + right < markdown.length
+            && text[textStart + right] === markdown[pagePosition + right]
+        ) {
+            right += 1;
+        }
+        const candidate = {
+            textStart: textStart - left,
+            textEnd: textStart + right,
+            length: left + right,
+        };
+        if (best === undefined || candidate.length > best.length) {
+            best = candidate;
+        }
+        if (candidate.textStart === 0 && candidate.textEnd === text.length) {
+            break;
+        }
+    }
+    return best;
+}
+
+function verifiedEmbeddedSpans(markdown, text, windowIndex) {
+    const spans = [];
+    for (
+        let index = 0;
+        index <= text.length - MIN_VERIFIED_EMBEDDED_SPAN;
+        index += 1
+    ) {
+        const window = text.slice(index, index + MIN_VERIFIED_EMBEDDED_SPAN);
+        const positions = windowIndex.get(window);
+        if (positions === undefined) {
+            continue;
+        }
+        const span = longestVerifiedExactSpan(markdown, text, index, positions);
+        if (span !== undefined) {
+            spans.push(text.slice(span.textStart, span.textEnd));
+            index = span.textEnd - 1;
+        }
+    }
+    return spans;
+}
+
+function isDecorationCharacter(character) {
+    return DECORATION_CHARACTER_PATTERN.test(character);
+}
+
+function collapseRuns(text, character, maximumRun) {
+    let collapsed = "";
+    let run = 0;
+    for (const current of Array.from(text)) {
+        if (current === character) {
+            run += 1;
+            if (run <= maximumRun) {
+                collapsed += current;
+            }
+        } else {
+            run = 0;
+            collapsed += current;
+        }
+    }
+    return collapsed;
+}
+
+function observedRunLengths(text, character) {
+    const lengths = new Set();
+    let run = 0;
+    for (const current of Array.from(text)) {
+        if (current === character) {
+            run += 1;
+        } else if (run > 0) {
+            lengths.add(run);
+            run = 0;
+        }
+    }
+    if (run > 0) {
+        lengths.add(run);
+    }
+    return lengths;
+}
+
+function decorationVariants(text, markdown) {
+    const variants = new Set();
+    const characters = Array.from(text);
+    const frequencies = new Map();
+    for (const character of characters) {
+        if (isDecorationCharacter(character)) {
+            frequencies.set(character, (frequencies.get(character) ?? 0) + 1);
+        }
+    }
+    const absentDecorations = [...frequencies.keys()].filter(
+        (character) => !markdown.includes(character),
+    );
+    if (absentDecorations.length > 0) {
+        const absent = new Set(absentDecorations);
+        const candidate = characters.filter((character) => !absent.has(character)).join("");
+        if (candidate.length > 0 && candidate !== text) {
+            variants.add(candidate);
+        }
+    }
+    const likelyDecorations = [...frequencies.entries()]
+        .sort((left, right) => (
+            Number(markdown.includes(left[0])) - Number(markdown.includes(right[0]))
+            || right[1] - left[1]
+            || left[0].localeCompare(right[0])
+        ))
+        .slice(0, MAX_DECORATION_CANDIDATES);
+    for (const [character] of likelyDecorations) {
+        const candidate = text.split(character).join("");
+        if (candidate.length > 0 && candidate !== text) {
+            variants.add(candidate);
+        }
+        for (const runLength of observedRunLengths(markdown, character)) {
+            const collapsed = collapseRuns(text, character, runLength);
+            if (collapsed.length > 0 && collapsed !== text) {
+                variants.add(collapsed);
+            }
+        }
+    }
+    for (
+        let stride = 2;
+        stride <= MAX_DECORATION_STRIDE && characters.length / stride >= MIN_VERIFIED_EMBEDDED_SPAN;
+        stride += 1
+    ) {
+        for (let offset = 0; offset < stride; offset += 1) {
+            const candidate = characters
+                .filter((_character, index) => index % stride === offset)
+                .join("");
+            if (candidate.length >= MIN_VERIFIED_EMBEDDED_SPAN) {
+                variants.add(candidate);
+            }
+        }
+    }
+    return variants;
+}
+
+function tokenizeDecoratedText(text) {
+    const runs = [];
+    const decorations = [""];
+    let mandatory = "";
+    for (const character of Array.from(text)) {
+        if (isDecorationCharacter(character)) {
+            if (mandatory) {
+                runs.push(mandatory);
+                mandatory = "";
+                decorations.push(character);
+            } else {
+                decorations[decorations.length - 1] += character;
+            }
+        } else {
+            mandatory += character;
+        }
+    }
+    if (mandatory) {
+        runs.push(mandatory);
+        decorations.push("");
+    }
+    return { runs, decorations };
+}
+
+function isDecorationSubsequence(needle, decorations) {
     let matched = 0;
-    for (let index = 0; index < haystack.length && matched < needle.length; index += 1) {
-        if (haystack[index] === needle[matched]) {
+    const needleCharacters = Array.from(needle);
+    for (const character of Array.from(decorations)) {
+        if (character === needleCharacters[matched]) {
             matched += 1;
         }
     }
-    return matched === needle.length;
+    return matched === needleCharacters.length;
 }
 
-function rollingHashPositions(value, length) {
-    const hashes = new Map();
-    if (length < 1 || value.length < length) {
-        return hashes;
+function verifiedDecoratedSpans(markdown, text) {
+    const { runs, decorations } = tokenizeDecoratedText(text);
+    if (
+        runs.length === 0
+        || decorations.every((value) => value.length === 0)
+    ) {
+        return [];
     }
-    const base = 16_777_619;
-    let leadingFactor = 1;
-    for (let index = 1; index < length; index += 1) {
-        leadingFactor = Math.imul(leadingFactor, base) >>> 0;
+    const anchoredRuns = runs.map((run, index) => ({
+        index,
+        run,
+        positions: allOccurrences(markdown, run),
+    })).filter((entry) => entry.positions.length > 0);
+    if (anchoredRuns.length === 0) {
+        return [];
     }
-    let hash = 0;
-    for (let index = 0; index < length; index += 1) {
-        hash = (Math.imul(hash, base) + value.charCodeAt(index)) >>> 0;
-    }
-    hashes.set(hash, [0]);
-    for (let index = length; index < value.length; index += 1) {
-        const leading = value.charCodeAt(index - length);
-        hash = (hash - Math.imul(leading, leadingFactor)) >>> 0;
-        hash = (Math.imul(hash, base) + value.charCodeAt(index)) >>> 0;
-        const positions = hashes.get(hash) ?? [];
-        positions.push(index - length + 1);
-        hashes.set(hash, positions);
-    }
-    return hashes;
-}
-
-function allocateOccurrence(stateByKey, key, positions, span, covered) {
-    const state = stateByKey.get(key) ?? {
-        cursorIndex: 0,
-        nextStart: 0,
-        used: new Set(),
+    anchoredRuns.sort((left, right) => (
+        left.positions.length - right.positions.length
+        || right.run.length - left.run.length
+        || left.run.localeCompare(right.run)
+    ));
+    const positionsByRun = runs.map((run) => allOccurrences(markdown, run));
+    let explored = 0;
+    const inspectGap = (path, states = 1) => {
+        explored += states;
+        if (explored > MAX_DECORATION_ALIGNMENT_STATES) {
+            fail(
+                "DECORATION_ALIGNMENT_AMBIGUOUS",
+                path,
+                "decorated text has too many exact fetched-content alignments",
+            );
+        }
     };
-    let position;
-    if (span === 1) {
-        while (
-            state.cursorIndex < positions.length
-            && (
-                covered[positions[state.cursorIndex]] !== 0
-                || state.used.has(positions[state.cursorIndex])
-            )
-        ) {
-            state.cursorIndex += 1;
-        }
-        if (state.cursorIndex < positions.length) {
-            position = positions[state.cursorIndex];
-            state.cursorIndex += 1;
-        }
-    } else {
-        const unused = positions.filter((candidate) => !state.used.has(candidate));
-        if (unused.length > 0) {
-            const prefix = new Uint32Array(covered.length + 1);
-            for (let index = 0; index < covered.length; index += 1) {
-                prefix[index + 1] = prefix[index] + covered[index];
+
+    const lowerBound = (values, target) => {
+        let low = 0;
+        let high = values.length;
+        while (low < high) {
+            const middle = Math.floor((low + high) / 2);
+            if (values[middle] < target) {
+                low = middle + 1;
+            } else {
+                high = middle;
             }
-            let bestGain = -1;
-            for (const candidate of unused) {
-                const overlap = prefix[candidate + span] - prefix[candidate];
-                const gain = span - overlap;
-                if (
-                    gain > bestGain
-                    || (
-                        gain === bestGain
-                        && position < state.nextStart
-                        && candidate >= state.nextStart
-                    )
+        }
+        return low;
+    };
+
+    const longestPrefixDecoration = (boundary, value) => {
+        const decorationCharacters = Array.from(value);
+        let decorationIndex = decorationCharacters.length - 1;
+        let consumed = 0;
+        const available = Array.from(markdown.slice(
+            Math.max(0, boundary - value.length),
+            boundary,
+        ));
+        for (let index = available.length - 1; index >= 0; index -= 1) {
+            inspectGap("$.decoratedPrefix");
+            const character = available[index];
+            while (
+                decorationIndex >= 0
+                && decorationCharacters[decorationIndex] !== character
+            ) {
+                decorationIndex -= 1;
+            }
+            if (decorationIndex < 0) {
+                break;
+            }
+            consumed += character.length;
+            decorationIndex -= 1;
+        }
+        return boundary - consumed;
+    };
+
+    const longestSuffixDecoration = (boundary, value) => {
+        const decorationCharacters = Array.from(value);
+        let decorationIndex = 0;
+        let consumed = 0;
+        const available = Array.from(markdown.slice(
+            boundary,
+            Math.min(markdown.length, boundary + value.length),
+        ));
+        for (const character of available) {
+            inspectGap("$.decoratedSuffix");
+            while (
+                decorationIndex < decorationCharacters.length
+                && decorationCharacters[decorationIndex] !== character
+            ) {
+                decorationIndex += 1;
+            }
+            if (decorationIndex >= decorationCharacters.length) {
+                break;
+            }
+            consumed += character.length;
+            decorationIndex += 1;
+        }
+        return boundary + consumed;
+    };
+
+    const earliestPrefix = (anchor, anchorStart) => {
+        let states = new Set([anchorStart]);
+        let firstRun = anchor.index;
+        for (let index = anchor.index - 1; index >= 0; index -= 1) {
+            const preceding = new Set();
+            const gap = decorations[index + 1];
+            const run = runs[index];
+            const runPositions = positionsByRun[index];
+            for (const nextStart of states) {
+                const minimumStart = Math.max(
+                    0,
+                    nextStart - gap.length - run.length,
+                );
+                const maximumStart = nextStart - run.length;
+                let positionIndex = lowerBound(runPositions, minimumStart);
+                while (
+                    positionIndex < runPositions.length
+                    && runPositions[positionIndex] <= maximumStart
                 ) {
-                    position = candidate;
-                    bestGain = gain;
-                    if (gain === span && candidate >= state.nextStart) {
-                        break;
+                    const runStart = runPositions[positionIndex];
+                    const boundary = runStart + run.length;
+                    inspectGap(
+                        "$.decoratedPrefix",
+                        nextStart - boundary + 1,
+                    );
+                    if (isDecorationSubsequence(
+                        markdown.slice(boundary, nextStart),
+                        gap,
+                    )) {
+                        preceding.add(runStart);
                     }
+                    positionIndex += 1;
                 }
             }
+            if (preceding.size === 0) {
+                break;
+            }
+            states = preceding;
+            firstRun = index;
+        }
+        const earliestRunStart = Math.min(...states);
+        return {
+            start: firstRun === 0
+                ? longestPrefixDecoration(earliestRunStart, decorations[0])
+                : earliestRunStart,
+            runIndex: firstRun,
+        };
+    };
+
+    const latestSuffix = (anchor, anchorEnd) => {
+        let states = new Set([anchorEnd]);
+        let lastRun = anchor.index;
+        for (let index = anchor.index + 1; index < runs.length; index += 1) {
+            const following = new Set();
+            const gap = decorations[index];
+            const run = runs[index];
+            const runPositions = positionsByRun[index];
+            for (const previousEnd of states) {
+                const maximumStart = Math.min(
+                    markdown.length - run.length,
+                    previousEnd + gap.length,
+                );
+                let positionIndex = lowerBound(runPositions, previousEnd);
+                while (
+                    positionIndex < runPositions.length
+                    && runPositions[positionIndex] <= maximumStart
+                ) {
+                    const runStart = runPositions[positionIndex];
+                    inspectGap(
+                        "$.decoratedSuffix",
+                        runStart - previousEnd + 1,
+                    );
+                    if (isDecorationSubsequence(
+                        markdown.slice(previousEnd, runStart),
+                        gap,
+                    )) {
+                        following.add(runStart + run.length);
+                    }
+                    positionIndex += 1;
+                }
+            }
+            if (following.size === 0) {
+                break;
+            }
+            states = following;
+            lastRun = index;
+        }
+        const latestRunEnd = Math.max(...states);
+        return {
+            end: lastRun === runs.length - 1
+                ? longestSuffixDecoration(
+                    latestRunEnd,
+                    decorations[runs.length],
+                )
+                : latestRunEnd,
+            runIndex: lastRun,
+        };
+    };
+
+    const matches = new Map();
+    for (const anchor of anchoredRuns) {
+        for (const position of anchor.positions) {
+            const prefix = earliestPrefix(anchor, position);
+            const suffix = latestSuffix(anchor, position + anchor.run.length);
+            const completeField = (
+                prefix.runIndex === 0
+                && suffix.runIndex === runs.length - 1
+            );
+            if (
+                suffix.end > prefix.start
+                && suffix.end - prefix.start < text.length
+                && (
+                    completeField
+                    || suffix.end - prefix.start >= MIN_VERIFIED_EMBEDDED_SPAN
+                )
+            ) {
+                const span = markdown.slice(prefix.start, suffix.end);
+                matches.set(
+                    `${prefix.runIndex}:${suffix.runIndex}:${span}`,
+                    span,
+                );
+            }
         }
     }
-    if (position === undefined) {
-        position = positions.at(-1);
-    }
-    for (let index = position; index < position + span; index += 1) {
-        covered[index] = 1;
-    }
-    state.used.add(position);
-    state.nextStart = position + span;
-    stateByKey.set(key, state);
-    return position;
+    return [...matches.values()];
 }
 
-function retentionManifest(contentHash, markdown, prose) {
-    const intervals = [];
-    const decoratedByHash = new Map();
-    const allocationState = new Map();
-    const covered = new Uint8Array(markdown.length);
-    const quoteChunkLength = 1;
-    const markdownChunkHashes = rollingHashPositions(markdown, quoteChunkLength);
-    const combinedProse = prose
-        .map((entry) => canonicalizeLineEndings(entry.text))
-        .join("");
-    if (isSubsequence(markdown, combinedProse)) {
-        fail(
-            "FULL_FETCH_CONTENT",
-            "$",
-            "persisted evidence fields cannot jointly contain a decorated fetched page",
-        );
+function normalizeInitialIntervals(markdown, intervals, path) {
+    if (!Array.isArray(intervals)) {
+        fail("INVALID_RETENTION_INTERVALS", path, "must be an array");
     }
+    return intervals.map((interval, index) => {
+        const intervalPath = `${path}[${index}]`;
+        if (
+            interval === null
+            || typeof interval !== "object"
+            || Array.isArray(interval)
+            || !Number.isSafeInteger(interval.start)
+            || !Number.isSafeInteger(interval.end)
+            || interval.start < 0
+            || interval.end <= interval.start
+            || interval.end > markdown.length
+            || interval.segmentHash !== sha256Hex(
+                markdown.slice(interval.start, interval.end),
+            )
+        ) {
+            fail(
+                "INVALID_RETENTION_INTERVAL",
+                intervalPath,
+                "must identify a hash-verified fetched Markdown span",
+            );
+        }
+        return { start: interval.start, end: interval.end };
+    });
+}
+
+function retentionManifest(
+    contentHash,
+    markdown,
+    prose,
+    { initialIntervals = [] } = {},
+) {
+    const requestsByText = new Map();
+    const normalizedInitialIntervals = normalizeInitialIntervals(
+        markdown,
+        initialIntervals,
+        "$.initialIntervals",
+    );
+    const windowIndex = buildVerifiedWindowIndex(markdown);
+    const addRequest = (text, count) => {
+        const existing = requestsByText.get(text);
+        if (existing === undefined) {
+            requestsByText.set(text, {
+                text,
+                positions: allOccurrences(markdown, text),
+                count,
+            });
+        } else {
+            existing.count += count;
+        }
+    };
+
+    const collectVerifiedText = (text) => {
+        if (!text) {
+            return { wholeMatch: false, spans: [] };
+        }
+        const positions = allOccurrences(markdown, text);
+        if (positions.length > 0) {
+            return { wholeMatch: true, spans: [text] };
+        }
+        if (text.length < MIN_VERIFIED_EMBEDDED_SPAN) {
+            return { wholeMatch: false, spans: [] };
+        }
+        return {
+            wholeMatch: false,
+            spans: verifiedEmbeddedSpans(markdown, text, windowIndex),
+        };
+    };
+
     for (const entry of prose) {
         const text = canonicalizeLineEndings(entry.text);
         if (!text) {
             continue;
+        }
+        if (Array.from(text).some((character) => (
+            CONTROL_CHARACTER_PATTERN.test(character)
+            && !["\t", "\n", "\r"].includes(character)
+        ))) {
+            fail(
+                "UNSAFE_PERSISTED_TEXT",
+                entry.path,
+                "persisted evidence text cannot contain hidden control characters",
+            );
         }
         if (text.includes(markdown)) {
             fail(
@@ -418,77 +1093,72 @@ function retentionManifest(contentHash, markdown, prose) {
                 "persisted evidence text cannot contain a complete fetched page",
             );
         }
-        if (isSubsequence(markdown, text)) {
-            fail(
-                "FULL_FETCH_CONTENT",
-                entry.path,
-                "persisted evidence text cannot contain a decorated complete fetched page",
-            );
-        }
-        const exactPositions = [];
-        let exactStart = markdown.indexOf(text);
-        while (exactStart >= 0) {
-            exactPositions.push(exactStart);
-            exactStart = markdown.indexOf(text, exactStart + 1);
-        }
-        if (exactPositions.length > 0) {
-            const start = allocateOccurrence(
-                allocationState,
-                `exact:${sha256Hex(text)}`,
-                exactPositions,
-                text.length,
-                covered,
-            );
-            intervals.push({ start, end: start + text.length });
-            continue;
-        }
-        if (text.length >= quoteChunkLength) {
-            const textHashes = rollingHashPositions(text, quoteChunkLength);
-            let matchedChars = 0;
-            for (const [hash, textPositions] of textHashes) {
-                const markdownPositions = markdownChunkHashes.get(hash);
-                if (markdownPositions !== undefined) {
-                    matchedChars += Math.min(textPositions.length, markdownPositions.length);
-                    for (let index = 0; index < textPositions.length; index += 1) {
-                        const markdownStart = allocateOccurrence(
-                            allocationState,
-                            `chunk:${hash}`,
-                            markdownPositions,
-                            quoteChunkLength,
-                            covered,
-                        );
-                        intervals.push({
-                            start: markdownStart,
-                            end: markdownStart + quoteChunkLength,
-                        });
-                    }
+        const matchesBySpan = new Map();
+        const mergeMatches = (spans) => {
+            const counts = new Map();
+            for (const span of spans) {
+                counts.set(span, (counts.get(span) ?? 0) + 1);
+            }
+            for (const [span, count] of counts) {
+                matchesBySpan.set(
+                    span,
+                    Math.max(matchesBySpan.get(span) ?? 0, count),
+                );
+            }
+        };
+        const { wholeMatch, spans } = collectVerifiedText(text);
+        mergeMatches(spans);
+        if (!wholeMatch) {
+            const entryVariants = new Set([text]);
+            let variantWholeMatch = false;
+            for (const variant of decorationVariants(text, markdown)) {
+                if (!entryVariants.has(variant)) {
+                    entryVariants.add(variant);
+                    const variantMatch = collectVerifiedText(variant);
+                    mergeMatches(variantMatch.spans);
+                    variantWholeMatch ||= variantMatch.wholeMatch;
                 }
             }
-            if (matchedChars > 0) {
-                const fragmentHash = sha256Hex(text);
-                decoratedByHash.set(fragmentHash, {
-                    fragmentHash,
-                    chars: Math.max(
-                        decoratedByHash.get(fragmentHash)?.chars ?? 0,
-                        matchedChars,
-                    ),
-                });
+            if (!variantWholeMatch) {
+                mergeMatches(verifiedDecoratedSpans(markdown, text));
             }
         }
+        for (const [span, count] of matchesBySpan) {
+            addRequest(span, count);
+        }
     }
+    const intervals = allocateVerifiedRequests(
+        markdown,
+        [...requestsByText.values()],
+        normalizedInitialIntervals,
+    );
     const merged = mergeIntervals(markdown, intervals);
+    const cumulative = mergeIntervals(markdown, [
+        ...normalizedInitialIntervals,
+        ...intervals,
+    ]);
     const totalChars = merged.reduce(
         (total, interval) => total + interval.end - interval.start,
         0,
     );
-    if (totalChars >= markdown.length) {
+    const cumulativeChars = cumulative.reduce(
+        (total, interval) => total + interval.end - interval.start,
+        0,
+    );
+    if (
+        cumulativeChars >= markdown.length
+        || (
+            cumulativeChars * NEAR_FULL_CONTENT_DENOMINATOR
+            >= markdown.length * NEAR_FULL_CONTENT_NUMERATOR
+        )
+    ) {
         fail(
             "FULL_FETCH_CONTENT",
             "$",
-            "persisted evidence text cannot reconstruct a complete fetched page",
+            "persisted evidence text cannot reconstruct a near-complete fetched page",
         );
     }
-    if (totalChars > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH) {
+    if (cumulativeChars > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH) {
         fail(
             "EXCERPT_BUDGET_EXCEEDED",
             "$",
@@ -501,14 +1171,10 @@ function retentionManifest(contentHash, markdown, prose) {
         contentLength: markdown.length,
         totalChars,
         intervals: merged,
-        decoratedFragments: [...decoratedByHash.values()].sort((left, right) => (
-            left.fragmentHash.localeCompare(right.fragmentHash)
-        )),
     };
 }
 
-export function validateResearchBundleWithRetention(bundleInput, captureInputs) {
-    const bundle = assertEvidenceContentHash(bundleInput);
+function normalizeBundleCaptures(bundle, captureInputs) {
     if (!Array.isArray(captureInputs)) {
         fail("INVALID_CAPTURES", "$.captures", "captured evidence must be an array");
     }
@@ -520,7 +1186,6 @@ export function validateResearchBundleWithRetention(bundleInput, captureInputs) 
         );
     }
     const captures = captureInputs.map(normalizeEvidenceCapture);
-    const markdownByHash = new Map();
     for (const capture of captures) {
         if (capture.researchId !== bundle.researchId) {
             fail(
@@ -529,6 +1194,13 @@ export function validateResearchBundleWithRetention(bundleInput, captureInputs) 
                 "captured evidence must belong to the bundle researchId",
             );
         }
+    }
+    return captures;
+}
+
+function fetchedMarkdownByHash(captures) {
+    const markdownByHash = new Map();
+    for (const capture of captures) {
         if (capture.logicalOperation === "docs-fetch") {
             const markdown = canonicalizeLineEndings(capture.fetchedMarkdown);
             const existingMarkdown = markdownByHash.get(capture.resultSha256);
@@ -542,6 +1214,69 @@ export function validateResearchBundleWithRetention(bundleInput, captureInputs) 
             markdownByHash.set(capture.resultSha256, markdown);
         }
     }
+    return markdownByHash;
+}
+
+function retentionManifestsForNormalizedProse(
+    markdownByHash,
+    prose,
+    initialIntervalsByHash = new Map(),
+) {
+    if (!(initialIntervalsByHash instanceof Map)) {
+        fail(
+            "INVALID_RETENTION_INTERVALS",
+            "$.initialIntervalsByHash",
+            "must be a Map keyed by fetched-content hash",
+        );
+    }
+    return [...markdownByHash.entries()]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([contentHash, markdown]) => (
+            retentionManifest(contentHash, markdown, prose, {
+                initialIntervals: initialIntervalsByHash.get(contentHash) ?? [],
+            })
+        ));
+}
+
+export function retentionManifestsForProse(
+    bundleInput,
+    captureInputs,
+    proseInputs,
+    { initialIntervalsByHash = new Map() } = {},
+) {
+    const bundle = assertEvidenceContentHash(bundleInput);
+    const captures = normalizeBundleCaptures(bundle, captureInputs);
+    if (!Array.isArray(proseInputs)) {
+        fail("INVALID_RETENTION_PROSE", "$.prose", "must be an array");
+    }
+    const prose = proseInputs.map((entry, index) => {
+        const path = `$.prose[${index}]`;
+        if (
+            entry === null
+            || typeof entry !== "object"
+            || Array.isArray(entry)
+            || typeof entry.path !== "string"
+            || typeof entry.text !== "string"
+        ) {
+            fail(
+                "INVALID_RETENTION_PROSE",
+                path,
+                "must contain string path and text properties",
+            );
+        }
+        return { path: entry.path, text: entry.text };
+    });
+    return retentionManifestsForNormalizedProse(
+        fetchedMarkdownByHash(captures),
+        prose,
+        initialIntervalsByHash,
+    );
+}
+
+export function validateResearchBundleWithRetention(bundleInput, captureInputs) {
+    const bundle = assertEvidenceContentHash(bundleInput);
+    const captures = normalizeBundleCaptures(bundle, captureInputs);
+    const markdownByHash = fetchedMarkdownByHash(captures);
 
     for (const [index, source] of bundle.sources.entries()) {
         const path = `$.sources[${index}]`;
@@ -587,11 +1322,10 @@ export function validateResearchBundleWithRetention(bundleInput, captureInputs) 
         }
     }
     const prose = persistedProse(bundle);
-    const retentionManifests = [...markdownByHash.entries()]
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([contentHash, markdown]) => (
-            retentionManifest(contentHash, markdown, prose)
-        ));
+    const retentionManifests = retentionManifestsForNormalizedProse(
+        markdownByHash,
+        prose,
+    );
     return { bundle, retentionManifests };
 }
 

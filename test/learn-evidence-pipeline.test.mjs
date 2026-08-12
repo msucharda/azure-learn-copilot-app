@@ -11,6 +11,7 @@ import {
     discoverLearnOperations,
     hashFetchedMarkdown,
     validateResearchBundle,
+    validateResearchBundleWithRetention,
 } from "../.github/extensions/learn-references/lib/index.mjs";
 import {
     clone,
@@ -24,6 +25,35 @@ function expectCode(callback, errorClass, code) {
         assert.equal(error.code, code);
         return true;
     });
+}
+
+function learnStylePage(paragraphs = 8) {
+    return [
+        "# Configure resilient application routing",
+        "",
+        ...Array.from({ length: paragraphs }, (_value, index) => (
+            `Routing stage ${index + 1} evaluates health probes, origin priority, and regional capacity before Azure Front Door selects an endpoint. Operators review diagnostic signals and deployment history for workload segment ${index + 1} before changing the failover policy.`
+        )),
+    ].join("\n\n");
+}
+
+function withUnrelatedEnglishProse(bundleInput) {
+    const bundle = clone(bundleInput);
+    bundle.question = {
+        original: "How should facilitators organize a practical workshop for a distributed engineering team?",
+        normalized: "Plan a practical distributed-team engineering workshop.",
+    };
+    bundle.scope = {
+        product: "Workshop planning",
+        version: "autumn curriculum",
+        platform: "Team learning portal",
+        taskIntent: "Prepare a concise agenda with exercises, breaks, and feedback checkpoints.",
+    };
+    bundle.claims[0].text = "The agenda should alternate short demonstrations with collaborative exercises and reflection.";
+    bundle.sources[0].title = "Workshop reference selected for discussion";
+    bundle.sources[0].sectionHeading = "Facilitation notes";
+    bundle.sources[0].whyItMatters = "This passage is the only quoted material needed to ground the recommendation.";
+    return rehash(bundle);
 }
 
 test("canonical JSON sorts object keys and preserves array order", () => {
@@ -141,14 +171,16 @@ test("claim prose cannot contain a complete fetched page", () => {
 });
 
 test("decorated source fragments are included in full-page accounting", () => {
+    const first = "Health probes identify whether an origin can accept production traffic. ";
+    const second = "Priority and weight determine which healthy origin receives the next request.";
     const fixture = makePublishedEvidence({
-        markdown: "0123456789",
-        exactExcerpt: "0",
+        markdown: first + second,
+        exactExcerpt: first,
     });
 
     const decorated = clone(fixture.bundle);
-    decorated.sources[0].title = "01234!";
-    decorated.sources[0].sectionHeading = "56789!";
+    decorated.sources[0].title = first;
+    decorated.sources[0].sectionHeading = second;
     expectCode(
         () => validateResearchBundle(rehash(decorated), [fixture.capture]),
         ContractValidationError,
@@ -172,20 +204,282 @@ test("dense decoration cannot hide a complete fetched page in prose", () => {
 });
 
 test("decorated page fragments cannot be split across persisted fields", () => {
-    const markdown = Array.from(
-        { length: 500 },
-        (_value, index) => String.fromCharCode(33 + (index % 90)),
-    ).join("");
-    const decorate = (text) => text.match(/./g).join("|");
+    const markdown = learnStylePage(4);
+    const decorate = (text) => Array.from(text).join("|");
+    const start = Math.floor(markdown.length * 0.05);
+    const middle = Math.floor(markdown.length * 0.5);
+    const end = Math.ceil(markdown.length * 0.95);
     const fixture = makePublishedEvidence({
         markdown,
-        exactExcerpt: markdown.slice(0, 5),
+        exactExcerpt: markdown.slice(start, start + 80),
     });
     const split = clone(fixture.bundle);
-    split.claims[0].text = decorate(markdown.slice(250));
-    split.sources[0].title = decorate(markdown.slice(0, 250));
+    split.claims[0].text = decorate(markdown.slice(middle, end));
+    split.sources[0].whyItMatters = decorate(markdown.slice(start, middle));
     expectCode(
         () => validateResearchBundle(rehash(split), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("sub-32-character decorated fragments still count as verified spans", () => {
+    const markdown = [
+        "Azure routing evaluates health before selecting an origin. ",
+        "Priority controls failover while weight balances healthy replicas. ",
+        "Diagnostics explain each routing decision to operators. ",
+        "Caching reduces repeated work at globally distributed edge locations.",
+    ].join("");
+    const chunks = markdown.match(/[\s\S]{1,20}/g);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: chunks[0],
+    });
+    const split = clone(fixture.bundle);
+    split.claims = chunks.slice(1).map((chunk, index) => ({
+        id: `claim-copy-${index + 1}`,
+        text: `${chunk.slice(0, 10)}|${chunk.slice(10)}`,
+        sourceIds: [split.sources[0].id],
+        support: "supported",
+    }));
+    expectCode(
+        () => validateResearchBundle(rehash(split), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("existing delimiters can be doubled without hiding copied spans", () => {
+    const raw = "abcdefghi||jklmnopqrs";
+    const markdown = raw.repeat(10);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: raw,
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims = Array.from({ length: 9 }, (_, index) => ({
+        id: `claim-delimiter-copy-${index + 1}`,
+        text: raw.replace("||", "||||"),
+        sourceIds: [copied.sources[0].id],
+        support: "supported",
+    }));
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("rare inserted delimiters are aligned without a candidate-frequency cutoff", () => {
+    const punctuation = [
+        "!", "#", "$", "%", "&", "'", "(", ")", "*",
+        "+", ",", "-", ".", "/", ":", ";", "?",
+    ];
+    const markdown = punctuation.map((
+        character,
+        index,
+    ) => `${String.fromCharCode(65 + index)}${character}`).join("") + "terminal";
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown[0],
+    });
+    const copied = clone(fixture.bundle);
+    const middle = Math.floor(markdown.length / 2);
+    copied.claims[0].text = `${markdown.slice(0, middle)}~${markdown.slice(middle)}`;
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("Unicode format characters cannot hide copied content", () => {
+    const markdown = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn";
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown[0],
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims[0].text = markdown.match(/.{1,8}/g).join("\u200b");
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("hidden control characters are rejected from persisted prose", () => {
+    const markdown = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn";
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown[0],
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims[0].text = markdown.match(/.{1,8}/g).join("\u0000");
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "UNSAFE_PERSISTED_TEXT",
+    );
+});
+
+test("hidden fetched-page characters fail the capture boundary", () => {
+    const markdown = "ABCDEFGH\u200bIJKLMNOPQRSTUVWXYZ";
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: "ABCDEFGH",
+    });
+    expectCode(
+        () => validateResearchBundle(fixture.bundle, [fixture.capture]),
+        ContractValidationError,
+        "UNSAFE_FETCHED_MARKDOWN",
+    );
+});
+
+test("Unicode combining marks cannot hide copied content", () => {
+    const markdown = "AzureRoutingEvidence".repeat(48);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 23),
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims[0].text = markdown.match(/.{1,31}/g).join("\u0301");
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("long insertion-only decoration is aligned exactly", () => {
+    const markdown = (
+        "Azure routing uses health probes and natural spaces while selecting an endpoint."
+    );
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown[0],
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims[0].text = markdown.match(/.{1,4}/g).join(" ");
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("decorated source spans are found inside bounded commentary", () => {
+    const markdown = (
+        "Azure routing uses health probes and natural spaces while selecting an endpoint."
+    );
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown[0],
+    });
+    const copied = clone(fixture.bundle);
+    const decorated = markdown.match(/.{1,4}/g).map((
+        chunk,
+        index,
+    ) => `${chunk}${" ".repeat(index % 9 + 1)}`).join("");
+    copied.claims[0].text = `Q | ${decorated}`;
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("disjoint decorated copies in one field preserve multiplicity", () => {
+    const repeated = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn";
+    const markdown = `${repeated} !${repeated}`;
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: " !",
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims[0].text = (
+        `${Array.from(repeated).join(" ")} |Q| `
+        + Array.from(repeated).join("!")
+    );
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("one decorated field reserves a recovered source span once", () => {
+    const fixture = makePublishedEvidence({
+        markdown: "abcdefabcdef",
+        exactExcerpt: "a",
+    });
+    const copied = clone(fixture.bundle);
+    copied.claims[0].text = "abc|def";
+    const result = validateResearchBundleWithRetention(
+        rehash(copied),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, 7);
+});
+
+test("failed decoration gaps are processed within a bounded scan", {
+    timeout: 2_000,
+}, () => {
+    const fixture = makePublishedEvidence({
+        markdown: "e".repeat(2_000),
+        exactExcerpt: "e",
+    });
+    const bounded = clone(fixture.bundle);
+    bounded.claims[0].text = `${"|".repeat(2_000)}e`;
+    const result = validateResearchBundleWithRetention(
+        rehash(bounded),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, 2);
+});
+
+test("short pages do not use unrestricted subsequence matching", () => {
+    const fixture = makePublishedEvidence({
+        markdown: "abcde",
+        exactExcerpt: "a",
+    });
+    const unrelated = clone(fixture.bundle);
+    unrelated.claims[0].text = "A broad curriculum develops practical expertise.";
+    assert.equal(
+        validateResearchBundle(rehash(unrelated), [fixture.capture]).claims.length,
+        1,
+    );
+});
+
+test("repeated occurrences are allocated globally rather than by field order", () => {
+    const first = "X".repeat(20);
+    const second = "Y".repeat(20);
+    const fixture = makePublishedEvidence({
+        markdown: first + second + first + first + second,
+        exactExcerpt: first + second,
+    });
+    const copied = clone(fixture.bundle);
+    copied.question.original = first;
+    copied.question.normalized = first + second;
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
+        ContractValidationError,
+        "FULL_FETCH_CONTENT",
+    );
+});
+
+test("global allocation explores alternatives beyond greedy request orders", () => {
+    const first = "X".repeat(20);
+    const second = "Y".repeat(20);
+    const fixture = makePublishedEvidence({
+        markdown: first + second + first + first + second,
+        exactExcerpt: second + first + first,
+    });
+    const copied = clone(fixture.bundle);
+    copied.question.original = first;
+    copied.question.normalized = first + second;
+    expectCode(
+        () => validateResearchBundle(rehash(copied), [fixture.capture]),
         ContractValidationError,
         "FULL_FETCH_CONTENT",
     );
@@ -206,18 +500,76 @@ test("repeated excerpts account for distinct fetched-content occurrences", () =>
 });
 
 test("exact and decorated prose share one occurrence allocation", () => {
+    const first = "The routing engine compares origin health and current capacity before selection. ";
+    const second = "The selected endpoint receives the request only after every routing rule is evaluated.";
     const fixture = makePublishedEvidence({
-        markdown: "abcabd",
-        exactExcerpt: "ab",
-        question: "c",
+        markdown: first + second,
+        exactExcerpt: first,
+        question: "Which endpoint receives the request?",
     });
     const mixed = clone(fixture.bundle);
-    mixed.claims[0].text = "a|b|d";
+    mixed.claims[0].text = Array.from(second).join("|");
     expectCode(
         () => validateResearchBundle(rehash(mixed), [fixture.capture]),
         ContractValidationError,
         "FULL_FETCH_CONTENT",
     );
+});
+
+test("ordinary English prose does not count as fetched-page retention", () => {
+    const markdown = learnStylePage(8);
+    const excerpt = "Routing stage 3 evaluates health probes, origin priority, and regional capacity before Azure Front Door selects an endpoint.";
+    const fixture = makePublishedEvidence({ markdown, exactExcerpt: excerpt });
+    const result = validateResearchBundleWithRetention(
+        withUnrelatedEnglishProse(fixture.bundle),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests.length, 1);
+    assert.equal(result.retentionManifests[0].totalChars, excerpt.length);
+    assert.deepEqual(result.retentionManifests[0].intervals.map((interval) => (
+        markdown.slice(interval.start, interval.end)
+    )), [excerpt]);
+});
+
+test("default fixture retention excludes coincidental character overlap", () => {
+    const fixture = makePublishedEvidence();
+    const result = validateResearchBundleWithRetention(
+        fixture.bundle,
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars < 100, true);
+});
+
+test("large Learn-style pages ignore bounded unrelated English prose", () => {
+    const markdown = learnStylePage(90);
+    assert.equal(markdown.length > 12_000, true);
+    const excerpt = "Routing stage 42 evaluates health probes, origin priority, and regional capacity before Azure Front Door selects an endpoint.";
+    const fixture = makePublishedEvidence({ markdown, exactExcerpt: excerpt });
+    const result = validateResearchBundleWithRetention(
+        withUnrelatedEnglishProse(fixture.bundle),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, excerpt.length);
+});
+
+test("overlap-aware allocation bounds accept provably bounded repeats", () => {
+    const markdown = `${"A".repeat(800)}${"B".repeat(200)}`;
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: "A".repeat(20),
+    });
+    const bounded = clone(fixture.bundle);
+    bounded.claims = [226, 227, 228, 229].map((length, index) => ({
+        id: `claim-overlap-${index + 1}`,
+        text: "A".repeat(length),
+        sourceIds: [bounded.sources[0].id],
+        support: "supported",
+    }));
+    const result = validateResearchBundleWithRetention(
+        rehash(bounded),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars <= 800, true);
 });
 
 test("undeclared fetch captures are still scanned for copied page content", () => {

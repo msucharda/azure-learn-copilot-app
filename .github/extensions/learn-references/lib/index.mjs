@@ -35,6 +35,7 @@ export {
     MAX_FETCHED_MARKDOWN_LENGTH,
     MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
     normalizeEvidenceCapture,
+    retentionManifestsForProse,
     validateResearchBundle,
     validateResearchBundleWithRetention,
 } from "./evidence-validation.mjs";

@@ -15,6 +15,7 @@ import {
     DraftEvidenceStore,
     LearnReferenceStorageError,
     PublishedEvidenceStore,
+    assertHandoffContentBounded,
     canonicalJson,
 } from "../.github/extensions/learn-references/lib/index.mjs";
 import {
@@ -255,6 +256,32 @@ test("published reads detect initial lifecycle tampering", async (t) => {
     );
 });
 
+test("published reads accept legacy v1 retention metadata", async (t) => {
+    const { root, published } = await stores(t);
+    const fixture = makePublishedEvidence();
+    await published.publish(fixture.bundle, [fixture.capture]);
+    const budgetPath = join(
+        root,
+        "published",
+        "retention",
+        fixture.capture.resultSha256,
+        "budget.json",
+    );
+    const legacy = JSON.parse(await readFile(budgetPath, "utf8"));
+    legacy.intervals = [{
+        start: 0,
+        end: legacy.contentLength - 1,
+        segmentHash: "0".repeat(64),
+    }];
+    legacy.totalChars = legacy.contentLength - 1;
+    legacy.decoratedFragments = [];
+    await writeFile(budgetPath, canonicalJson(legacy));
+    assert.equal(
+        (await published.get(RESEARCH_ID, 1)).contentHash,
+        fixture.bundle.contentHash,
+    );
+});
+
 test("latest selection never regresses under out-of-order publication", async (t) => {
     const { published } = await stores(t);
     const first = makePublishedEvidence({
@@ -463,7 +490,7 @@ test("handoffs persist separately and conflicting duplicates fail", async (t) =>
     const fixture = makePublishedEvidence();
     await published.publish(fixture.bundle, [fixture.capture]);
     const handoff = handoffFor(fixture.bundle);
-    await published.storeHandoff(handoff);
+    await published.storeHandoff(handoff, [fixture.capture]);
     assert.deepEqual(await published.storeHandoff(handoff), handoff);
     assert.equal(
         (await published.getHandoff(
@@ -482,12 +509,131 @@ test("handoffs persist separately and conflicting duplicates fail", async (t) =>
         "1.json",
     ), "utf8");
     assert.equal(handoffText.includes("fetchedMarkdown"), false);
+    const reservationDirectory = join(
+        root,
+        "published",
+        "retention",
+        fixture.capture.resultSha256,
+        "handoffs",
+    );
+    const reservationNames = await readdir(reservationDirectory);
+    const reservation = JSON.parse(await readFile(
+        join(reservationDirectory, reservationNames[0]),
+        "utf8",
+    ));
+    assert.equal(Object.hasOwn(reservation, "textChars"), false);
+    assert.equal(Array.isArray(reservation.intervals), true);
 
     const conflict = clone(handoff);
     conflict.executiveFindings[0].text = "Conflicting duplicate.";
     await assert.rejects(
         published.storeHandoff(conflict),
         expectStorageCode("HANDOFF_CONFLICT"),
+    );
+});
+
+test("new handoffs require fresh fetch captures", async (t) => {
+    const { published } = await stores(t);
+    const fixture = makePublishedEvidence();
+    await published.publish(fixture.bundle, [fixture.capture]);
+    await assert.rejects(
+        published.storeHandoff(handoffFor(fixture.bundle)),
+        expectStorageCode("MISSING_HANDOFF_FETCH_EVIDENCE"),
+    );
+});
+
+test("unrelated handoff prose consumes no fetched-content budget", async (t) => {
+    const { published } = await stores(t);
+    const markdown = [
+        "Azure routing evaluates health, priority, and capacity before selecting an origin. ",
+        "Diagnostic logs explain which rule produced each routing decision. ",
+        "Caching at edge locations reduces repeated work for stable responses.",
+    ].join("");
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 48),
+    });
+    await published.publish(fixture.bundle, [fixture.capture]);
+    const handoff = handoffFor(fixture.bundle);
+    handoff.executiveFindings[0].text = [
+        "The implementation remains intentionally bounded and deterministic. ",
+        "Operators receive explicit failures rather than ambiguous fallback records. ",
+        "Atomic writes keep incomplete state invisible to concurrent readers.",
+    ].join("");
+    assert.deepEqual(
+        await published.storeHandoff(handoff, [fixture.capture]),
+        handoff,
+    );
+});
+
+test("verified handoff spans enforce the cumulative excerpt budget", async (t) => {
+    const { published } = await stores(t);
+    const markdown = Array.from({ length: 240 }, (_, index) => (
+        `Routing section ${String(index).padStart(3, "0")} evaluates health probes, `
+        + "origin priority, regional capacity, cache state, and diagnostic policy "
+        + `before selecting endpoint ${String(index).padStart(3, "0")}.\n`
+    )).join("");
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    const handoff = handoffFor(fixture.bundle);
+    handoff.executiveFindings[0].text = markdown.slice(500, 1_500);
+    handoff.unresolvedRisks = Array.from({ length: 12 }, (_, index) => ({
+        id: `risk-retained-span-${index + 1}`,
+        text: markdown.slice(1_500 + index * 1_000, 2_500 + index * 1_000),
+    }));
+    await assert.rejects(
+        published.publish(fixture.bundle, [fixture.capture], handoff),
+        expectStorageCode("HANDOFF_RETENTION_LIMIT"),
+    );
+});
+
+test("legacy handoff reservations are reconstructed from stored envelopes", async (t) => {
+    const { root, published } = await stores(t);
+    const markdown = Array.from(
+        { length: 160 },
+        (_, index) => String.fromCodePoint(0xe000 + index),
+    ).join("");
+    const first = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 10),
+    });
+    const firstHandoff = handoffFor(first.bundle);
+    firstHandoff.executiveFindings[0].text = markdown.slice(10, 70);
+    await published.publish(first.bundle, [first.capture], firstHandoff);
+
+    const reservationDirectory = join(
+        root,
+        "published",
+        "retention",
+        first.capture.resultSha256,
+        "handoffs",
+    );
+    const [reservationName] = await readdir(reservationDirectory);
+    const reservationPath = join(reservationDirectory, reservationName);
+    const reservation = JSON.parse(await readFile(reservationPath, "utf8"));
+    await writeFile(reservationPath, canonicalJson({
+        schemaVersion: 1,
+        reservationId: reservation.reservationId,
+        contentHash: reservation.contentHash,
+        parentSessionId: reservation.parentSessionId,
+        researchId: reservation.researchId,
+        version: reservation.version,
+        handoffHash: reservation.handoffHash,
+        textChars: 1,
+    }));
+
+    const second = makePublishedEvidence({
+        researchId: "87654321-4321-4321-8321-cba987654321",
+        markdown,
+        exactExcerpt: markdown.slice(0, 10),
+    });
+    const secondHandoff = handoffFor(second.bundle);
+    secondHandoff.executiveFindings[0].text = markdown.slice(70, 144);
+    await assert.rejects(
+        published.publish(second.bundle, [second.capture], secondHandoff),
+        expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
     );
 });
 
@@ -502,7 +648,7 @@ test("handoffs reject a complete fetched page", async (t) => {
     const handoff = handoffFor(fixture.bundle);
     handoff.executiveFindings[0].text = fixture.markdown;
     await assert.rejects(
-        published.storeHandoff(handoff),
+        published.storeHandoff(handoff, [fixture.capture]),
         expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
     );
 });
@@ -522,7 +668,7 @@ test("handoffs cannot partition a complete fetched page across fields", async (t
         text: "fghij",
     });
     await assert.rejects(
-        published.storeHandoff(handoff),
+        published.storeHandoff(handoff, [fixture.capture]),
         expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
     );
 });
@@ -538,7 +684,7 @@ test("bundle and handoff prose cannot jointly reconstruct a fetched page", async
     const handoff = handoffFor(fixture.bundle);
     handoff.executiveFindings[0].text = "A".repeat(60);
     await assert.rejects(
-        published.storeHandoff(handoff),
+        published.storeHandoff(handoff, [fixture.capture]),
         expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
     );
 });
@@ -574,6 +720,94 @@ test("handoff retention is cumulative across evidence keys", async (t) => {
         (await published.publish(second.bundle, [second.capture])).researchId,
         second.bundle.researchId,
     );
+});
+
+test("overlapping handoff reservations remain valid for later handoffs", async (t) => {
+    const { published } = await stores(t);
+    const markdown = Array.from({ length: 30 }, (_, index) => (
+        `Unique routing paragraph ${String(index).padStart(2, "0")} records health, `
+        + "capacity, priority, and diagnostics for one endpoint.\n"
+    )).join("");
+    const researchIds = [
+        RESEARCH_ID,
+        "87654321-4321-4321-8321-cba987654321",
+        "11111111-2222-4333-8444-555555555555",
+    ];
+    const fixtures = researchIds.map((researchId) => makePublishedEvidence({
+        researchId,
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    }));
+
+    const firstHandoff = handoffFor(fixtures[0].bundle);
+    firstHandoff.executiveFindings[0].text = markdown.slice(300, 500);
+    await published.publish(
+        fixtures[0].bundle,
+        [fixtures[0].capture],
+        firstHandoff,
+    );
+
+    const secondHandoff = handoffFor(fixtures[1].bundle);
+    secondHandoff.executiveFindings[0].text = markdown.slice(400, 600);
+    await published.publish(
+        fixtures[1].bundle,
+        [fixtures[1].capture],
+        secondHandoff,
+    );
+
+    await published.publish(fixtures[2].bundle, [fixtures[2].capture]);
+    const thirdHandoff = handoffFor(fixtures[2].bundle);
+    thirdHandoff.executiveFindings[0].text = (
+        "This independent operational conclusion contains no copied page prose."
+    );
+    assert.deepEqual(
+        await published.storeHandoff(thirdHandoff, [fixtures[2].capture]),
+        thirdHandoff,
+    );
+    assert.equal(
+        (await published.publish(
+            fixtures[0].bundle,
+            [fixtures[0].capture],
+            firstHandoff,
+        )).contentHash,
+        fixtures[0].bundle.contentHash,
+    );
+});
+
+test("aggregate reservation intervals use union coverage, not record limits", () => {
+    const fixture = makePublishedEvidence();
+    const handoff = handoffFor(fixture.bundle);
+    const contentHash = fixture.capture.resultSha256;
+    const contentLength = fixture.markdown.length;
+    const segmentHash = "0".repeat(64);
+    assert.equal(assertHandoffContentBounded(
+        handoff,
+        fixture.bundle,
+        [{
+            schemaVersion: 1,
+            contentHash,
+            contentLength,
+            totalChars: 10,
+            intervals: [{ start: 0, end: 10, segmentHash }],
+        }],
+        [{
+            schemaVersion: 1,
+            contentHash,
+            contentLength,
+            totalChars: 0,
+            intervals: [],
+        }],
+        {
+            reservedIntervalsByHash: new Map([[
+                contentHash,
+                Array.from({ length: 12_001 }, () => ({
+                    start: 20,
+                    end: 30,
+                    segmentHash,
+                })),
+            ]]),
+        },
+    ), true);
 });
 
 test("handoffs are charged against undeclared fetch captures", async (t) => {
@@ -641,7 +875,7 @@ test("supersession updates lifecycle without rewriting immutable payload", async
     const fixture = makePublishedEvidence();
     await published.publish(fixture.bundle, [fixture.capture]);
     const handoff = handoffFor(fixture.bundle);
-    await published.storeHandoff(handoff);
+    await published.storeHandoff(handoff, [fixture.capture]);
     const payloadPath = join(
         root,
         "published",

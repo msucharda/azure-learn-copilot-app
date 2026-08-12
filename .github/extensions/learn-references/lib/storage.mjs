@@ -23,9 +23,7 @@ import {
 } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import {
-    canonicalizeLineEndings,
     canonicalJson,
-    hashFetchedMarkdown,
     sha256Hex,
 } from "./canonical-json.mjs";
 import { assertEvidenceContentHash } from "./content-hash.mjs";
@@ -41,9 +39,11 @@ import {
     MAX_EVIDENCE_CAPTURES,
     MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
     normalizeEvidenceCapture,
+    retentionManifestsForProse,
     validateResearchBundleWithRetention,
 } from "./evidence-validation.mjs";
 import {
+    ContractValidationError,
     normalizeHash,
     normalizePositiveInteger,
     normalizeResearchId,
@@ -58,6 +58,8 @@ const STORAGE_LOCK_TIMEOUT_MS = 30_000;
 const STORAGE_LOCK_RETRY_MS = 20;
 const INCOMPLETE_LOCK_GRACE_MS = 5_000;
 const MAX_HANDOFF_RESERVATIONS_PER_FETCH = 1_000;
+const NEAR_FULL_CONTENT_NUMERATOR = 9;
+const NEAR_FULL_CONTENT_DENOMINATOR = 10;
 
 export class LearnReferenceStorageError extends Error {
     constructor(code, message, { path, cause } = {}) {
@@ -634,40 +636,36 @@ function normalizeBoundedInteger(value, path, { minimum = 0, maximum } = {}) {
     return value;
 }
 
-function normalizeRetentionRecord(input) {
-    const object = requireObject(input, "$", [
-        "schemaVersion",
-        "contentHash",
-        "contentLength",
-        "totalChars",
-        "intervals",
-        "decoratedFragments",
-    ]);
-    requireSchemaVersion(object.schemaVersion);
-    const contentLength = normalizeBoundedInteger(object.contentLength, "$.contentLength", {
-        minimum: 1,
-        maximum: 262_144,
-    });
+function normalizeRetentionIntervals(
+    intervalInputs,
+    contentLength,
+    path = "$.intervals",
+    { requireDisjoint = true } = {},
+) {
     if (
-        !Array.isArray(object.intervals)
-        || object.intervals.length > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH
+        !Array.isArray(intervalInputs)
+        || (
+            requireDisjoint
+            && intervalInputs.length > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH
+        )
     ) {
         storageFail("INVALID_RETENTION_RECORD", "Retention intervals must be a bounded array");
     }
-    const intervals = object.intervals.map((entry, index) => {
-        const interval = requireObject(entry, `$.intervals[${index}]`, [
+    const intervals = intervalInputs.map((entry, index) => {
+        const intervalPath = `${path}[${index}]`;
+        const interval = requireObject(entry, intervalPath, [
             "start",
             "end",
             "segmentHash",
         ]);
         const start = normalizeBoundedInteger(
             interval.start,
-            `$.intervals[${index}].start`,
+            `${intervalPath}.start`,
             { maximum: contentLength - 1 },
         );
         const end = normalizeBoundedInteger(
             interval.end,
-            `$.intervals[${index}].end`,
+            `${intervalPath}.end`,
             { minimum: start + 1, maximum: contentLength },
         );
         return {
@@ -675,41 +673,32 @@ function normalizeRetentionRecord(input) {
             end,
             segmentHash: normalizeHash(
                 interval.segmentHash,
-                `$.intervals[${index}].segmentHash`,
+                `${intervalPath}.segmentHash`,
             ),
         };
     });
-    for (let index = 1; index < intervals.length; index += 1) {
-        if (intervals[index].start < intervals[index - 1].end) {
+    if (requireDisjoint) {
+        for (let index = 1; index < intervals.length; index += 1) {
+            if (intervals[index].start >= intervals[index - 1].end) {
+                continue;
+            }
             storageFail(
                 "INVALID_RETENTION_RECORD",
                 "Retention intervals must be sorted and non-overlapping",
             );
         }
     }
-    const totalChars = normalizeBoundedInteger(object.totalChars, "$.totalChars", {
-        maximum: MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
-    });
-    const computedTotal = intervals.reduce(
-        (total, interval) => total + interval.end - interval.start,
-        0,
-    );
-    if (computedTotal !== totalChars || totalChars >= contentLength) {
+    return intervals;
+}
+
+function normalizeLegacyDecoratedFragments(value) {
+    if (!Array.isArray(value) || value.length > 1_100) {
         storageFail(
             "INVALID_RETENTION_RECORD",
-            "Retention totals must match intervals and remain shorter than fetched content",
+            "Legacy decorated retention fragments must be a bounded array",
         );
     }
-    if (
-        !Array.isArray(object.decoratedFragments)
-        || object.decoratedFragments.length > 1_100
-    ) {
-        storageFail(
-            "INVALID_RETENTION_RECORD",
-            "Decorated retention fragments must be a bounded array",
-        );
-    }
-    const decoratedFragments = object.decoratedFragments.map((entry, index) => {
+    const normalized = value.map((entry, index) => {
         const fragment = requireObject(entry, `$.decoratedFragments[${index}]`, [
             "fragmentHash",
             "chars",
@@ -727,26 +716,77 @@ function normalizeRetentionRecord(input) {
         };
     });
     if (
-        new Set(decoratedFragments.map((entry) => entry.fragmentHash)).size
-            !== decoratedFragments.length
-        || decoratedFragments.some((
+        new Set(normalized.map((entry) => entry.fragmentHash)).size !== normalized.length
+        || normalized.some((
             entry,
             index,
-        ) => index > 0 && entry.fragmentHash <= decoratedFragments[index - 1].fragmentHash)
+        ) => index > 0 && entry.fragmentHash <= normalized[index - 1].fragmentHash)
     ) {
         storageFail(
             "INVALID_RETENTION_RECORD",
-            "Decorated retention fragments must be unique and sorted",
+            "Legacy decorated retention fragments must be unique and sorted",
         );
     }
-    return {
+    return normalized;
+}
+
+function normalizeRetentionRecord(input) {
+    const object = requireObject(input, "$", [
+        "schemaVersion",
+        "contentHash",
+        "contentLength",
+        "totalChars",
+        "intervals",
+        "decoratedFragments",
+    ], [
+        "schemaVersion",
+        "contentHash",
+        "contentLength",
+        "totalChars",
+        "intervals",
+    ]);
+    requireSchemaVersion(object.schemaVersion);
+    const contentLength = normalizeBoundedInteger(object.contentLength, "$.contentLength", {
+        minimum: 1,
+        maximum: 262_144,
+    });
+    const intervals = normalizeRetentionIntervals(object.intervals, contentLength);
+    const totalChars = normalizeBoundedInteger(object.totalChars, "$.totalChars", {
+        maximum: MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
+    });
+    const computedTotal = intervals.reduce(
+        (total, interval) => total + interval.end - interval.start,
+        0,
+    );
+    const legacyDecoratedFragments = object.decoratedFragments === undefined
+        ? undefined
+        : normalizeLegacyDecoratedFragments(object.decoratedFragments);
+    if (
+        computedTotal !== totalChars
+        || totalChars >= contentLength
+        || (
+            legacyDecoratedFragments === undefined
+            &&
+            totalChars * NEAR_FULL_CONTENT_DENOMINATOR
+            >= contentLength * NEAR_FULL_CONTENT_NUMERATOR
+        )
+    ) {
+        storageFail(
+            "INVALID_RETENTION_RECORD",
+            "Retention totals must match intervals and remain below the fetched-content limits",
+        );
+    }
+    const normalized = {
         schemaVersion: 1,
         contentHash: normalizeHash(object.contentHash, "$.contentHash"),
         contentLength,
         totalChars,
         intervals,
-        decoratedFragments,
     };
+    if (legacyDecoratedFragments !== undefined) {
+        normalized.decoratedFragments = legacyDecoratedFragments;
+    }
+    return normalized;
 }
 
 function normalizePublicationRetentionRecord(input) {
@@ -796,9 +836,20 @@ function normalizeHandoffReservation(input) {
         "version",
         "handoffHash",
         "textChars",
+        "contentLength",
+        "totalChars",
+        "intervals",
+    ], [
+        "schemaVersion",
+        "reservationId",
+        "contentHash",
+        "parentSessionId",
+        "researchId",
+        "version",
+        "handoffHash",
     ]);
     requireSchemaVersion(object.schemaVersion);
-    return {
+    const metadata = {
         schemaVersion: 1,
         reservationId: normalizeHash(object.reservationId, "$.reservationId"),
         contentHash: normalizeHash(object.contentHash, "$.contentHash"),
@@ -806,10 +857,40 @@ function normalizeHandoffReservation(input) {
         researchId: normalizeResearchId(object.researchId),
         version: normalizePositiveInteger(object.version, "$.version"),
         handoffHash: normalizeHash(object.handoffHash, "$.handoffHash"),
-        textChars: normalizeBoundedInteger(object.textChars, "$.textChars", {
-            minimum: 1,
-            maximum: 40_000,
-        }),
+    };
+    const legacy = object.textChars !== undefined;
+    const intervalRecord = (
+        object.contentLength !== undefined
+        || object.totalChars !== undefined
+        || object.intervals !== undefined
+    );
+    if (legacy === intervalRecord) {
+        storageFail(
+            "INVALID_HANDOFF_RETENTION",
+            "Handoff retention must use exactly one supported reservation format",
+        );
+    }
+    if (legacy) {
+        return {
+            ...metadata,
+            textChars: normalizeBoundedInteger(object.textChars, "$.textChars", {
+                minimum: 1,
+                maximum: 40_000,
+            }),
+        };
+    }
+    const retention = normalizeRetentionRecord({
+        schemaVersion: 1,
+        contentHash: metadata.contentHash,
+        contentLength: object.contentLength,
+        totalChars: object.totalChars,
+        intervals: object.intervals,
+    });
+    return {
+        ...metadata,
+        contentLength: retention.contentLength,
+        totalChars: retention.totalChars,
+        intervals: retention.intervals,
     };
 }
 
@@ -913,74 +994,174 @@ export function resolveLearnReferenceStorageRoots({
     };
 }
 
-function handoffTextValues(envelope) {
+function handoffProse(envelope) {
     return [
-        ...envelope.executiveFindings.map((finding) => finding.text),
-        ...envelope.unresolvedRisks.map((risk) => risk.text),
+        ...envelope.executiveFindings.map((finding, index) => ({
+            path: `$.executiveFindings[${index}].text`,
+            text: finding.text,
+        })),
+        ...envelope.unresolvedRisks.map((risk, index) => ({
+            path: `$.unresolvedRisks[${index}].text`,
+            text: risk.text,
+        })),
     ];
 }
 
-function handoffTextChars(envelope) {
-    return handoffTextValues(envelope).reduce(
-        (total, text) => total + canonicalizeLineEndings(text).length,
-        0,
-    );
+function mergedIntervalCoverage(intervals) {
+    const sorted = intervals
+        .map(({ start, end }) => ({ start, end }))
+        .sort((left, right) => left.start - right.start || left.end - right.end);
+    const merged = [];
+    for (const interval of sorted) {
+        const previous = merged.at(-1);
+        if (previous && interval.start <= previous.end) {
+            previous.end = Math.max(previous.end, interval.end);
+        } else {
+            merged.push(interval);
+        }
+    }
+    return merged.reduce((total, interval) => total + interval.end - interval.start, 0);
 }
 
 export function assertHandoffContentBounded(
     envelopeInput,
     bundleInput,
-    retentionManifestInputs,
-    { reservedCharsByHash = new Map() } = {},
+    bundleRetentionInputs,
+    handoffRetentionInputs,
+    {
+        reservedIntervalsByHash = new Map(),
+    } = {},
 ) {
     const envelope = normalizeHandoffEnvelope(envelopeInput);
     const bundle = normalizeEvidenceBundle(bundleInput);
-    if (!Array.isArray(retentionManifestInputs)) {
+    assertHandoffMatchesBundle(envelope, bundle);
+    if (
+        !Array.isArray(bundleRetentionInputs)
+        || !Array.isArray(handoffRetentionInputs)
+        || !(reservedIntervalsByHash instanceof Map)
+    ) {
         storageFail(
             "MISSING_RETENTION_MANIFEST",
-            "Handoff validation requires persisted-content retention manifests",
+            "Handoff validation requires bundle, handoff, and reserved retention intervals",
         );
     }
-    const manifests = retentionManifestInputs.map(normalizeRetentionRecord);
-    const manifestByHash = new Map(
-        manifests.map((manifest) => [manifest.contentHash, manifest]),
+    const bundleManifests = bundleRetentionInputs.map(normalizeRetentionRecord);
+    const handoffManifests = handoffRetentionInputs.map(normalizeRetentionRecord);
+    const bundleByHash = new Map(
+        bundleManifests.map((manifest) => [manifest.contentHash, manifest]),
+    );
+    const handoffByHash = new Map(
+        handoffManifests.map((manifest) => [manifest.contentHash, manifest]),
     );
     for (const source of bundle.sources) {
-        if (!manifestByHash.has(source.contentHash)) {
+        if (!bundleByHash.has(source.contentHash)) {
             storageFail(
                 "MISSING_RETENTION_MANIFEST",
                 `No retention manifest exists for declared source ${source.id}`,
             );
         }
     }
-    const fetchedHashes = new Set(manifests.map((manifest) => manifest.contentHash));
-    const handoffText = handoffTextValues(envelope);
-    const totalChars = handoffTextChars(envelope);
-    for (const contentHash of fetchedHashes) {
-        const manifest = manifestByHash.get(contentHash);
-        if (!manifest) {
+    if (
+        handoffByHash.size !== bundleByHash.size
+        || [...handoffByHash.keys()].some((hash) => !bundleByHash.has(hash))
+    ) {
+        storageFail(
+            "MISSING_RETENTION_MANIFEST",
+            "Handoff retention must cover exactly the fetched bundle content",
+        );
+    }
+    for (const [contentHash, bundleManifest] of bundleByHash) {
+        const handoffManifest = handoffByHash.get(contentHash);
+        if (
+            handoffManifest === undefined
+            || handoffManifest.contentLength !== bundleManifest.contentLength
+        ) {
             storageFail(
                 "MISSING_RETENTION_MANIFEST",
                 `No retention manifest exists for fetched content ${contentHash}`,
             );
         }
-        const reservedChars = reservedCharsByHash.get(contentHash) ?? 0;
-        if (manifest.totalChars + reservedChars + totalChars >= manifest.contentLength) {
+        const reservedIntervals = normalizeRetentionIntervals(
+            reservedIntervalsByHash.get(contentHash) ?? [],
+            bundleManifest.contentLength,
+            `$.reservedIntervalsByHash[${contentHash}]`,
+            { requireDisjoint: false },
+        );
+        const verifiedChars = mergedIntervalCoverage([
+            ...bundleManifest.intervals,
+            ...reservedIntervals,
+            ...handoffManifest.intervals,
+        ]);
+        const retainedChars = verifiedChars;
+        if (
+            retainedChars >= bundleManifest.contentLength
+            || (
+                retainedChars * NEAR_FULL_CONTENT_DENOMINATOR
+                >= bundleManifest.contentLength * NEAR_FULL_CONTENT_NUMERATOR
+            )
+        ) {
             storageFail(
                 "HANDOFF_FULL_FETCH_CONTENT",
-                "Cumulative bundle and handoff prose must remain shorter than every fetched page",
+                "Cumulative bundle and handoff spans cannot reconstruct fetched content",
             );
         }
-    }
-    for (const text of handoffText) {
-        if (fetchedHashes.has(hashFetchedMarkdown(text))) {
+        if (retainedChars > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH) {
             storageFail(
-                "HANDOFF_FULL_FETCH_CONTENT",
-                "Handoff text cannot contain a complete fetched page",
+                "HANDOFF_RETENTION_LIMIT",
+                `Cumulative bundle and handoff spans cannot exceed ${MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH} characters`,
             );
         }
     }
     return true;
+}
+
+function verifiedProseRetentionManifests(
+    bundle,
+    captureInputs,
+    prose,
+    initialIntervalsByHash,
+) {
+    try {
+        return retentionManifestsForProse(
+            bundle,
+            captureInputs,
+            prose,
+            { initialIntervalsByHash },
+        );
+    } catch (error) {
+        if (error instanceof ContractValidationError && error.code === "FULL_FETCH_CONTENT") {
+            storageFail(
+                "HANDOFF_FULL_FETCH_CONTENT",
+                "Handoff text cannot reconstruct fetched content",
+                { cause: error },
+            );
+        }
+        if (
+            error instanceof ContractValidationError
+            && error.code === "EXCERPT_BUDGET_EXCEEDED"
+        ) {
+            storageFail(
+                "HANDOFF_RETENTION_LIMIT",
+                `Cumulative bundle and handoff spans cannot exceed ${MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH} characters`,
+                { cause: error },
+            );
+        }
+        throw error;
+    }
+}
+
+function verifiedHandoffRetentionManifests(
+    bundle,
+    captureInputs,
+    envelope,
+    initialIntervalsByHash,
+) {
+    return verifiedProseRetentionManifests(
+        bundle,
+        captureInputs,
+        handoffProse(envelope),
+        initialIntervalsByHash,
+    );
 }
 
 export class DraftEvidenceStore {
@@ -1143,14 +1324,13 @@ export class PublishedEvidenceStore {
             : normalizeHandoffEnvelope(handoffInput);
         if (handoff !== undefined) {
             assertHandoffMatchesBundle(handoff, bundle);
-            assertHandoffContentBounded(handoff, bundle, retentionManifests);
         }
         return withStorageLock(this.root, async () => (
-            this.publishLocked(bundle, retentionManifests, handoff)
+            this.publishLocked(bundle, retentionManifests, handoff, captureInputs)
         ));
     }
 
-    async publishLocked(bundle, retentionManifests, handoff) {
+    async publishLocked(bundle, retentionManifests, handoff, captureInputs) {
         const paths = await this.paths(bundle.researchId, bundle.version);
         const payload = immutableStoredPayload(bundle);
         const lifecycle = lifecycleRecord(bundle);
@@ -1189,6 +1369,7 @@ export class PublishedEvidenceStore {
                 handoff,
                 bundle,
                 preparedRetention.map(({ existing, manifest }) => existing ?? manifest),
+                captureInputs,
             );
 
         const storedPayload = await createOrCompare(paths.payload, payload, {
@@ -1250,12 +1431,6 @@ export class PublishedEvidenceStore {
                         && approved.end >= interval.end
                     ))
                 ))
-                && intended.decoratedFragments.every((fragment) => (
-                    existing.decoratedFragments.some((approved) => (
-                        approved.fragmentHash === fragment.fragmentHash
-                        && approved.chars >= fragment.chars
-                    ))
-                ))
             );
             let existing;
             if (existingValue !== undefined) {
@@ -1284,7 +1459,12 @@ export class PublishedEvidenceStore {
         }
     }
 
-    async prepareHandoff(envelopeInput, bundleInput, retentionManifestInputs) {
+    async prepareHandoff(
+        envelopeInput,
+        bundleInput,
+        retentionManifestInputs,
+        captureInputs,
+    ) {
         const envelope = normalizeHandoffEnvelope(envelopeInput);
         const bundle = normalizeEvidenceBundle(bundleInput);
         assertHandoffMatchesBundle(envelope, bundle);
@@ -1310,9 +1490,10 @@ export class PublishedEvidenceStore {
             version: envelope.version,
         }));
         const handoffHash = sha256Hex(canonicalJson(envelope));
-        const textChars = handoffTextChars(envelope);
-        const reservedCharsByHash = new Map();
-        const reservations = [];
+        const initialIntervalsByHash = new Map();
+        const reservedIntervalsByHash = new Map();
+        const legacyReservations = new Map();
+        const contexts = [];
 
         for (const contentHash of contentHashes) {
             const manifest = manifestByHash.get(contentHash);
@@ -1327,9 +1508,9 @@ export class PublishedEvidenceStore {
                 ["retention", contentHash, "handoffs"],
             );
             const entries = await readdir(directory, { withFileTypes: true });
-            let reservedChars = 0;
+            const reservedIntervals = [];
             let permanentEntries = 0;
-            let currentReservationExists = false;
+            let currentReservation;
             for (const entry of entries) {
                 if (entry.isFile() && isTemporaryFilename(entry.name)) {
                     continue;
@@ -1365,15 +1546,43 @@ export class PublishedEvidenceStore {
                     );
                 }
                 if (reservation.reservationId === reservationId) {
-                    currentReservationExists = true;
+                    currentReservation = reservation;
+                } else if (reservation.textChars !== undefined) {
+                    const existingLegacy = legacyReservations.get(
+                        reservation.reservationId,
+                    );
+                    if (
+                        existingLegacy !== undefined
+                        && (
+                            existingLegacy.parentSessionId
+                                !== reservation.parentSessionId
+                            || existingLegacy.researchId !== reservation.researchId
+                            || existingLegacy.version !== reservation.version
+                            || existingLegacy.handoffHash !== reservation.handoffHash
+                        )
+                    ) {
+                        storageFail(
+                            "HANDOFF_RETENTION_CONFLICT",
+                            "Legacy handoff reservations disagree across fetched pages",
+                            { path: reservationPath },
+                        );
+                    }
+                    legacyReservations.set(reservation.reservationId, reservation);
                 } else {
-                    reservedChars += reservation.textChars;
+                    if (reservation.contentLength !== manifest.contentLength) {
+                        storageFail(
+                            "HANDOFF_RETENTION_CONFLICT",
+                            "Handoff retention content length conflicts with its fetched page",
+                            { path: reservationPath },
+                        );
+                    }
+                    reservedIntervals.push(...reservation.intervals);
                 }
             }
             if (
                 permanentEntries > MAX_HANDOFF_RESERVATIONS_PER_FETCH
                 || (
-                    !currentReservationExists
+                    currentReservation === undefined
                     && permanentEntries >= MAX_HANDOFF_RESERVATIONS_PER_FETCH
                 )
             ) {
@@ -1383,31 +1592,173 @@ export class PublishedEvidenceStore {
                     { path: directory },
                 );
             }
-            reservedCharsByHash.set(contentHash, reservedChars);
-            const reservation = {
-                schemaVersion: 1,
-                reservationId,
-                contentHash,
-                parentSessionId: envelope.parentSessionId,
-                researchId: envelope.researchId,
-                version: envelope.version,
-                handoffHash,
-                textChars,
-            };
             const reservationPath = await safeFilePath(
                 this.root,
                 ["retention", contentHash, "handoffs"],
                 `${reservationId}.json`,
             );
-            await assertCreateCompatible(reservationPath, reservation, {
-                normalize: normalizeHandoffReservation,
-                conflictCode: "HANDOFF_RETENTION_CONFLICT",
-                conflictMessage: "Handoff retention reservation conflicts with stored data",
+            if (
+                currentReservation !== undefined
+                && (
+                    currentReservation.contentHash !== contentHash
+                    || currentReservation.parentSessionId !== envelope.parentSessionId
+                    || currentReservation.researchId !== envelope.researchId
+                    || currentReservation.version !== envelope.version
+                    || currentReservation.handoffHash !== handoffHash
+                )
+            ) {
+                storageFail(
+                    "HANDOFF_RETENTION_CONFLICT",
+                    "Handoff retention reservation conflicts with stored data",
+                    { path: reservationPath },
+                );
+            }
+            initialIntervalsByHash.set(contentHash, [
+                ...manifest.intervals,
+                ...reservedIntervals,
+            ]);
+            reservedIntervalsByHash.set(contentHash, reservedIntervals);
+            contexts.push({
+                contentHash,
+                manifest,
+                reservedIntervals,
+                reservationPath,
+                currentReservation,
             });
-            reservations.push({ path: reservationPath, reservation });
         }
-        assertHandoffContentBounded(envelope, bundle, manifests, {
-            reservedCharsByHash,
+
+        if (
+            contexts.length > 0
+            && contexts.every((context) => context.currentReservation !== undefined)
+        ) {
+            return {
+                path,
+                envelope,
+                reservations: contexts.map((context) => ({
+                    path: context.reservationPath,
+                    reservation: context.currentReservation,
+                })),
+            };
+        }
+
+        if (legacyReservations.size > 0) {
+            const legacyProse = [];
+            for (const reservation of legacyReservations.values()) {
+                const legacyPath = await safeFilePath(
+                    this.root,
+                    [
+                        "handoffs",
+                        reservation.parentSessionId,
+                        reservation.researchId,
+                    ],
+                    `${reservation.version}.json`,
+                    { createDirectories: false },
+                );
+                const legacyValue = await readJson(legacyPath, { missing: "undefined" });
+                if (legacyValue === undefined) {
+                    storageFail(
+                        "LEGACY_HANDOFF_RETENTION_UNVERIFIABLE",
+                        "Legacy handoff retention requires its stored envelope",
+                        { path: legacyPath },
+                    );
+                }
+                const legacyEnvelope = normalizeHandoffEnvelope(legacyValue);
+                if (
+                    legacyEnvelope.parentSessionId !== reservation.parentSessionId
+                    || legacyEnvelope.researchId !== reservation.researchId
+                    || legacyEnvelope.version !== reservation.version
+                    || sha256Hex(canonicalJson(legacyEnvelope)) !== reservation.handoffHash
+                ) {
+                    storageFail(
+                        "LEGACY_HANDOFF_RETENTION_UNVERIFIABLE",
+                        "Legacy handoff envelope does not match its retention reservation",
+                        { path: legacyPath },
+                    );
+                }
+                legacyProse.push(...handoffProse(legacyEnvelope));
+            }
+            const reconstructed = verifiedProseRetentionManifests(
+                bundle,
+                captureInputs,
+                legacyProse,
+                initialIntervalsByHash,
+            );
+            const reconstructedByHash = new Map(
+                reconstructed.map((manifest) => [manifest.contentHash, manifest]),
+            );
+            for (const context of contexts) {
+                const legacyManifest = reconstructedByHash.get(context.contentHash);
+                if (legacyManifest === undefined) {
+                    storageFail(
+                        "MISSING_HANDOFF_FETCH_EVIDENCE",
+                        `No fresh fetch capture exists for legacy handoff content ${context.contentHash}`,
+                    );
+                }
+                context.reservedIntervals.push(...legacyManifest.intervals);
+                initialIntervalsByHash.set(context.contentHash, [
+                    ...context.manifest.intervals,
+                    ...context.reservedIntervals,
+                ]);
+            }
+        }
+
+        const generatedManifests = verifiedHandoffRetentionManifests(
+            bundle,
+            captureInputs,
+            envelope,
+            initialIntervalsByHash,
+        );
+        const generatedByHash = new Map(
+            generatedManifests.map((manifest) => [manifest.contentHash, manifest]),
+        );
+        if (
+            generatedByHash.size !== manifestByHash.size
+            || [...generatedByHash.keys()].some((hash) => !manifestByHash.has(hash))
+        ) {
+            storageFail(
+                "MISSING_HANDOFF_FETCH_EVIDENCE",
+                "Handoff captures must exactly match the fetched content retained by publication",
+            );
+        }
+        const handoffManifests = [];
+        const reservations = [];
+        for (const context of contexts) {
+            const generated = generatedByHash.get(context.contentHash);
+            if (generated === undefined) {
+                storageFail(
+                    "MISSING_RETENTION_MANIFEST",
+                    `No fresh fetch capture exists for handoff content ${context.contentHash}`,
+                );
+            }
+            let manifest = generated;
+            let reservation = context.currentReservation;
+            if (reservation !== undefined && reservation.textChars === undefined) {
+                manifest = {
+                    schemaVersion: 1,
+                    contentHash: reservation.contentHash,
+                    contentLength: reservation.contentLength,
+                    totalChars: reservation.totalChars,
+                    intervals: reservation.intervals,
+                };
+            } else {
+                reservation = {
+                    schemaVersion: 1,
+                    reservationId,
+                    contentHash: context.contentHash,
+                    parentSessionId: envelope.parentSessionId,
+                    researchId: envelope.researchId,
+                    version: envelope.version,
+                    handoffHash,
+                    contentLength: generated.contentLength,
+                    totalChars: generated.totalChars,
+                    intervals: generated.intervals,
+                };
+            }
+            handoffManifests.push(manifest);
+            reservations.push({ path: context.reservationPath, reservation });
+        }
+        assertHandoffContentBounded(envelope, bundle, manifests, handoffManifests, {
+            reservedIntervalsByHash,
         });
         return { path, envelope, reservations };
     }
@@ -1668,21 +2019,47 @@ export class PublishedEvidenceStore {
         });
     }
 
-    async storeHandoff(envelopeInput) {
+    async storeHandoff(envelopeInput, captureInputs) {
         const envelope = normalizeHandoffEnvelope(envelopeInput);
         return withStorageLock(this.root, async () => {
             const bundle = await this.get(envelope.researchId, envelope.version);
             const publishedBundle = await this.originalPublishedProjection(bundle);
             assertHandoffMatchesBundle(envelope, publishedBundle);
+            const handoffPath = await safeFilePath(
+                this.root,
+                ["handoffs", envelope.parentSessionId, envelope.researchId],
+                `${envelope.version}.json`,
+                { createDirectories: false },
+            );
+            const existingValue = await readJson(handoffPath, { missing: "undefined" });
+            if (existingValue !== undefined) {
+                const existing = normalizeHandoffEnvelope(existingValue);
+                if (canonicalJson(existing) !== canonicalJson(envelope)) {
+                    storageFail(
+                        "HANDOFF_CONFLICT",
+                        "Handoff key already exists with different data",
+                        { path: handoffPath },
+                    );
+                }
+                return existing;
+            }
             const paths = await this.paths(envelope.researchId, envelope.version, {
                 createDirectories: false,
             });
             const retention = await readJson(paths.retention);
             const { manifests } = await this.readRetentionManifests(paths, retention);
+            const captures = captureInputs ?? (manifests.length === 0 ? [] : undefined);
+            if (!Array.isArray(captures)) {
+                storageFail(
+                    "MISSING_HANDOFF_FETCH_EVIDENCE",
+                    "A new handoff requires the original bounded Learn fetch captures",
+                );
+            }
             const prepared = await this.prepareHandoff(
                 envelope,
                 publishedBundle,
                 manifests,
+                captures,
             );
             return this.writePreparedHandoff(prepared);
         });

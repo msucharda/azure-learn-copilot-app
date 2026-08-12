@@ -12,15 +12,11 @@ import {
     validateResearchBundleWithRetention,
 } from "./evidence-validation.mjs";
 import {
-    assertHandoffMatchesBundle,
-} from "./handoff-envelope.mjs";
-import {
     GET_RESEARCH_BUNDLE_SCHEMA,
     PUBLISH_RESEARCH_BUNDLE_SCHEMA,
     RECORD_LEARN_EVIDENCE_SCHEMA,
     VALIDATE_RESEARCH_BUNDLE_SCHEMA,
 } from "./tool-schemas.mjs";
-import { assertHandoffContentBounded } from "./storage.mjs";
 import {
     fail,
     normalizeResearchId,
@@ -180,17 +176,8 @@ export function createLearnReferenceTools({
                 const captures = await draftStore.listCaptures(object.bundle?.researchId);
                 const {
                     bundle: validated,
-                    retentionManifests,
                 } = validateResearchBundleWithRetention(object.bundle, captures);
                 assertEvidenceContentHash(validated);
-                if (object.handoff !== undefined) {
-                    assertHandoffMatchesBundle(object.handoff, validated);
-                    assertHandoffContentBounded(
-                        object.handoff,
-                        validated,
-                        retentionManifests,
-                    );
-                }
                 const bundle = await publishedStore.publish(
                     validated,
                     captures,

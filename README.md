@@ -17,7 +17,7 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 - `.github/extensions/learn-references/extension.mjs` registers `record_learn_evidence`, `validate_research_bundle`, `publish_research_bundle`, and `get_research_bundle`.
 - `.github/extensions/learn-references/lib/` contains dependency-free contract, hashing, MCP adapter, tool-handler, and storage modules.
 - `.github/extensions/learn-references/fixtures/` contains bounded schema version 1 examples and rejection cases.
-- `test/` covers strict contracts, deterministic hashes, fetched-Markdown quote authority, defensive MCP result adaptation, concurrent publication, lifecycle storage, and tool failures.
+- `test/` covers strict contracts, deterministic hashes, fetched-Markdown quote authority, verified bundle/handoff retention intervals, defensive MCP result adaptation, concurrent publication, lifecycle storage, and tool failures.
 - `docs/architecture.md` records the component and trust boundaries.
 - `docs/operations.md` documents storage roots, layouts, retention, validation, and operational limitations.
 
