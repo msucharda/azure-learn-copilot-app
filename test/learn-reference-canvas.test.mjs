@@ -5,7 +5,7 @@ import {
     rm,
     writeFile,
 } from "node:fs/promises";
-import { get } from "node:http";
+import { ServerResponse, get } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -44,7 +44,7 @@ function draftFixture(options = {}) {
     return fixture;
 }
 
-async function harness(t) {
+async function harness(t, providerOptions = {}) {
     const root = await mkdtemp(join(tmpdir(), "learn-reference-canvas-"));
     const draftStore = await DraftEvidenceStore.create({ root: join(root, "draft") });
     const publishedStore = await PublishedEvidenceStore.create({
@@ -55,6 +55,7 @@ async function harness(t) {
         createCanvas: (options) => options,
         draftStore,
         publishedStore,
+        ...providerOptions,
     });
     t.after(async () => {
         await provider.closeAll();
@@ -101,6 +102,28 @@ function waitForSse(url, expectedText) {
             });
         });
         request.on("error", reject);
+    });
+}
+
+async function openSse(url) {
+    let request;
+    const response = await new Promise((resolve, reject) => {
+        request = get(new URL("/events", url), resolve);
+        request.on("error", reject);
+    });
+    return { request, response };
+}
+
+function waitForClose(response, timeoutMs = 1_000) {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+            () => reject(new Error("Timed out waiting for SSE client close.")),
+            timeoutMs,
+        );
+        response.once("close", () => {
+            clearTimeout(timeout);
+            resolve();
+        });
     });
 }
 
@@ -232,6 +255,28 @@ test("same-instance reopen reuses one loopback server", async (t) => {
     assert.equal(context.instanceCount(), 1);
 });
 
+test("concurrent same-instance opens share one server and close releases its port", async (t) => {
+    const context = await harness(t);
+    const fixture = draftFixture();
+    await context.draftStore.writeBundle(fixture.bundle);
+    const input = {
+        researchId: RESEARCH_ID,
+        version: 1,
+        view: "draft",
+    };
+    const [first, second] = await Promise.all([
+        context.canvas.open(openContext("concurrent-instance", input)),
+        context.canvas.open(openContext("concurrent-instance", input)),
+    ]);
+    assert.equal(first.url, second.url);
+    assert.equal(context.instanceCount(), 1);
+    assert.equal((await fetch(first.url)).status, 200);
+
+    await context.canvas.onClose({ instanceId: "concurrent-instance" });
+    await assert.rejects(fetch(first.url));
+    await assert.rejects(fetch(second.url));
+});
+
 test("two instances share persisted evidence but keep independent UI state", async (t) => {
     const context = await harness(t);
     const fixture = draftFixture();
@@ -272,6 +317,71 @@ test("refresh action validates input and pushes a bounded SSE repaint event", as
         }),
         (error) => error.code === "invalid_refresh_input",
     );
+});
+
+test("refresh broadcast evicts an SSE client immediately on backpressure", async (t) => {
+    const context = await harness(t);
+    const fixture = draftFixture();
+    await context.draftStore.writeBundle(fixture.bundle);
+    const opened = await context.canvas.open(openContext("broadcast-pressure", {
+        researchId: RESEARCH_ID,
+        view: "draft",
+    }));
+    const { request, response } = await openSse(opened.url);
+    const closed = waitForClose(response);
+    const originalWrite = ServerResponse.prototype.write;
+    let pressuredWrites = 0;
+    ServerResponse.prototype.write = function patchedWrite(chunk, ...args) {
+        if (String(chunk).startsWith("event: refresh")) {
+            pressuredWrites += 1;
+            return false;
+        }
+        return originalWrite.call(this, chunk, ...args);
+    };
+    try {
+        await action(context.canvas, "refresh").handler({
+            instanceId: "broadcast-pressure",
+            input: {},
+        });
+        await closed;
+        await action(context.canvas, "refresh").handler({
+            instanceId: "broadcast-pressure",
+            input: {},
+        });
+        assert.equal(pressuredWrites, 1);
+    } finally {
+        ServerResponse.prototype.write = originalWrite;
+        request.destroy();
+    }
+});
+
+test("heartbeat evicts an SSE client immediately on backpressure", async (t) => {
+    const context = await harness(t, { heartbeatMs: 20 });
+    const fixture = draftFixture();
+    await context.draftStore.writeBundle(fixture.bundle);
+    const opened = await context.canvas.open(openContext("heartbeat-pressure", {
+        researchId: RESEARCH_ID,
+        view: "draft",
+    }));
+    const { request, response } = await openSse(opened.url);
+    const closed = waitForClose(response);
+    const originalWrite = ServerResponse.prototype.write;
+    let pressuredWrites = 0;
+    ServerResponse.prototype.write = function patchedWrite(chunk, ...args) {
+        if (String(chunk) === ": heartbeat\n\n") {
+            pressuredWrites += 1;
+            return false;
+        }
+        return originalWrite.call(this, chunk, ...args);
+    };
+    try {
+        await closed;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        assert.equal(pressuredWrites, 1);
+    } finally {
+        ServerResponse.prototype.write = originalWrite;
+        request.destroy();
+    }
 });
 
 test("close releases SSE clients and the unpredictable loopback port", async (t) => {

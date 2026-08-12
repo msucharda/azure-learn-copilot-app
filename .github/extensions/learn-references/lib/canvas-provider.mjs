@@ -228,13 +228,50 @@ function validateRefreshInput(input) {
     }
 }
 
+function writeSse(entry, client, message) {
+    if (client.destroyed || client.writableEnded) {
+        entry.clients.delete(client);
+        return false;
+    }
+    try {
+        if (client.write(message)) {
+            return true;
+        }
+    } catch {
+        // The client is evicted below.
+    }
+    entry.clients.delete(client);
+    client.destroy();
+    return false;
+}
+
 export function createLearnReferencesCanvas({
     createCanvas,
     CanvasError,
     draftStore,
     publishedStore,
+    heartbeatMs = HEARTBEAT_MS,
 }) {
     const instances = new Map();
+    const instanceLocks = new Map();
+
+    async function withInstanceLock(instanceId, callback) {
+        const previous = instanceLocks.get(instanceId) ?? Promise.resolve();
+        let release;
+        const current = new Promise((resolve) => {
+            release = resolve;
+        });
+        instanceLocks.set(instanceId, current);
+        await previous;
+        try {
+            return await callback();
+        } finally {
+            release();
+            if (instanceLocks.get(instanceId) === current) {
+                instanceLocks.delete(instanceId);
+            }
+        }
+    }
 
     async function load(entry) {
         const { researchId, version, view } = entry.selector;
@@ -262,7 +299,7 @@ export function createLearnReferencesCanvas({
         entry.revision += 1;
         const message = `event: refresh\ndata: ${JSON.stringify({ revision: entry.revision })}\n\n`;
         for (const client of entry.clients) {
-            client.write(message);
+            writeSse(entry, client, message);
         }
     }
 
@@ -321,8 +358,12 @@ export function createLearnReferencesCanvas({
                         "x-accel-buffering": "no",
                         "x-content-type-options": "nosniff",
                     });
-                    res.write(`event: ready\ndata: ${JSON.stringify({ revision: entry.revision })}\n\n`);
                     entry.clients.add(res);
+                    writeSse(
+                        entry,
+                        res,
+                        `event: ready\ndata: ${JSON.stringify({ revision: entry.revision })}\n\n`,
+                    );
                     req.on("close", () => entry.clients.delete(res));
                     return;
                 }
@@ -367,9 +408,9 @@ export function createLearnReferencesCanvas({
         entry.url = `http://127.0.0.1:${address.port}/`;
         entry.heartbeat = setInterval(() => {
             for (const client of entry.clients) {
-                client.write(": heartbeat\n\n");
+                writeSse(entry, client, ": heartbeat\n\n");
             }
-        }, HEARTBEAT_MS);
+        }, heartbeatMs);
         entry.heartbeat.unref();
         return entry;
     }
@@ -445,7 +486,7 @@ export function createLearnReferencesCanvas({
                 },
             },
         ],
-        open: async (ctx) => {
+        open: async (ctx) => withInstanceLock(ctx.instanceId, async () => {
             const selector = validateSelector(ctx.input, CanvasError);
             let entry = instances.get(ctx.instanceId);
             try {
@@ -478,15 +519,15 @@ export function createLearnReferencesCanvas({
                 const visible = publicError(error);
                 fail(CanvasError, visible.code.toLowerCase(), visible.message);
             }
-        },
-        onClose: async (ctx) => {
+        }),
+        onClose: async (ctx) => withInstanceLock(ctx.instanceId, async () => {
             const entry = instances.get(ctx.instanceId);
             if (!entry) {
                 return;
             }
             instances.delete(ctx.instanceId);
             await closeEntry(entry);
-        },
+        }),
     });
 
     return {

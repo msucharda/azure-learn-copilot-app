@@ -57,7 +57,7 @@ The `learn-references` canvas accepts:
 
 `version` is optional and resolves to the latest complete record in the selected store. Inputs reject additional properties, malformed/non-lowercase UUIDs, non-positive or unsafe versions, and any view other than `draft` or `published`. Storage validation remains authoritative, so traversal, symlink, incomplete publication, malformed record, and content-hash failures are surfaced as unavailable errors without filesystem details.
 
-Every open panel owns an unpredictable loopback port on `127.0.0.1`; no port is configured or externally bound. Reopening or rehydrating the same instance reuses its server. Closing the panel releases its SSE clients, heartbeat, sockets, and port. At most eight SSE clients attach to one instance, heartbeat comments are sent every 25 seconds, repaint messages contain only a revision number, request bodies are limited to 256 bytes, and projected state is limited to 4,000,000 bytes.
+Every open panel owns an unpredictable loopback port on `127.0.0.1`; no port is configured or externally bound. Concurrent open/rehydration requests for one instance are serialized and reuse its server. Closing the panel releases its SSE clients, heartbeat, sockets, and port. At most eight SSE clients attach to one instance, heartbeat comments are sent every 25 seconds, and a client is immediately evicted if any SSE write reports backpressure. Repaint messages contain only a revision number, request bodies are limited to 256 bytes, and projected state is limited to 4,000,000 bytes.
 
 Agent-facing actions are read-only:
 
