@@ -1,4 +1,8 @@
-import { joinSession } from "@github/copilot-sdk/extension";
+import {
+    CanvasError,
+    createCanvas,
+    joinSession,
+} from "@github/copilot-sdk/extension";
 import {
     DraftEvidenceStore,
     PublishedEvidenceStore,
@@ -7,6 +11,7 @@ import {
 import { LearnMcpAdapter } from "./lib/learn-mcp-adapter.mjs";
 import { LearnMcpHttpTransport } from "./lib/learn-mcp-http.mjs";
 import { createLearnReferenceTools } from "./lib/tools.mjs";
+import { createLearnReferencesCanvas } from "./lib/canvas-provider.mjs";
 
 const roots = resolveLearnReferenceStorageRoots();
 const [draftStore, publishedStore] = await Promise.all([
@@ -44,10 +49,18 @@ const learnAdapter = {
     },
 };
 
+const referencesCanvas = createLearnReferencesCanvas({
+    CanvasError,
+    createCanvas,
+    draftStore,
+    publishedStore,
+});
+
 await joinSession({
     tools: createLearnReferenceTools({
         draftStore,
         publishedStore,
         learnAdapter,
     }),
+    canvases: [referencesCanvas.canvas],
 });

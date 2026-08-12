@@ -1207,6 +1207,40 @@ export class DraftEvidenceStore {
         return bundle;
     }
 
+    async getLatest(researchIdInput) {
+        const researchId = normalizeResearchId(researchIdInput);
+        const inspected = await inspectDirectory(this.root, ["bundles", researchId]);
+        if (!inspected.exists) {
+            storageFail("LATEST_DRAFT_NOT_FOUND", "No draft evidence versions exist");
+        }
+        const entries = await readdir(inspected.path, { withFileTypes: true });
+        let latestVersion;
+        for (const entry of entries) {
+            if (entry.isFile() && isTemporaryFilename(entry.name)) {
+                continue;
+            }
+            const match = /^([1-9]\d*)\.json$/.exec(entry.name);
+            if (!entry.isFile() || entry.isSymbolicLink() || !match) {
+                storageFail(
+                    "UNSAFE_STORAGE_ENTRY",
+                    "Draft research directories may contain only positive-version JSON files",
+                    { path: join(inspected.path, entry.name) },
+                );
+            }
+            const version = Number.parseInt(match[1], 10);
+            if (!Number.isSafeInteger(version)) {
+                storageFail("INVALID_DRAFT_VERSION", "Draft version is not a safe integer");
+            }
+            latestVersion = latestVersion === undefined
+                ? version
+                : Math.max(latestVersion, version);
+        }
+        if (latestVersion === undefined) {
+            storageFail("LATEST_DRAFT_NOT_FOUND", "No draft evidence versions exist");
+        }
+        return this.readBundle(researchId, latestVersion);
+    }
+
     async recordCapture(captureInput) {
         const capture = normalizeEvidenceCapture(captureInput);
         const path = await safeFilePath(
