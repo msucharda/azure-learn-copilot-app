@@ -56,6 +56,20 @@ Tool handlers throw structured contract, adapter, or storage errors. Failed adap
 
 Automatic production hook capture is intentionally not registered. The confirmed hook shape does not provide both dynamically discovered tool schemas and a trusted `researchId`, so name heuristics would weaken the boundary. Use `record_learn_evidence` until the runtime supplies those values.
 
+## Skill routing and freshness
+
+The generated project router is validated with:
+
+```sh
+python .github/skills/repository-skill-generator/scripts/manage_project_skills.py validate --repo . --require-meta
+```
+
+It contains two exact external entries, `azure-functions` and `microsoft-foundry`, and no fallback. Excluded neighboring products and unknown products remain unresolved. The researcher records plugin name/version and generation date only when exposed by trusted runtime metadata or kickoff context. A generation date older than three calendar months is visibly stale; absent metadata remains absent.
+
+Skill files cannot prove context reduction if the host injects the complete installed-skill catalog. Do not add telemetry or claim savings. For an out-of-band observation, run equivalent bounded prompts in fresh sessions: one with plugin-wide discovery and one with compact-router selection to the exact skill. Compare only host-visible input-token totals and skill/tool loading events, record host/model/plugin versions and prompt hashes, and report the observation without generalizing beyond that runtime.
+
+Project agent and skill changes may require a fresh turn or session before the runtime picker sees them. Reload extensions separately, inspect diagnostics, and use a fresh session for the bounded router-to-skill-to-fetch/record probe. Nested-session orchestration is not implemented here.
+
 ## Validation
 
 Run all retained and production tests:

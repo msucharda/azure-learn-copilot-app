@@ -1,6 +1,6 @@
 # Learn research architecture
 
-Status: schema version 1 contracts, deterministic evidence validation, the production extension tools, and atomic reference storage are implemented. The production canvas, nested-session orchestration, and rate-limit behavior are deferred.
+Status: schema version 1 contracts, deterministic evidence validation, production extension tools, compact official-skill routing, production researcher/critic agents, and atomic reference storage are implemented. The production canvas, nested-session orchestration, and rate-limit behavior are deferred.
 
 ## Repository boundaries
 
@@ -10,11 +10,18 @@ Status: schema version 1 contracts, deterministic evidence validation, the produ
 | `.github/extensions/learn-references/lib/` | Dependency-free contracts, hashing, Learn adapter, tool handlers, and storage |
 | `.github/extensions/learn-references/fixtures/` | Bounded valid and invalid schema version 1 examples |
 | `.github/extensions/learn-references/test-support/` | Bounded generated test inputs; no fetched Learn pages |
+| `.github/skills/project-azure-learn-skill-router/SKILL.md` | Generated bounded allow-list that selects one exact external official skill |
+| `.github/agents/learn-researcher.agent.md` | Read-only production researcher with evidence-tool write access only |
+| `.github/agents/citation-critic.agent.md` | Read-only support classifier over supplied bounded evidence |
 | `.github/extensions/learn-capability-spikes/` | Retained PR 0 diagnostics; not the production reference store |
 | `test/*.test.mjs` | Contract, adapter, storage, and production-tool tests using `node:test` |
 | `docs/spikes/000-capability-spikes.md` | Validated runtime observations that constrain production design |
 
 The retained spike fallback tool is renamed `record_learn_spike_evidence`; the production extension owns `record_learn_evidence`.
+
+The generated router is project context, not a runtime service, policy layer, evidence source, or official plugin. It currently allows only `azure-functions` and `microsoft-foundry`, has no fallback, and returns unresolved for excluded or uncovered products. On a resolved route the researcher invokes exactly one external skill and progressively reads only the relevant category. The selected external skill's observed plugin metadata populates `officialSkill`; missing metadata is not inferred, and generation dates older than three calendar months produce a visible warning.
+
+The researcher sends all successful logical Learn operations through `record_learn_evidence`. Search is discovery only, code-sample search is reserved for SDK/code verification, and exact excerpts are authorized only by successful fetch captures. The citation critic neither fetches nor rewrites and cannot override deterministic validation.
 
 ## Evidence bundle schema version 1
 

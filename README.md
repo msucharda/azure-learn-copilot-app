@@ -1,11 +1,11 @@
 # azure-learn-copilot-app
 
-Foundation for a sourced Microsoft Learn research-agent system. PR 0 validated runtime capabilities, PR 1 defined schema version 1 contracts, and the production evidence pipeline now implements deterministic validation, bounded Learn-result adaptation, and atomic published storage. The production canvas, orchestration, and rate-limit behavior remain future work.
+Foundation for a sourced Microsoft Learn research-agent system. PR 0 validated runtime capabilities, PR 1 defined schema version 1 contracts, and the production evidence pipeline implements deterministic validation, bounded Learn-result adaptation, and atomic published storage. The production researcher now routes through one compact project skill to one external official Azure skill.
 
 ## Retained spike scaffold
 
 - `docs/spikes/000-capability-spikes.md` records observed contracts and fallbacks.
-- `.github/agents/learn-researcher.agent.md` is a read-only deep-research probe.
+- `.github/agents/learn-researcher.agent.md` is the production evidence researcher; `.github/agents/citation-critic.agent.md` performs bounded read-only support classification.
 - `.github/skills/publish-research-draft/SKILL.md` validates and publishes a reviewed Markdown draft when the user says **publish**.
 - `.github/extensions/learn-capability-spikes/` captures bounded diagnostic evidence and exposes canvas actions. Its fallback tool is named `record_learn_spike_evidence` so the production extension owns `record_learn_evidence`.
 - `test/contracts.test.mjs` validates evidence bounds and hashing with Node built-ins.
@@ -22,6 +22,8 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 - `docs/operations.md` documents storage roots, layouts, retention, validation, and operational limitations.
 
 The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoint remain external prerequisites. Production code discovers logical Learn operations from runtime tool schemas rather than compiling against a wrapper or legacy tool spelling.
+
+The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-functions` and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
 
 ## Validate
 
