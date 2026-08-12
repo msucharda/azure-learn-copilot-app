@@ -75,6 +75,63 @@ function repeatedReferencePage(length) {
     return paragraphs.join("").slice(0, length);
 }
 
+function repeatedStaticWebAppsPage(length) {
+    const paragraph = (
+        "Azure Static Web Apps lets you add a custom domain to your static site "
+        + "so that visitors can reach your application using a domain name that "
+        + "you control instead of the default azurestaticapps.net domain. You "
+        + "can add domains that you already own through a supported domain "
+        + "registrar, and the platform issues and manages a free TLS "
+        + "certificate automatically once the required DNS records are "
+        + "validated. "
+    );
+    let markdown = "";
+    for (let section = 0; markdown.length < length; section += 1) {
+        markdown += `Section ${section}: ${paragraph}`;
+    }
+    return markdown.slice(0, length);
+}
+
+function contiguousClaims(bundle, markdown, offset, length) {
+    const claims = [];
+    for (
+        let position = offset, remaining = length, index = 0;
+        remaining > 0;
+        index += 1
+    ) {
+        const claimLength = Math.min(3_900, remaining);
+        claims.push({
+            id: `claim-contiguous-${index + 1}`,
+            text: markdown.slice(position, position + claimLength),
+            sourceIds: [bundle.sources[0].id],
+            support: "supported",
+        });
+        position += claimLength;
+        remaining -= claimLength;
+    }
+    return claims;
+}
+
+function boundedTextChunks(text, maximumLength) {
+    const chunks = [];
+    for (let position = 0; position < text.length;) {
+        let end = Math.min(text.length, position + maximumLength);
+        while (
+            end < text.length
+            && end > position
+            && (
+                /\s/u.test(text[end - 1])
+                || /\s/u.test(text[end])
+            )
+        ) {
+            end -= 1;
+        }
+        chunks.push(text.slice(position, end));
+        position = end;
+    }
+    return chunks;
+}
+
 function fragmentedFields(
     markdown,
     fragmentLength,
@@ -298,7 +355,7 @@ test("publication allows a bounded set of embedded short excerpts", async (t) =>
     assert.equal(retention.totalChars, excerpt.length);
 });
 
-test("publication anchors exact claims on repetitive pages", async (t) => {
+test("publication retains exact claims once on repetitive pages", async (t) => {
     const { root, published } = await stores(t);
     const markdown = repeatedReferencePage(60_000);
     const offset = 8_000;
@@ -322,6 +379,45 @@ test("publication anchors exact claims on repetitive pages", async (t) => {
     ), "utf8"));
     assert.equal(retention.totalChars >= 3_000, true);
     assert.equal(retention.totalChars <= 3_100, true);
+});
+
+test("publication preserves the periodic split-field retention boundary", async (t) => {
+    const { root, published } = await stores(t);
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const overBudget = clone(fixture.bundle);
+    overBudget.claims = contiguousClaims(
+        overBudget,
+        markdown,
+        40_000,
+        12_001,
+    );
+    await assert.rejects(
+        published.publish(rehash(overBudget), [fixture.capture]),
+        (error) => error.code === "EXCERPT_BUDGET_EXCEEDED",
+    );
+    await assert.rejects(
+        published.get(RESEARCH_ID, 1),
+        expectStorageCode("PUBLISHED_NOT_FOUND"),
+    );
+    const quoted = clone(fixture.bundle);
+    quoted.claims = contiguousClaims(quoted, markdown, 40_000, 11_999);
+    const bundle = rehash(quoted);
+    assert.equal(
+        (await published.publish(bundle, [fixture.capture])).contentHash,
+        bundle.contentHash,
+    );
+    const retention = JSON.parse(await readFile(join(
+        root,
+        "published",
+        "retention",
+        fixture.capture.resultSha256,
+        "budget.json",
+    ), "utf8"));
+    assert.equal(retention.totalChars, 11_999);
 });
 
 test("publication retains every fetch capture hash, including zero-overlap captures", async (t) => {
@@ -751,6 +847,45 @@ test("unrelated handoff prose consumes no fetched-content budget", async (t) => 
         await published.storeHandoff(handoff, [fixture.capture]),
         handoff,
     );
+});
+
+test("handoffs preserve the periodic split-field retention boundary", async (t) => {
+    const { root, published } = await stores(t);
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    await published.publish(fixture.bundle, [fixture.capture]);
+    const handoff = handoffFor(fixture.bundle);
+    const text = markdown.slice(40_000, 51_999).trim();
+    const chunks = boundedTextChunks(text, 1_000);
+    handoff.executiveFindings[0].text = chunks[0];
+    handoff.unresolvedRisks = chunks.slice(1).map((chunk, index) => ({
+        id: `risk-contiguous-${index + 1}`,
+        text: chunk,
+    }));
+    assert.deepEqual(
+        await published.storeHandoff(handoff, [fixture.capture]),
+        handoff,
+    );
+    const reservationDirectory = join(
+        root,
+        "published",
+        "retention",
+        fixture.capture.resultSha256,
+        "handoffs",
+    );
+    const [reservationName] = await readdir(reservationDirectory);
+    const reservation = JSON.parse(await readFile(
+        join(reservationDirectory, reservationName),
+        "utf8",
+    ));
+    const retained = reservation.intervals.reduce(
+        (total, interval) => total + interval.end - interval.start,
+        0,
+    );
+    assert.equal(retained, text.length);
 });
 
 test("handoffs reject ordered short fragments with alphanumeric filler", async (t) => {

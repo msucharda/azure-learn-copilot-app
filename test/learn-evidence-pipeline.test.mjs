@@ -64,6 +64,23 @@ function repeatedReferencePage(length) {
     return paragraphs.join("").slice(0, length);
 }
 
+function repeatedStaticWebAppsPage(length) {
+    const paragraph = (
+        "Azure Static Web Apps lets you add a custom domain to your static site "
+        + "so that visitors can reach your application using a domain name that "
+        + "you control instead of the default azurestaticapps.net domain. You "
+        + "can add domains that you already own through a supported domain "
+        + "registrar, and the platform issues and manages a free TLS "
+        + "certificate automatically once the required DNS records are "
+        + "validated. "
+    );
+    let markdown = "";
+    for (let section = 0; markdown.length < length; section += 1) {
+        markdown += `Section ${section}: ${paragraph}`;
+    }
+    return markdown.slice(0, length);
+}
+
 function unrelatedEnglishWithLength(length) {
     const paragraphs = [];
     for (let index = 0; paragraphs.join("").length < length; index += 1) {
@@ -140,6 +157,28 @@ function withFragmentedClaims(
         sourceIds: [bundle.sources[0].id],
         support: "supported",
     }));
+    return rehash(bundle);
+}
+
+function withContiguousSplitClaims(bundleInput, markdown, offset, length) {
+    const bundle = clone(bundleInput);
+    const claims = [];
+    for (
+        let position = offset, remaining = length, index = 0;
+        remaining > 0;
+        index += 1
+    ) {
+        const claimLength = Math.min(3_900, remaining);
+        claims.push({
+            id: `claim-contiguous-${index + 1}`,
+            text: markdown.slice(position, position + claimLength),
+            sourceIds: [bundle.sources[0].id],
+            support: "supported",
+        });
+        position += claimLength;
+        remaining -= claimLength;
+    }
+    bundle.claims = claims;
     return rehash(bundle);
 }
 
@@ -461,6 +500,33 @@ test("single-character reconstruction contributes verified source intervals", ()
     );
 });
 
+test("ordered replay confirms one bounded anchored prose range", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    const baseline = validateResearchBundleWithRetention(
+        fixture.bundle,
+        [fixture.capture],
+    ).retentionManifests[0].totalChars;
+    const result = validateResearchBundleWithRetention(
+        withFragmentedClaims(
+            fixture.bundle,
+            markdown.slice(500, 1_400),
+            1,
+            13,
+            false,
+            ["e"],
+        ),
+        [fixture.capture],
+    );
+    assert.equal(
+        result.retentionManifests[0].totalChars,
+        baseline + 900,
+    );
+});
+
 test("sub-anchor fragments independently enforce the absolute excerpt budget", () => {
     const markdown = learnStylePageWithLength(20_000);
     const fixture = makePublishedEvidence({
@@ -484,7 +550,7 @@ test("sub-anchor fragments independently enforce the absolute excerpt budget", (
     );
 });
 
-test("ordered reconstruction anchors exact claims on repetitive pages", () => {
+test("exact claims on repetitive pages do not reserve repeated copies", () => {
     const markdown = repeatedReferencePage(60_000);
     for (const offset of [5_000, 8_000, 20_000]) {
         const fixture = makePublishedEvidence({
@@ -507,6 +573,88 @@ test("ordered reconstruction anchors exact claims on repetitive pages", () => {
             true,
         );
     }
+});
+
+test("split contiguous excerpts retain monotonically on periodic pages", () => {
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const lengths = [
+        11_700,
+        11_850,
+        11_890,
+        11_895,
+        11_900,
+        11_920,
+        11_940,
+        11_950,
+        11_999,
+    ];
+    for (const offset of [35_000, 40_000]) {
+        for (const length of lengths) {
+            const result = validateResearchBundleWithRetention(
+                withContiguousSplitClaims(
+                    fixture.bundle,
+                    markdown,
+                    offset,
+                    length,
+                ),
+                [fixture.capture],
+            );
+            const { totalChars } = result.retentionManifests[0];
+            assert.equal(totalChars >= length, true);
+            assert.equal(totalChars <= length + 1, true);
+            assert.equal(totalChars <= 12_000, true);
+        }
+        expectCode(
+            () => validateResearchBundle(
+                withContiguousSplitClaims(
+                    fixture.bundle,
+                    markdown,
+                    offset,
+                    12_001,
+                ),
+                [fixture.capture],
+            ),
+            ContractValidationError,
+            "EXCERPT_BUDGET_EXCEEDED",
+        );
+    }
+});
+
+test("periodic pages still reject fragmented reconstruction", () => {
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    assert.throws(
+        () => validateResearchBundle(
+            withFragmentedClaims(
+                fixture.bundle,
+                markdown.slice(35_000, 55_000),
+                31,
+                13,
+                false,
+            ),
+            [fixture.capture],
+        ),
+        (error) => {
+            assert.equal(error instanceof ContractValidationError, true);
+            assert.equal(
+                [
+                    "EXCERPT_BUDGET_EXCEEDED",
+                    "FULL_FETCH_CONTENT",
+                    "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+                    "SHORT_FRAGMENT_AMBIGUOUS",
+                ].includes(error.code),
+                true,
+            );
+            return true;
+        },
+    );
 });
 
 test("repetitive pages still reject true fragmented reconstruction", () => {
@@ -537,6 +685,7 @@ test("repetitive pages still reject true fragmented reconstruction", () => {
                     [
                         "EXCERPT_BUDGET_EXCEEDED",
                         "FULL_FETCH_CONTENT",
+                        "ORDERED_RECONSTRUCTION_AMBIGUOUS",
                         "SHORT_FRAGMENT_AMBIGUOUS",
                     ].includes(error.code),
                     true,

@@ -829,6 +829,9 @@ function orderedProseStreams(prose) {
     const groups = new Map();
     const all = [];
     for (const entry of prose) {
+        if (entry.wholeSourceMatch) {
+            continue;
+        }
         all.push(entry.text);
         const group = proseStreamGroup(entry.path);
         const values = groups.get(group) ?? [];
@@ -1081,13 +1084,15 @@ function matchOrderedForwardWindow(
     sourceEnd,
     proseStart,
     budget,
+    maximumProseEnd = prose.length,
 ) {
     const searchLimit = Math.min(
-        prose.length,
+        maximumProseEnd,
         proseStart
             + (sourceEnd - sourceStart) * ORDERED_RECONSTRUCTION_FILLER_RATIO,
     );
     let proseIndex = proseStart;
+    let matchedStart;
     for (
         let sourceIndex = sourceStart;
         sourceIndex < sourceEnd;
@@ -1104,9 +1109,10 @@ function matchOrderedForwardWindow(
         if (proseIndex >= searchLimit) {
             return undefined;
         }
+        matchedStart ??= proseIndex;
         proseIndex += 1;
     }
-    return proseIndex;
+    return { start: matchedStart, end: proseIndex };
 }
 
 function matchOrderedBackwardWindow(
@@ -1116,13 +1122,15 @@ function matchOrderedBackwardWindow(
     sourceEnd,
     proseEnd,
     budget,
+    minimumProseStart = 0,
 ) {
     const searchLimit = Math.max(
-        0,
+        minimumProseStart,
         proseEnd
             - (sourceEnd - sourceStart) * ORDERED_RECONSTRUCTION_FILLER_RATIO,
     );
     let proseIndex = proseEnd - 1;
+    let matchedEnd;
     for (
         let sourceIndex = sourceEnd - 1;
         sourceIndex >= sourceStart;
@@ -1139,9 +1147,10 @@ function matchOrderedBackwardWindow(
         if (proseIndex < searchLimit) {
             return undefined;
         }
+        matchedEnd ??= proseIndex + 1;
         proseIndex -= 1;
     }
-    return proseIndex + 1;
+    return { start: proseIndex + 1, end: matchedEnd };
 }
 
 function orderedAnchoredCoverage(
@@ -1155,6 +1164,7 @@ function orderedAnchoredCoverage(
     const ambiguousText = new Uint8Array(prose.length);
     const ambiguousSource = new Uint8Array(markdown.length);
     const ambiguousWindows = new Set();
+    let extensionAmbiguousChars = 0;
     const anchor = longestOrderedAnchor(
         markdown,
         prose,
@@ -1168,7 +1178,7 @@ function orderedAnchoredCoverage(
     const ambiguity = () => ({
         chars: ambiguousText.reduce(
             (total, value) => total + value,
-            0,
+            extensionAmbiguousChars,
         ),
         intervals: byteCoverageIntervals(ambiguousSource),
     });
@@ -1183,6 +1193,18 @@ function orderedAnchoredCoverage(
         start: anchor.sourceStart,
         end: anchor.sourceEnd,
     }];
+    const recordAmbiguousExtension = (
+        sourceStart,
+        sourceEnd,
+        match,
+        sourceIntervals,
+    ) => {
+        ambiguousText.fill(0, match.start, match.end);
+        extensionAmbiguousChars += sourceEnd - sourceStart;
+        for (const interval of sourceIntervals) {
+            ambiguousSource.fill(1, interval.start, interval.end);
+        }
+    };
     let sourceStart = anchor.sourceEnd;
     let proseStart = anchor.textEnd;
     while (sourceStart < markdown.length && proseStart < prose.length) {
@@ -1190,7 +1212,7 @@ function orderedAnchoredCoverage(
             markdown.length,
             sourceStart + ORDERED_RECONSTRUCTION_WINDOW,
         );
-        const nextProseStart = matchOrderedForwardWindow(
+        const match = matchOrderedForwardWindow(
             markdown,
             prose,
             sourceStart,
@@ -1198,12 +1220,35 @@ function orderedAnchoredCoverage(
             proseStart,
             alignmentBudget,
         );
-        if (nextProseStart === undefined) {
+        if (match === undefined) {
             break;
         }
-        intervals.push({ start: sourceStart, end: sourceEnd });
+        const reverseMatch = matchOrderedBackwardWindow(
+            markdown,
+            prose,
+            sourceStart,
+            sourceEnd,
+            match.end,
+            alignmentBudget,
+            proseStart,
+        );
+        const uniqueMapping = (
+            reverseMatch?.start === match.start
+            && reverseMatch.end === match.end
+        );
+        if (uniqueMapping) {
+            ambiguousText.fill(0, match.start, match.end);
+            intervals.push({ start: sourceStart, end: sourceEnd });
+        } else {
+            recordAmbiguousExtension(
+                sourceStart,
+                sourceEnd,
+                match,
+                [{ start: sourceStart, end: sourceEnd }],
+            );
+        }
         sourceStart = sourceEnd;
-        proseStart = nextProseStart;
+        proseStart = match.end;
     }
     let sourceEnd = anchor.sourceStart;
     let proseEnd = anchor.textStart;
@@ -1212,7 +1257,7 @@ function orderedAnchoredCoverage(
             0,
             sourceEnd - ORDERED_RECONSTRUCTION_WINDOW,
         );
-        const previousProseEnd = matchOrderedBackwardWindow(
+        const match = matchOrderedBackwardWindow(
             markdown,
             prose,
             previousSourceStart,
@@ -1220,15 +1265,38 @@ function orderedAnchoredCoverage(
             proseEnd,
             alignmentBudget,
         );
-        if (previousProseEnd === undefined) {
+        if (match === undefined) {
             break;
         }
-        intervals.push({
-            start: previousSourceStart,
-            end: sourceEnd,
-        });
+        const forwardMatch = matchOrderedForwardWindow(
+            markdown,
+            prose,
+            previousSourceStart,
+            sourceEnd,
+            match.start,
+            alignmentBudget,
+            proseEnd,
+        );
+        const uniqueMapping = (
+            forwardMatch?.start === match.start
+            && forwardMatch.end === match.end
+        );
+        if (uniqueMapping) {
+            ambiguousText.fill(0, match.start, match.end);
+            intervals.push({
+                start: previousSourceStart,
+                end: sourceEnd,
+            });
+        } else {
+            recordAmbiguousExtension(
+                previousSourceStart,
+                sourceEnd,
+                match,
+                [{ start: previousSourceStart, end: sourceEnd }],
+            );
+        }
         sourceEnd = previousSourceStart;
-        proseEnd = previousProseEnd;
+        proseEnd = match.start;
     }
     return {
         intervals,
@@ -1697,7 +1765,11 @@ function retentionManifest(
                 "persisted evidence text cannot contain hidden control characters",
             );
         }
-        return { path: entry.path, text };
+        return {
+            path: entry.path,
+            text,
+            wholeSourceMatch: text.length > 0 && markdown.includes(text),
+        };
     });
     const windowIndex = buildVerifiedWindowIndex(
         markdown,
