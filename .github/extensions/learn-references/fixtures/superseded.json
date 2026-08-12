@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "researchId": "77777777-7777-4777-8777-777777777777",
+  "version": 1,
+  "status": "superseded",
+  "parentSessionId": "session-parent-example",
+  "researcherAgent": "learn-researcher",
+  "question": {
+    "original": "How is an old evidence version represented?",
+    "normalized": "Represent an immutable superseded evidence version."
+  },
+  "scope": {
+    "product": "Microsoft Learn",
+    "version": "current",
+    "platform": "Copilot CLI",
+    "taskIntent": "Test the terminal superseded state."
+  },
+  "officialSkill": {
+    "skillName": "microsoft-foundry",
+    "pluginName": "azure-agent-skills",
+    "pluginVersion": "1.0.0"
+  },
+  "claims": [],
+  "sources": [],
+  "unresolvedItems": [],
+  "lifecycle": {
+    "createdAt": "2026-08-12T09:00:00Z",
+    "updatedAt": "2026-08-12T09:20:00Z",
+    "validatingAt": "2026-08-12T09:05:00Z",
+    "validatedAt": "2026-08-12T09:10:00Z",
+    "publishedAt": "2026-08-12T09:15:00Z",
+    "supersededAt": "2026-08-12T09:20:00Z"
+  },
+  "contentHash": "abababababababababababababababababababababababababababababababab"
+}

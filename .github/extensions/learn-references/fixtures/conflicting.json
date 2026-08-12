@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "researchId": "33333333-3333-4333-8333-333333333333",
+  "version": 1,
+  "status": "validated",
+  "parentSessionId": "session-parent-example",
+  "researcherAgent": "learn-researcher",
+  "question": {
+    "original": "Do all Learn tools return structured content?",
+    "normalized": "Compare structured content across Learn MCP tools."
+  },
+  "scope": {
+    "product": "Microsoft Learn MCP Server",
+    "version": "1.0.0",
+    "platform": "Copilot CLI",
+    "taskIntent": "Record conflicting source support."
+  },
+  "officialSkill": {
+    "skillName": "microsoft-foundry",
+    "pluginName": "azure-agent-skills",
+    "pluginVersion": "1.0.0"
+  },
+  "claims": [
+    {
+      "id": "claim-structured-content",
+      "text": "All Learn MCP tools return structured content.",
+      "sourceIds": [
+        "source-search-shape",
+        "source-fetch-shape"
+      ],
+      "support": "conflicting"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-search-shape",
+      "title": "Search result shape",
+      "canonicalUrl": "https://learn.microsoft.com/training/support/mcp-search",
+      "sectionHeading": "Search results",
+      "exactExcerpt": "Search returns structured results.",
+      "whyItMatters": "It supports the claim for search.",
+      "retrievalMethod": "microsoft_docs_search",
+      "retrievedAt": "2026-08-12T09:01:00Z",
+      "contentHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "verificationState": "verified"
+    },
+    {
+      "id": "source-fetch-shape",
+      "title": "Fetch result shape",
+      "canonicalUrl": "https://learn.microsoft.com/training/support/mcp-fetch",
+      "sectionHeading": "Fetch results",
+      "exactExcerpt": "Fetch returns content text.",
+      "whyItMatters": "It conflicts with the universal claim.",
+      "retrievalMethod": "microsoft_docs_fetch",
+      "retrievedAt": "2026-08-12T09:02:00Z",
+      "contentHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "verificationState": "verified"
+    }
+  ],
+  "unresolvedItems": [],
+  "lifecycle": {
+    "createdAt": "2026-08-12T09:00:00Z",
+    "updatedAt": "2026-08-12T09:06:00Z",
+    "validatingAt": "2026-08-12T09:04:00Z",
+    "validatedAt": "2026-08-12T09:06:00Z"
+  },
+  "contentHash": "1212121212121212121212121212121212121212121212121212121212121212"
+}

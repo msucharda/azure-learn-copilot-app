@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "researchId": "11111111-1111-4111-8111-111111111111",
+  "version": 1,
+  "status": "draft",
+  "parentSessionId": "session-parent-example",
+  "researcherAgent": "learn-researcher",
+  "question": {
+    "original": "How should a Learn research record be represented?",
+    "normalized": "Define a bounded Microsoft Learn evidence record."
+  },
+  "scope": {
+    "product": "Microsoft Learn",
+    "version": "current",
+    "platform": "Copilot CLI",
+    "taskIntent": "Define evidence contracts."
+  },
+  "officialSkill": {
+    "skillName": "microsoft-foundry",
+    "pluginName": "azure-agent-skills",
+    "pluginVersion": "1.0.0"
+  },
+  "claims": [],
+  "sources": [],
+  "unresolvedItems": [],
+  "lifecycle": {
+    "createdAt": "2026-08-12T09:00:00Z",
+    "updatedAt": "2026-08-12T09:00:00Z"
+  },
+  "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
