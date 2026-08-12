@@ -93,21 +93,34 @@ test("router exclusions and uncovered products remain unresolved", async () => {
     assert.equal(resolve(routes, "Configure Azure Kubernetes Service").status, "unresolved");
 });
 
-test("researcher allows only routing, reading, and production evidence tools", async () => {
+test("researcher allows only routing, bounded reading, and production evidence tools", async () => {
     const researcher = await readFile(RESEARCHER_PATH, "utf8");
     const header = frontmatter(researcher);
-    assert.match(header, /tools: \["skill", "read", "record_learn_evidence", "validate_research_bundle", "publish_research_bundle", "get_research_bundle"\]/);
+    assert.match(header, /tools: \["skill", "read", "record_learn_evidence", "read_learn_evidence_capture", "validate_research_bundle", "publish_research_bundle", "get_research_bundle"\]/);
     assert.doesNotMatch(header, /\b(?:edit|bash|shell|write)\b/);
     assert.match(researcher, /invoke exactly one `primary_skill` by exact name/i);
     assert.match(researcher, /more than three calendar months old/i);
     assert.match(researcher, /generated project router is never evidence provenance/i);
     assert.match(researcher, /every successful Learn operation through `record_learn_evidence`/i);
+    assert.match(researcher, /inspect only necessary bounded chunks with `read_learn_evidence_capture`/i);
 });
 
 test("researcher avoids fixed Learn wrapper and legacy operation names", async () => {
     const researcher = await readFile(RESEARCHER_PATH, "utf8");
     assert.doesNotMatch(researcher, /microsoft_docs_(?:search|fetch)|microsoft_code_sample_search|mcp_microsoftdocs|microsoft-learn-microsoft/);
     assert.match(researcher, /logical operation `docs-fetch`/);
+});
+
+test("unresolved routing cannot fabricate schema provenance or publish", async () => {
+    const researcher = await readFile(RESEARCHER_PATH, "utf8");
+    const unresolved = researcher.match(
+        /If the route is unresolved,[\s\S]*?until an external official skill is selected\./,
+    )?.[0];
+    assert.ok(unresolved);
+    assert.match(unresolved, /at most one bounded `docs-search`/);
+    assert.match(unresolved, /Do not create `officialSkill`, a bundle, claims, sources, citations/);
+    assert.match(unresolved, /or call validation\/publication tools/);
+    assert.doesNotMatch(unresolved, /validate_research_bundle|publish_research_bundle/);
 });
 
 test("citation critic is read-only and cannot broaden or rewrite", async () => {
@@ -134,8 +147,15 @@ test("project instructions stay minimal and contain no copied source URLs", asyn
 });
 
 test("publish workflow validates, publishes, and verifies only on explicit request", async () => {
-    const publish = await readFile(PUBLISH_PATH, "utf8");
+    const [researcher, publish] = await Promise.all([
+        readFile(RESEARCHER_PATH, "utf8"),
+        readFile(PUBLISH_PATH, "utf8"),
+    ]);
+    assert.match(researcher, /On explicit publication, invoke `publish-research-draft` by exact skill name/);
+    assert.match(researcher, /Never perform the validation, publication, immutable read-back, or handoff sequence directly outside the publish skill/);
+    assert.doesNotMatch(researcher, /On explicit publication, use `publish_research_bundle`/);
     assert.match(publish, /user explicitly says \*\*publish\*\*/i);
+    assert.match(publish, /If the read-only researcher has no draft file, accept its complete bounded current schema-version-1 evidence bundle and draft state/);
     assert.match(publish, /`validate_research_bundle`/);
     assert.match(publish, /`publish_research_bundle`/);
     assert.match(publish, /`get_research_bundle`/);

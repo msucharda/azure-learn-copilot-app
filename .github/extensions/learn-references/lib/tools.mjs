@@ -14,6 +14,7 @@ import {
 import {
     GET_RESEARCH_BUNDLE_SCHEMA,
     PUBLISH_RESEARCH_BUNDLE_SCHEMA,
+    READ_LEARN_EVIDENCE_CAPTURE_SCHEMA,
     RECORD_LEARN_EVIDENCE_SCHEMA,
     VALIDATE_RESEARCH_BUNDLE_SCHEMA,
 } from "./tool-schemas.mjs";
@@ -145,6 +146,63 @@ export function createLearnReferenceTools({
                     resultCount: stored.resultCount,
                     sourceUrls: stored.sourceUrls,
                     observedAt: stored.observedAt,
+                });
+            },
+        },
+        {
+            name: "read_learn_evidence_capture",
+            description: "Read one exact bounded Markdown chunk from a recorded Learn fetch",
+            parameters: READ_LEARN_EVIDENCE_CAPTURE_SCHEMA,
+            handler: async (input) => {
+                const object = requireObject(input, "$", [
+                    "researchId",
+                    "captureId",
+                    "offset",
+                    "length",
+                ]);
+                const researchId = normalizeResearchId(object.researchId);
+                if (!Number.isInteger(object.offset) || object.offset < 0 || object.offset > 262_143) {
+                    fail("INVALID_CAPTURE_OFFSET", "$.offset", "must be an integer from 0 through 262143");
+                }
+                if (!Number.isInteger(object.length) || object.length < 1 || object.length > 4_096) {
+                    fail("INVALID_CAPTURE_LENGTH", "$.length", "must be an integer from 1 through 4096");
+                }
+                const capture = await draftStore.readCapture(researchId, object.captureId);
+                if (capture.logicalOperation !== "docs-fetch") {
+                    fail(
+                        "NON_FETCH_CAPTURE",
+                        "$.captureId",
+                        "must identify a docs-fetch capture",
+                    );
+                }
+                const totalLength = capture.fetchedMarkdown.length;
+                if (object.offset >= totalLength) {
+                    fail(
+                        "CAPTURE_OFFSET_OUT_OF_RANGE",
+                        "$.offset",
+                        "must be less than the fetched Markdown length",
+                    );
+                }
+                const end = Math.min(totalLength, object.offset + object.length);
+                if (object.offset === 0 && end === totalLength) {
+                    fail(
+                        "FULL_CAPTURE_READ",
+                        "$",
+                        "bounded reads cannot return the complete fetched Markdown body",
+                    );
+                }
+                const markdownChunk = capture.fetchedMarkdown.slice(object.offset, end);
+                return successResult({
+                    researchId: capture.researchId,
+                    captureId: capture.captureId,
+                    canonicalUrl: capture.canonicalUrl,
+                    retrievalUrl: capture.retrievalUrl,
+                    observedAt: capture.observedAt,
+                    resultSha256: capture.resultSha256,
+                    totalLength,
+                    offset: object.offset,
+                    length: markdownChunk.length,
+                    markdownChunk,
                 });
             },
         },

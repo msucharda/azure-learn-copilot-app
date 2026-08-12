@@ -10,6 +10,7 @@ import {
     DraftEvidenceStore,
     LearnMcpAdapterError,
     PublishedEvidenceStore,
+    READ_LEARN_EVIDENCE_CAPTURE_SCHEMA,
     RECORD_LEARN_EVIDENCE_SCHEMA,
     createLearnReferenceTools,
 } from "../.github/extensions/learn-references/lib/index.mjs";
@@ -102,6 +103,7 @@ test("production extension exposes exactly the required strict tools", async (t)
         tools.map((tool) => tool.name),
         [
             "record_learn_evidence",
+            "read_learn_evidence_capture",
             "validate_research_bundle",
             "publish_research_bundle",
             "get_research_bundle",
@@ -111,6 +113,7 @@ test("production extension exposes exactly the required strict tools", async (t)
         assertStrictObjects(tool.parameters);
     }
     assert.equal(RECORD_LEARN_EVIDENCE_SCHEMA.properties.argumentsJson.maxLength, 20_000);
+    assert.equal(READ_LEARN_EVIDENCE_CAPTURE_SCHEMA.properties.length.maximum, 4_096);
 });
 
 test("record tool stores normalized fetch evidence and no full body in its result", async (t) => {
@@ -123,6 +126,89 @@ test("record tool stores normalized fetch evidence and no full body in its resul
     const captures = await context.draftStore.listCaptures(RESEARCH_ID);
     assert.equal(captures.length, 1);
     assert.equal(captures[0].fetchedMarkdown, fixture.markdown);
+});
+
+test("capture reader returns an exact bounded fetch chunk and provenance", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    const recorded = await context.tool("record_learn_evidence").handler(recordInput(fixture));
+    const result = await context.tool("read_learn_evidence_capture").handler({
+        researchId: RESEARCH_ID,
+        captureId: recorded.structuredContent.captureId,
+        offset: 5,
+        length: 37,
+    });
+    assert.equal(result.structuredContent.markdownChunk, fixture.markdown.slice(5, 42));
+    assert.equal(result.structuredContent.totalLength, fixture.markdown.length);
+    assert.equal(result.structuredContent.resultSha256, fixture.capture.resultSha256);
+    assert.equal(result.structuredContent.canonicalUrl, fixture.capture.canonicalUrl);
+    assert.equal(result.structuredContent.retrievalUrl, fixture.capture.retrievalUrl);
+    assert.equal(result.structuredContent.observedAt, "2026-08-12T09:01:00.000Z");
+    assert.equal(result.textResultForLlm.includes(fixture.markdown), false);
+});
+
+test("capture reader rejects cross-research and search/code captures", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    await context.draftStore.recordCapture(fixture.capture);
+    await assert.rejects(
+        context.tool("read_learn_evidence_capture").handler({
+            researchId: "80000000-0000-4000-8000-000000000001",
+            captureId: fixture.capture.captureId,
+            offset: 0,
+            length: 1,
+        }),
+        (error) => error.code === "CAPTURE_NOT_FOUND",
+    );
+
+    for (const [operation, captureId] of [
+        ["docs-search", "70000000-0000-4000-8000-000000000001"],
+        ["code-sample-search", "70000000-0000-4000-8000-000000000002"],
+    ]) {
+        const discoveryCapture = clone(fixture.capture);
+        discoveryCapture.captureId = captureId;
+        discoveryCapture.logicalOperation = operation;
+        delete discoveryCapture.canonicalUrl;
+        delete discoveryCapture.retrievalUrl;
+        delete discoveryCapture.fetchedMarkdown;
+        await context.draftStore.recordCapture(discoveryCapture);
+        await assert.rejects(
+            context.tool("read_learn_evidence_capture").handler({
+                researchId: RESEARCH_ID,
+                captureId,
+                offset: 0,
+                length: 1,
+            }),
+            (error) => error.code === "NON_FETCH_CAPTURE",
+        );
+    }
+});
+
+test("capture reader rejects out-of-range and complete-body reads", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence({
+        markdown: "abcdefghij",
+        exactExcerpt: "abc",
+    });
+    await context.draftStore.recordCapture(fixture.capture);
+    await assert.rejects(
+        context.tool("read_learn_evidence_capture").handler({
+            researchId: RESEARCH_ID,
+            captureId: fixture.capture.captureId,
+            offset: 10,
+            length: 1,
+        }),
+        (error) => error.code === "CAPTURE_OFFSET_OUT_OF_RANGE",
+    );
+    await assert.rejects(
+        context.tool("read_learn_evidence_capture").handler({
+            researchId: RESEARCH_ID,
+            captureId: fixture.capture.captureId,
+            offset: 0,
+            length: 10,
+        }),
+        (error) => error.code === "FULL_CAPTURE_READ",
+    );
 });
 
 test("record tool rejects success-shaped failures without writing capture records", async (t) => {

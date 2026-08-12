@@ -14,7 +14,7 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 
 ## Production evidence pipeline
 
-- `.github/extensions/learn-references/extension.mjs` registers `record_learn_evidence`, `validate_research_bundle`, `publish_research_bundle`, and `get_research_bundle`.
+- `.github/extensions/learn-references/extension.mjs` registers `record_learn_evidence`, bounded `read_learn_evidence_capture`, `validate_research_bundle`, `publish_research_bundle`, and `get_research_bundle`.
 - `.github/extensions/learn-references/lib/` contains dependency-free contract, hashing, MCP adapter, tool-handler, and storage modules.
 - `.github/extensions/learn-references/fixtures/` contains bounded schema version 1 examples and rejection cases.
 - `test/` covers strict contracts, deterministic hashes, fetched-Markdown quote authority, short-fragment and decorated bundle/handoff retention, defensive MCP result adaptation, concurrent publication, lifecycle storage, and tool failures.

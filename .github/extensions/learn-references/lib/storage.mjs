@@ -38,6 +38,7 @@ import {
 import {
     MAX_EVIDENCE_CAPTURES,
     MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
+    normalizeCaptureId,
     normalizeEvidenceCapture,
     retentionManifestsForProse,
     validateResearchBundleWithRetention,
@@ -1219,6 +1220,28 @@ export class DraftEvidenceStore {
             conflictCode: "CAPTURE_CONFLICT",
             conflictMessage: "Capture ID already exists with different evidence",
         });
+    }
+
+    async readCapture(researchIdInput, captureIdInput) {
+        const researchId = normalizeResearchId(researchIdInput);
+        const captureId = normalizeCaptureId(captureIdInput);
+        const path = await safeFilePath(
+            this.root,
+            ["captures", researchId],
+            `${captureId}.json`,
+            { createDirectories: false },
+        );
+        const value = await readJson(path, { missing: "undefined" });
+        if (value === undefined) {
+            storageFail("CAPTURE_NOT_FOUND", "Draft evidence capture was not found", { path });
+        }
+        const capture = normalizeEvidenceCapture(value);
+        if (capture.researchId !== researchId || capture.captureId !== captureId) {
+            storageFail("STORAGE_KEY_MISMATCH", "Capture identity does not match its path", {
+                path,
+            });
+        }
+        return capture;
     }
 
     async listCaptures(researchIdInput) {

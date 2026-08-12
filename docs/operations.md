@@ -37,9 +37,10 @@ A read requires payload, lifecycle, and commit files and recomputes the immutabl
 
 1. Discover Learn MCP tool definitions and map them to `docs-search`, `docs-fetch`, and `code-sample-search` with `LearnMcpAdapter`. Runtime names remain opaque.
 2. Call `record_learn_evidence` with a `researchId`, logical operation, and bounded JSON-encoded tool arguments. The extension invokes the discovered Learn tool through its trusted transport. Result bodies, digests, counts, runtime names, and source URLs are adapter output and cannot be supplied by the caller.
-3. Use the returned `observedAt` as the source `retrievedAt`, then call `validate_research_bundle`. Every declared source must be a verified `docs-fetch` source backed by the same canonical/retrieval URL, content digest, timestamp, and exact excerpt.
-4. Call `publish_research_bundle`, optionally with a bounded handoff. Publication repeats validation and preflights the evidence key, all fetched-content budgets, and the handoff under one cross-process store lock before writing records. A dead-owner lock fails closed with `ABANDONED_STORAGE_LOCK`; remove that exact lock directory only after confirming no writer is active.
-5. Call `get_research_bundle` with a version or omit it for `latest`. Every read verifies the content digest.
+3. For a fetch capture, call `read_learn_evidence_capture` with its `researchId`, `captureId`, and a bounded offset/length. It returns at most 4,096 exact Markdown characters and rejects non-fetch, cross-research, out-of-range, and complete-body reads.
+4. Use the returned `observedAt` as the source `retrievedAt`, then call `validate_research_bundle`. Every declared source must be a verified `docs-fetch` source backed by the same canonical/retrieval URL, content digest, timestamp, and exact excerpt.
+5. Call `publish_research_bundle`, optionally with a bounded handoff. Publication repeats validation and preflights the evidence key, all fetched-content budgets, and the handoff under one cross-process store lock before writing records. A dead-owner lock fails closed with `ABANDONED_STORAGE_LOCK`; remove that exact lock directory only after confirming no writer is active.
+6. Call `get_research_bundle` with a version or omit it for `latest`. Every read verifies the content digest.
 
 Tool handlers throw structured contract, adapter, or storage errors. Failed adapter/validation calls do not create success-shaped evidence records.
 

@@ -195,6 +195,13 @@ export const RECORD_LEARN_EVIDENCE_SCHEMA = strictObject({
     "argumentsJson",
 ]);
 
+export const READ_LEARN_EVIDENCE_CAPTURE_SCHEMA = strictObject({
+    researchId: stringSchema(36, { pattern: UUID_V4 }),
+    captureId: stringSchema(36, { pattern: UUID_V4 }),
+    offset: { type: "integer", minimum: 0, maximum: 262_143 },
+    length: { type: "integer", minimum: 1, maximum: 4_096 },
+});
+
 export const VALIDATE_RESEARCH_BUNDLE_SCHEMA = strictObject({
     bundle: EVIDENCE_BUNDLE_SCHEMA,
 });

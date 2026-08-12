@@ -62,7 +62,7 @@ const CAPTURE_KEYS = Object.freeze([
     "fetchedMarkdown",
 ]);
 
-function normalizeCaptureId(value, path) {
+export function normalizeCaptureId(value, path = "$.captureId") {
     const normalized = normalizeString(value, path, {
         min: 36,
         max: 36,

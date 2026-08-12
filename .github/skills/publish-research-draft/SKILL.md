@@ -7,8 +7,8 @@ description: Validate and publish the current Microsoft Learn research Markdown 
 
 Use this skill only after the user explicitly says **publish** or clearly requests a parent handoff.
 
-1. Keep the draft in a Markdown file and open that file in the editor canvas while it is being reviewed.
-2. Read the complete draft and its schema-version-1 evidence bundle before publishing. Reject the request if required evidence, source captures, production decisions, or validation results are missing.
+1. When a nested-session Markdown draft exists, keep it in that file and open it in the editor canvas while it is reviewed. If the read-only researcher has no draft file, accept its complete bounded current schema-version-1 evidence bundle and draft state from the active context; do not create a file solely to publish.
+2. Read the complete bounded draft state and evidence bundle before publishing. Reject the request if required evidence, source captures, production decisions, or validation results are missing.
 3. Call `validate_research_bundle` with the complete bundle. Deterministic validation failures remain explicit and stop publication.
 4. Call `publish_research_bundle` only after validation succeeds, then call `get_research_bundle` for the same `researchId` and version to confirm the immutable published record.
 5. Do not publish full Microsoft Learn pages, secrets, local absolute paths, runtime session IDs in repository content, or unbounded tool output.
