@@ -1,6 +1,6 @@
 # azure-learn-copilot-app
 
-Foundation for a sourced Microsoft Learn research-agent system. PR 0 validated runtime capabilities, PR 1 defined schema version 1 contracts, and the production evidence pipeline implements deterministic validation, bounded Learn-result adaptation, and atomic published storage. The production researcher now routes through one compact project skill to one external official Azure skill.
+Foundation for a sourced Microsoft Learn research-agent system. PR 0 validated runtime capabilities, PR 1 defined schema version 1 contracts, and the production evidence pipeline implements deterministic validation, bounded Learn-result adaptation, atomic published storage, compact official-skill routing, production researcher agents, and a read-only reference canvas.
 
 ## Retained spike scaffold
 
@@ -15,15 +15,18 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 ## Production evidence pipeline
 
 - `.github/extensions/learn-references/extension.mjs` registers `record_learn_evidence`, bounded `read_learn_evidence_capture`, `validate_research_bundle`, `publish_research_bundle`, and `get_research_bundle`.
-- `.github/extensions/learn-references/lib/` contains dependency-free contract, hashing, MCP adapter, tool-handler, and storage modules.
+- The same extension registers the `learn-references` project canvas. Open it with `{ researchId, version?, view }`, where `view` is `draft` or `published`; omit `version` to read the latest complete version.
+- `.github/extensions/learn-references/lib/` contains dependency-free contract, hashing, MCP adapter, tool-handler, storage, canvas-provider, and DOM-renderer modules.
 - `.github/extensions/learn-references/fixtures/` contains bounded schema version 1 examples and rejection cases.
-- `test/` covers strict contracts, deterministic hashes, fetched-Markdown quote authority, short-fragment and decorated bundle/handoff retention, defensive MCP result adaptation, concurrent publication, lifecycle storage, and tool failures.
+- `test/` covers strict contracts, deterministic hashes, fetched-Markdown quote authority, short-fragment and decorated bundle/handoff retention, defensive MCP result adaptation, concurrent publication, lifecycle storage, tool failures, and reference-canvas security/lifecycle behavior.
 - `docs/architecture.md` records the component and trust boundaries.
 - `docs/operations.md` documents storage roots, layouts, retention, validation, and operational limitations.
 
 The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoint remain external prerequisites. Production code discovers logical Learn operations from runtime tool schemas rather than compiling against a wrapper or legacy tool spelling.
 
 The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-functions` and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
+
+The reference canvas renders only bounded evidence fields already accepted by the draft or published stores. It never serves retained fetched Markdown, does not expose publishing controls, and does not bridge iframe input into an agent turn. Publishing remains the explicit `publish-research-draft` chat skill.
 
 ## Validate
 

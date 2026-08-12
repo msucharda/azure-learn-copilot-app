@@ -1,13 +1,13 @@
 # Learn research architecture
 
-Status: schema version 1 contracts, deterministic evidence validation, production extension tools, compact official-skill routing, production researcher/critic agents, and atomic reference storage are implemented. The production canvas, nested-session orchestration, and rate-limit behavior are deferred.
+Status: schema version 1 contracts, deterministic evidence validation, production extension tools, compact official-skill routing, production researcher/critic agents, atomic reference storage, and the production read-only reference canvas are implemented. Nested-session orchestration and rate-limit behavior are deferred.
 
 ## Repository boundaries
 
 | Path | Responsibility |
 | --- | --- |
-| `.github/extensions/learn-references/extension.mjs` | Production tool registration and configured store startup |
-| `.github/extensions/learn-references/lib/` | Dependency-free contracts, hashing, Learn adapter, tool handlers, and storage |
+| `.github/extensions/learn-references/extension.mjs` | Production tool/canvas registration and configured store startup |
+| `.github/extensions/learn-references/lib/` | Dependency-free contracts, hashing, Learn adapter, tool handlers, storage, canvas provider, and renderer assets |
 | `.github/extensions/learn-references/fixtures/` | Bounded valid and invalid schema version 1 examples |
 | `.github/extensions/learn-references/test-support/` | Bounded generated test inputs; no fetched Learn pages |
 | `.github/skills/project-azure-learn-skill-router/SKILL.md` | Generated bounded allow-list that selects one exact external official skill |
@@ -22,6 +22,18 @@ The retained spike fallback tool is renamed `record_learn_spike_evidence`; the p
 The generated router is project context, not a runtime service, policy layer, evidence source, or official plugin. It currently allows only `azure-functions` and `microsoft-foundry`, has no fallback, and returns unresolved for excluded or uncovered products. On a resolved route the researcher invokes exactly one external skill and progressively reads only the relevant category. The selected external skill's observed plugin metadata populates `officialSkill`; missing metadata is not inferred, and generation dates older than three calendar months produce a visible warning.
 
 The researcher sends all successful logical Learn operations through `record_learn_evidence`. Search is discovery only, code-sample search is reserved for SDK/code verification, and exact excerpts are authorized only by successful fetch captures. The citation critic neither fetches nor rewrites and cannot override deterministic validation.
+
+## Production reference canvas
+
+The production extension declares one project canvas type, `learn-references`. Its strict input is `{ researchId, version?, view }`; `researchId` is the stable evidence identity, `version` is a positive safe integer when present, and `view` is exactly `draft` or `published`. The caller-supplied canvas `instanceId` identifies only one panel and its ephemeral support filter. Two panels for the same evidence key independently serve the same persisted record.
+
+The provider reads through `DraftEvidenceStore` or `PublishedEvidenceStore` only. An omitted version resolves through the corresponding validated latest-read API. Draft reads recompute the evidence content hash; published reads also require the complete payload, lifecycle, retention, and commit set already enforced by the published store. Missing, incomplete, malformed, unsafe, or hash-mismatched data produces an explicit unavailable error before a server is exposed.
+
+Each open instance receives its own standard-library HTTP server on an OS-selected port bound to `127.0.0.1`. Rehydrating the same instance reuses its server. `onClose` clears the heartbeat, ends bounded SSE clients, destroys remaining sockets, and releases the port. The `refresh` action and same-origin refresh endpoint validate the current store read before emitting a small SSE repaint event; `set_support_filter` changes per-panel presentation only. Neither action mutates evidence.
+
+The renderer receives a bounded projection containing the question/claim summary, scope, official-skill provenance, claim/source relationships, exact excerpts, verification and retrieval metadata, unresolved/conflicting items, lifecycle, version, and content hash. It never receives capture records or fetched Markdown. Static HTML contains no evidence values. Browser code creates elements and assigns untrusted strings with `textContent`; it never uses untrusted `innerHTML`.
+
+Only exact HTTPS `learn.microsoft.com` URLs without credentials or custom ports become links, and links use `noopener noreferrer`. The server applies a deny-by-default CSP with same-origin scripts, styles, and connections only; there are no remote assets, wildcard bindings, iframe-to-agent bridges, or publish controls. Publication remains an explicit agent turn through the retained project skill.
 
 ## Evidence bundle schema version 1
 
