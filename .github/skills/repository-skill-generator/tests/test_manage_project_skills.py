@@ -49,6 +49,27 @@ class ManageProjectSkillsTests(unittest.TestCase):
             "instructions": "# Routing\n\nUse when changing tested behavior.\n",
         }
 
+    def write_malformed_generated_claim(self, name, metadata_lines=None):
+        skill_file = self.root / ".github" / "skills" / name / "SKILL.md"
+        skill_file.parent.mkdir(parents=True)
+        if metadata_lines is None:
+            metadata_lines = [
+                "  managed-by: repository-skill-generator",
+                '  generated: "true"',
+            ]
+        metadata = "\n".join(metadata_lines)
+        content = (
+            "---\n"
+            f"name: {name}\n"
+            "description: Malformed generated ownership claim.\n"
+            "metadata:\n"
+            f"{metadata}\n"
+            "---\n\n"
+            "Preserve this content.\n"
+        )
+        skill_file.write_text(content, encoding="utf-8")
+        return skill_file, content
+
     def test_scan_detects_signals_and_ignores_generated_and_vendor_files(self):
         (self.root / "src").mkdir()
         (self.root / "src" / "app.py").write_text("print('ok')\n", encoding="utf-8")
@@ -123,6 +144,25 @@ class ManageProjectSkillsTests(unittest.TestCase):
         self.assertIn("hand-authored", error)
         self.assertEqual(skill_file.read_text(encoding="utf-8"), original)
 
+    def test_apply_preserves_and_rejects_malformed_generated_target(self):
+        name = "project-repository-testing"
+        skill_file, original = self.write_malformed_generated_claim(name)
+        plan = self.write_plan([self.generated_entry(name)])
+
+        code, _, error = self.run_main(
+            "apply", "--repo", str(self.root), "--plan", str(plan)
+        )
+        validate_code, _, validate_error = self.run_main(
+            "validate", "--repo", str(self.root)
+        )
+
+        self.assertEqual(code, 2)
+        self.assertIn("malformed generated ownership metadata", error)
+        self.assertIn("refusing to replace skill", error)
+        self.assertEqual(skill_file.read_text(encoding="utf-8"), original)
+        self.assertEqual(validate_code, 2)
+        self.assertIn("malformed generated ownership metadata", validate_error)
+
     def test_prune_removes_only_generated_skills(self):
         initial = self.write_plan(
             [
@@ -157,6 +197,34 @@ class ManageProjectSkillsTests(unittest.TestCase):
         self.assertFalse(
             (self.root / ".github" / "skills" / "project-remove-generated").exists()
         )
+
+    def test_prune_preserves_and_rejects_malformed_generated_claim(self):
+        skill_file, original = self.write_malformed_generated_claim(
+            "project-malformed-generated",
+            metadata_lines=[
+                "  managed-by: repository-skill-generator",
+                '  generated: "true"',
+                '  format-version: "999"',
+                '  kind: "unknown-kind"',
+                '  provenance: "unknown-provenance"',
+                "  unexpected-owner-field: present",
+            ],
+        )
+        plan = self.write_plan([])
+
+        code, _, error = self.run_main(
+            "apply",
+            "--repo",
+            str(self.root),
+            "--plan",
+            str(plan),
+            "--prune",
+        )
+
+        self.assertEqual(code, 2)
+        self.assertIn("malformed generated ownership metadata", error)
+        self.assertIn("refusing to prune skill", error)
+        self.assertEqual(skill_file.read_text(encoding="utf-8"), original)
 
     def test_rejects_catalog_collision(self):
         plan = self.write_plan(

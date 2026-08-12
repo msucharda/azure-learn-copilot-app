@@ -98,6 +98,14 @@ PROJECT_PREFIX = "project-"
 MAX_SCAN_FILES = 20_000
 MAX_SCAN_DIRECTORIES = 10_000
 MAX_SCAN_ENTRIES = 100_000
+GENERATED_KINDS = {"project-skill", "official-skill-router"}
+OWNERSHIP_METADATA_KEYS = {
+    "managed-by",
+    "generated",
+    "format-version",
+    "kind",
+    "provenance",
+}
 
 
 class SkillError(Exception):
@@ -349,17 +357,57 @@ def _decode_scalar(value: str) -> str:
     return value
 
 
-def is_generated(path: Path) -> bool:
+def generated_ownership(path: Path) -> Tuple[str, Optional[str]]:
     try:
         frontmatter, _ = parse_frontmatter(path)
     except SkillError:
-        return False
+        return "none", None
     metadata = frontmatter.get("metadata")
-    return (
-        isinstance(metadata, dict)
-        and metadata.get("managed-by") == MANAGER
-        and metadata.get("generated") == "true"
+    if not isinstance(metadata, dict):
+        return "none", None
+    claims_ownership = (
+        metadata.get("managed-by") == MANAGER
+        or metadata.get("generated") == "true"
     )
+    if not claims_ownership:
+        return "none", None
+
+    errors = []
+    if set(metadata) != OWNERSHIP_METADATA_KEYS:
+        missing = sorted(OWNERSHIP_METADATA_KEYS - set(metadata))
+        unexpected = sorted(set(metadata) - OWNERSHIP_METADATA_KEYS)
+        if missing:
+            errors.append(f"missing keys: {', '.join(missing)}")
+        if unexpected:
+            errors.append(f"unexpected keys: {', '.join(unexpected)}")
+    if metadata.get("managed-by") != MANAGER:
+        errors.append(f"managed-by must be {MANAGER!r}")
+    if metadata.get("generated") != "true":
+        errors.append("generated must be 'true'")
+    if metadata.get("format-version") != FORMAT_VERSION:
+        errors.append(f"format-version must be {FORMAT_VERSION!r}")
+    if metadata.get("kind") not in GENERATED_KINDS:
+        errors.append("kind must identify a recognized generated skill")
+    if metadata.get("provenance") != "project-repository-context":
+        errors.append("provenance must be 'project-repository-context'")
+    if errors:
+        return "invalid", "; ".join(errors)
+    return "valid", None
+
+
+def is_generated(path: Path) -> bool:
+    state, _ = generated_ownership(path)
+    return state == "valid"
+
+
+def _reject_malformed_ownership(path: Path, action: str) -> str:
+    state, details = generated_ownership(path)
+    if state == "invalid":
+        raise SkillError(
+            f"{path}: malformed generated ownership metadata ({details}); "
+            f"refusing to {action}"
+        )
+    return state
 
 
 def _validate_name(name: Any) -> str:
@@ -627,8 +675,10 @@ def apply_plan(
             raise SkillError(f"refusing symlinked skill directory: {directory}")
         if directory.exists() and not skill_file.is_file():
             raise SkillError(f"{directory}: existing directory has no SKILL.md")
-        if skill_file.exists() and not is_generated(skill_file):
-            raise SkillError(f"{name}: refusing to replace hand-authored skill")
+        if skill_file.exists():
+            ownership = _reject_malformed_ownership(skill_file, "replace skill")
+            if ownership != "valid":
+                raise SkillError(f"{name}: refusing to replace hand-authored skill")
 
     result: Dict[str, List[str]] = {
         "created": [],
@@ -650,12 +700,14 @@ def apply_plan(
     if prune and skills_root.is_dir():
         for directory in sorted(skills_root.iterdir()):
             if (
-                directory.is_dir()
-                and not directory.is_symlink()
-                and directory.name not in desired
-                and directory.name not in META_SKILLS
-                and is_generated(directory / "SKILL.md")
+                not directory.is_dir()
+                or directory.is_symlink()
+                or directory.name in desired
             ):
+                continue
+            skill_file = directory / "SKILL.md"
+            ownership = _reject_malformed_ownership(skill_file, "prune skill")
+            if directory.name not in META_SKILLS and ownership == "valid":
                 result["pruned"].append(directory.name)
 
     if dry_run:
@@ -709,17 +761,12 @@ def validate_skills(root: Path, require_meta: bool) -> Dict[str, Any]:
                     errors.append(f"{skill_file}: invalid description")
                 if not body:
                     errors.append(f"{skill_file}: empty instructions")
-                if is_generated(skill_file):
-                    metadata = frontmatter["metadata"]
-                    if metadata.get("format-version") != FORMAT_VERSION:
-                        errors.append(f"{skill_file}: unsupported generated format version")
-                    if metadata.get("kind") not in {
-                        "project-skill",
-                        "official-skill-router",
-                    }:
-                        errors.append(f"{skill_file}: invalid generated skill kind")
-                    if metadata.get("provenance") != "project-repository-context":
-                        errors.append(f"{skill_file}: invalid generated provenance")
+                ownership, ownership_error = generated_ownership(skill_file)
+                if ownership == "invalid":
+                    errors.append(
+                        f"{skill_file}: malformed generated ownership metadata "
+                        f"({ownership_error})"
+                    )
                 found.append(directory.name)
             except SkillError as error:
                 errors.append(str(error))
