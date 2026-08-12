@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "researchId": "22222222-2222-4222-8222-222222222222",
+  "version": 3,
+  "status": "published",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "childSessionId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "researcherAgent": "learn-researcher",
+  "question": {
+    "original": "Which Learn MCP contracts are safe to use?",
+    "normalized": "Identify production-safe Microsoft Learn MCP contracts."
+  },
+  "scope": {
+    "product": "Microsoft Learn MCP Server",
+    "version": "1.0.0",
+    "platform": "Copilot CLI",
+    "taskIntent": "Choose dynamic discovery and bounded evidence capture."
+  },
+  "officialSkill": {
+    "skillName": "microsoft-foundry",
+    "pluginName": "azure-agent-skills",
+    "pluginVersion": "1.0.0",
+    "generatedAt": "2026-08-09"
+  },
+  "claims": [
+    {
+      "id": "claim-dynamic-discovery",
+      "text": "Learn MCP tool names and schemas are discovered at runtime.",
+      "sourceIds": [
+        "source-mcp-overview"
+      ],
+      "support": "supported"
+    },
+    {
+      "id": "claim-success-capture",
+      "text": "Successful tool results can be reduced to bounded evidence before paraphrasing.",
+      "sourceIds": [
+        "source-mcp-overview",
+        "source-tool-shapes"
+      ],
+      "support": "partially-supported"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-mcp-overview",
+      "title": "Microsoft Learn MCP Server overview",
+      "canonicalUrl": "https://learn.microsoft.com/training/support/mcp",
+      "retrievalUrl": "https://learn.microsoft.com/training/support/mcp?view=current",
+      "sectionHeading": "Available tools",
+      "exactExcerpt": "The server exposes documentation search, code sample search, and page fetch operations.",
+      "whyItMatters": "It identifies the production documentation source.",
+      "retrievalMethod": "microsoft_docs_fetch",
+      "retrievedAt": "2026-08-12T09:01:00Z",
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "verificationState": "verified"
+    },
+    {
+      "id": "source-tool-shapes",
+      "title": "Microsoft Learn MCP tool response shapes",
+      "canonicalUrl": "https://learn.microsoft.com/training/support/mcp-tools",
+      "sectionHeading": "Response content",
+      "exactExcerpt": "Search operations return bounded result collections.",
+      "whyItMatters": "It supports bounded capture at the adapter boundary.",
+      "retrievalMethod": "microsoft_docs_search",
+      "retrievedAt": "2026-08-12T09:02:00Z",
+      "contentHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "verificationState": "verified"
+    }
+  ],
+  "unresolvedItems": [
+    {
+      "id": "unresolved-failure-adapter",
+      "text": "Confirm the exact production adapter failure payload."
+    }
+  ],
+  "lifecycle": {
+    "createdAt": "2026-08-12T09:00:00Z",
+    "updatedAt": "2026-08-12T09:10:00Z",
+    "validatingAt": "2026-08-12T09:05:00Z",
+    "validatedAt": "2026-08-12T09:07:00Z",
+    "publishedAt": "2026-08-12T09:10:00Z"
+  },
+  "contentHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+}

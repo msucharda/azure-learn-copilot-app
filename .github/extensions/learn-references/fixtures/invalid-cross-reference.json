@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "researchId": "44444444-4444-4444-8444-444444444444",
+  "version": 1,
+  "status": "draft",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "researcherAgent": "learn-researcher",
+  "question": {
+    "original": "Can a claim reference a missing source?",
+    "normalized": "Reject absent source references."
+  },
+  "scope": {
+    "product": "Microsoft Learn",
+    "version": "current",
+    "platform": "Copilot CLI",
+    "taskIntent": "Test claim cross-references."
+  },
+  "officialSkill": {
+    "skillName": "microsoft-foundry",
+    "pluginName": "azure-agent-skills",
+    "pluginVersion": "1.0.0"
+  },
+  "claims": [
+    {
+      "id": "claim-missing-source",
+      "text": "This source is absent.",
+      "sourceIds": [
+        "source-absent"
+      ],
+      "support": "supported"
+    }
+  ],
+  "sources": [],
+  "unresolvedItems": [],
+  "lifecycle": {
+    "createdAt": "2026-08-12T09:00:00Z",
+    "updatedAt": "2026-08-12T09:00:00Z"
+  },
+  "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
