@@ -20,7 +20,7 @@ Every bundle has `schemaVersion: 1`. `version` is the monotonic evidence revisio
 
 The contract models:
 
-- stable research, session, agent, claim, source, and unresolved-item identities;
+- stable research, app-native session, agent, claim, source, and unresolved-item identities;
 - original and normalized questions;
 - product, version, platform, and task-intent scope;
 - official skill name, plugin name/version, and optional generation time;
@@ -31,11 +31,12 @@ The contract models:
 
 Published and superseded normalized bundles are recursively frozen. The transition validator also prevents published content from changing while the published version moves to `superseded`.
 
+Validated, published, and superseded bundles contain at least one claim so every publishable version can produce the required executive finding in its handoff. A no-evidence conclusion is represented as an `unsupported` claim with an empty `sourceIds` array. Draft, validating, and rejected bundles may have no claims.
+
 ### Stable ID policy
 
-`researchId` is a lowercase UUID v4 and is preserved across quick refinement, deep-session promotion, and later evidence versions. Other IDs are lowercase, hyphen-delimited stable identifiers:
+`researchId` is a lowercase UUID v4 and is preserved across quick refinement, deep-session promotion, and later evidence versions. `parentSessionId` and optional `childSessionId` are raw app-native UUID v4 session IDs, canonicalized to lowercase, so they can be passed directly to session messaging operations without an encode/decode layer. Other IDs are lowercase, hyphen-delimited stable identifiers:
 
-- `session-*` for parent and child session references;
 - `claim-*` for claims;
 - `source-*` for sources;
 - `unresolved-*` for unresolved items;

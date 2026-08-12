@@ -3,7 +3,7 @@
   "researchId": "44444444-4444-4444-8444-444444444444",
   "version": 1,
   "status": "draft",
-  "parentSessionId": "session-parent-example",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   "researcherAgent": "learn-researcher",
   "question": {
     "original": "Can a claim reference a missing source?",

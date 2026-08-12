@@ -3,7 +3,7 @@
   "researchId": "66666666-6666-4666-8666-666666666666",
   "version": 1,
   "status": "draft",
-  "parentSessionId": "session-parent-example",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   "researcherAgent": "learn-researcher",
   "question": {
     "original": "Can an unknown schema be accepted?",

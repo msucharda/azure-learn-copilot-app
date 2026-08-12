@@ -3,7 +3,7 @@
   "researchId": "77777777-7777-4777-8777-777777777777",
   "version": 1,
   "status": "superseded",
-  "parentSessionId": "session-parent-example",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   "researcherAgent": "learn-researcher",
   "question": {
     "original": "How is an old evidence version represented?",
@@ -20,7 +20,14 @@
     "pluginName": "azure-agent-skills",
     "pluginVersion": "1.0.0"
   },
-  "claims": [],
+  "claims": [
+    {
+      "id": "claim-no-longer-current",
+      "text": "This evidence version is no longer current.",
+      "sourceIds": [],
+      "support": "unsupported"
+    }
+  ],
   "sources": [],
   "unresolvedItems": [],
   "lifecycle": {

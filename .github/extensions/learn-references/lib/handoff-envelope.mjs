@@ -5,6 +5,7 @@ import {
     normalizeHash,
     normalizePositiveInteger,
     normalizeResearchId,
+    normalizeSessionId,
     normalizeStableId,
     normalizeString,
     normalizeTimestamp,
@@ -89,7 +90,7 @@ export function normalizeHandoffEnvelope(input) {
         researchId: normalizeResearchId(object.researchId),
         version: normalizePositiveInteger(object.version, "$.version"),
         status: "published",
-        parentSessionId: normalizeStableId(object.parentSessionId, "$.parentSessionId", "session"),
+        parentSessionId: normalizeSessionId(object.parentSessionId, "$.parentSessionId"),
         researcherAgent: normalizeStableId(object.researcherAgent, "$.researcherAgent"),
         executiveFindings,
         unresolvedRisks,
@@ -97,10 +98,9 @@ export function normalizeHandoffEnvelope(input) {
         publishedAt: normalizeTimestamp(object.publishedAt, "$.publishedAt"),
     };
     if (object.childSessionId !== undefined) {
-        normalized.childSessionId = normalizeStableId(
+        normalized.childSessionId = normalizeSessionId(
             object.childSessionId,
             "$.childSessionId",
-            "session",
         );
     }
     return normalized;

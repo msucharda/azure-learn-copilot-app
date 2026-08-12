@@ -3,8 +3,8 @@
   "researchId": "22222222-2222-4222-8222-222222222222",
   "version": 3,
   "status": "published",
-  "parentSessionId": "session-parent-example",
-  "childSessionId": "session-child-example",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "childSessionId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
   "researcherAgent": "learn-researcher",
   "question": {
     "original": "Which Learn MCP contracts are safe to use?",

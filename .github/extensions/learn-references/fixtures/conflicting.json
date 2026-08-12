@@ -3,7 +3,7 @@
   "researchId": "33333333-3333-4333-8333-333333333333",
   "version": 1,
   "status": "validated",
-  "parentSessionId": "session-parent-example",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   "researcherAgent": "learn-researcher",
   "question": {
     "original": "Do all Learn tools return structured content?",

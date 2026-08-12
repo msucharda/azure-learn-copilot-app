@@ -97,6 +97,15 @@ export function normalizeResearchId(value, path = "$.researchId") {
     return normalized.toLowerCase();
 }
 
+export function normalizeSessionId(value, path) {
+    const normalized = normalizeString(value, path, {
+        min: 36,
+        max: 36,
+        pattern: UUID_V4_PATTERN,
+    });
+    return normalized.toLowerCase();
+}
+
 export function normalizePositiveInteger(value, path) {
     if (!Number.isSafeInteger(value) || value < 1) {
         fail("INVALID_INTEGER", path, "must be a positive safe integer");

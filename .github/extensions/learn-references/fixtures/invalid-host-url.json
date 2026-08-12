@@ -3,7 +3,7 @@
   "researchId": "55555555-5555-4555-8555-555555555555",
   "version": 1,
   "status": "draft",
-  "parentSessionId": "session-parent-example",
+  "parentSessionId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   "researcherAgent": "learn-researcher",
   "question": {
     "original": "Which source hosts are accepted?",

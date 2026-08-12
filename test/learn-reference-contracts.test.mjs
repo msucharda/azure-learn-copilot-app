@@ -10,6 +10,7 @@ import {
     assertStatusTransition,
     normalizeEvidenceBundle,
     normalizeHandoffEnvelope,
+    normalizeSessionId,
 } from "../.github/extensions/learn-references/lib/index.mjs";
 
 const FIXTURE_ROOT = new URL(
@@ -77,6 +78,37 @@ test("normalizes the minimal, complete, conflicting, and superseded fixtures", a
     const superseded = normalizeEvidenceBundle(await fixture("superseded.json"));
     assert.equal(superseded.status, "superseded");
     assert.equal(Object.isFrozen(superseded.lifecycle), true);
+});
+
+test("accepts app-native UUID v4 session IDs without aliases", async () => {
+    assert.equal(
+        normalizeSessionId(
+            "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "$.parentSessionId",
+        ),
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    );
+
+    const minimal = await fixture("minimal-valid.json");
+    minimal.parentSessionId = "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA";
+    assert.equal(
+        normalizeEvidenceBundle(minimal).parentSessionId,
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    );
+
+    const complete = normalizeEvidenceBundle(await fixture("complete-valid.json"));
+    const handoff = handoffFor(complete);
+    handoff.childSessionId = "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB";
+    assert.equal(
+        normalizeHandoffEnvelope(handoff).childSessionId,
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    );
+
+    minimal.parentSessionId = "session-parent-example";
+    expectContractError(
+        () => normalizeEvidenceBundle(minimal),
+        "INVALID_LENGTH",
+    );
 });
 
 test("rejects invalid fixture cross-references, hosts, and schema versions explicitly", async () => {
@@ -260,6 +292,44 @@ test("validates the rejected lifecycle branch", async () => {
     );
 });
 
+test("requires claims once evidence reaches validated status", async () => {
+    const draft = await fixture("minimal-valid.json");
+    assert.equal(normalizeEvidenceBundle(draft).claims.length, 0);
+
+    const validated = clone(draft);
+    validated.status = "validated";
+    validated.lifecycle.updatedAt = "2026-08-12T09:10:00Z";
+    validated.lifecycle.validatingAt = "2026-08-12T09:05:00Z";
+    validated.lifecycle.validatedAt = "2026-08-12T09:10:00Z";
+    expectContractError(
+        () => normalizeEvidenceBundle(validated),
+        "INVALID_LENGTH",
+    );
+
+    const published = await fixture("complete-valid.json");
+    published.claims = [];
+    expectContractError(
+        () => normalizeEvidenceBundle(published),
+        "INVALID_LENGTH",
+    );
+
+    const superseded = await fixture("superseded.json");
+    superseded.claims = [];
+    expectContractError(
+        () => normalizeEvidenceBundle(superseded),
+        "INVALID_LENGTH",
+    );
+
+    const unsupported = clone(validated);
+    unsupported.claims = [{
+        id: "claim-no-evidence",
+        text: "No official source supports the proposition.",
+        sourceIds: [],
+        support: "unsupported",
+    }];
+    assert.equal(normalizeEvidenceBundle(unsupported).claims.length, 1);
+});
+
 test("preserves published content when transitioning to superseded", async () => {
     const published = await fixture("complete-valid.json");
     const superseded = clone(published);
@@ -274,6 +344,20 @@ test("preserves published content when transitioning to superseded", async () =>
         () => assertEvidenceBundleTransition(published, changed),
         "IMMUTABLE_PUBLISHED_VERSION",
     );
+
+    for (const [field, value] of [
+        ["createdAt", "2026-08-12T08:59:00Z"],
+        ["validatingAt", "2026-08-12T09:04:00Z"],
+        ["validatedAt", "2026-08-12T09:08:00Z"],
+        ["publishedAt", "2026-08-12T09:11:00Z"],
+    ]) {
+        const changedLifecycleHistory = clone(superseded);
+        changedLifecycleHistory.lifecycle[field] = value;
+        expectContractError(
+            () => assertEvidenceBundleTransition(published, changedLifecycleHistory),
+            "IMMUTABLE_PUBLISHED_VERSION",
+        );
+    }
 
     const changedVersion = clone(superseded);
     changedVersion.version += 1;

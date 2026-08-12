@@ -15,4 +15,5 @@ export {
 } from "./lifecycle.mjs";
 export {
     ContractValidationError,
+    normalizeSessionId,
 } from "./validation.mjs";

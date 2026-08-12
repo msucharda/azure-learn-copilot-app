@@ -10,6 +10,7 @@ import {
     normalizeOptionalString,
     normalizePositiveInteger,
     normalizeResearchId,
+    normalizeSessionId,
     normalizeStableId,
     normalizeString,
     normalizeTimestamp,
@@ -197,6 +198,18 @@ function immutablePayload(bundle) {
     return JSON.stringify(payload);
 }
 
+function assertPublishedLifecycleHistory(previous, next) {
+    for (const field of ["createdAt", "validatingAt", "validatedAt", "publishedAt"]) {
+        if (previous.lifecycle[field] !== next.lifecycle[field]) {
+            fail(
+                "IMMUTABLE_PUBLISHED_VERSION",
+                `$.lifecycle.${field}`,
+                "published lifecycle history cannot change when it is superseded",
+            );
+        }
+    }
+}
+
 export function normalizeEvidenceBundle(input) {
     const object = requireVersionedObject(input, "$", TOP_LEVEL_KEYS, [
         "schemaVersion",
@@ -220,6 +233,7 @@ export function normalizeEvidenceBundle(input) {
         item: normalizeSource,
     });
     const claims = normalizeArray(object.claims, "$.claims", {
+        min: ["validated", "published", "superseded"].includes(status) ? 1 : 0,
         max: 200,
         item: normalizeClaim,
     });
@@ -254,7 +268,7 @@ export function normalizeEvidenceBundle(input) {
         researchId: normalizeResearchId(object.researchId),
         version: normalizePositiveInteger(object.version, "$.version"),
         status,
-        parentSessionId: normalizeStableId(object.parentSessionId, "$.parentSessionId", "session"),
+        parentSessionId: normalizeSessionId(object.parentSessionId, "$.parentSessionId"),
         researcherAgent: normalizeStableId(object.researcherAgent, "$.researcherAgent"),
         question: normalizeQuestion(object.question, "$.question"),
         scope: normalizeScope(object.scope, "$.scope"),
@@ -266,10 +280,9 @@ export function normalizeEvidenceBundle(input) {
         contentHash: normalizeHash(object.contentHash, "$.contentHash"),
     };
     if (object.childSessionId !== undefined) {
-        normalized.childSessionId = normalizeStableId(
+        normalized.childSessionId = normalizeSessionId(
             object.childSessionId,
             "$.childSessionId",
-            "session",
         );
     }
 
@@ -297,12 +310,15 @@ export function assertEvidenceBundleTransition(previousInput, nextInput) {
             "must not move backwards during a status transition",
         );
     }
-    if (previous.status === "published" && immutablePayload(previous) !== immutablePayload(next)) {
-        fail(
-            "IMMUTABLE_PUBLISHED_VERSION",
-            "$",
-            "published evidence content cannot change when it is superseded",
-        );
+    if (previous.status === "published") {
+        assertPublishedLifecycleHistory(previous, next);
+        if (immutablePayload(previous) !== immutablePayload(next)) {
+            fail(
+                "IMMUTABLE_PUBLISHED_VERSION",
+                "$",
+                "published evidence content cannot change when it is superseded",
+            );
+        }
     }
     return true;
 }
