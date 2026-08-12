@@ -45,6 +45,81 @@ function expectStorageCode(code) {
     };
 }
 
+function learnStylePageWithLength(length) {
+    const paragraphs = [];
+    let total = 0;
+    for (let index = 0; total < length; index += 1) {
+        const paragraph = (
+            `Routing stage ${index} evaluates probe state ${String(index).padStart(5, "0")} `
+            + `before selecting an origin for workload segment ${index}. `
+        );
+        paragraphs.push(paragraph);
+        total += paragraph.length;
+    }
+    return paragraphs.join("").slice(0, length);
+}
+
+function fragmentedFields(
+    markdown,
+    fragmentLength,
+    fieldCount = 13,
+    reverse = false,
+    fillers = ["Z"],
+) {
+    const fragments = markdown.match(new RegExp(
+        `[\\s\\S]{1,${fragmentLength}}`,
+        "g",
+    ));
+    if (reverse) {
+        fragments.reverse();
+    }
+    const fragmentsPerField = Math.ceil(fragments.length / fieldCount);
+    return Array.from({ length: fieldCount }, (_value, index) => {
+        const selected = fragments.slice(
+            index * fragmentsPerField,
+            (index + 1) * fragmentsPerField,
+        );
+        const fieldStart = index * fragmentsPerField;
+        const joined = selected.map((fragment, selectedIndex) => (
+            selectedIndex === 0
+                ? fragment
+                : `${fillers[(fieldStart + selectedIndex - 1) % fillers.length]}${fragment}`
+        )).join("");
+        return selected.length === 0 ? "" : `Q${joined}Q`;
+    }).filter(Boolean);
+}
+
+function fragmentedBundle(
+    bundleInput,
+    markdown,
+    fragmentLength,
+    fieldCount = 13,
+    reverse = false,
+    fillers = ["Z"],
+) {
+    const bundle = clone(bundleInput);
+    bundle.claims = fragmentedFields(
+        markdown,
+        fragmentLength,
+        fieldCount,
+        reverse,
+        fillers,
+    ).map((text, index) => ({
+        id: `claim-fragment-${index + 1}`,
+        text,
+        sourceIds: [bundle.sources[0].id],
+        support: "supported",
+    }));
+    return rehash(bundle);
+}
+
+function foreignAsciiFillers(markdown) {
+    return Array.from(
+        { length: 94 },
+        (_value, index) => String.fromCharCode(index + 33),
+    ).filter((character) => !markdown.includes(character));
+}
+
 test("draft captures are isolated by configured workspace root", async (t) => {
     const root = await mkdtemp(join(tmpdir(), "learn-draft-isolation-"));
     t.after(() => rm(root, { recursive: true, force: true }));
@@ -135,6 +210,76 @@ test("publication rejects a capture whose retrieval URL does not match its canon
         published.publish(fixture.bundle, [mismatchedCapture]),
         (error) => error.code === "FETCH_URL_MISMATCH",
     );
+});
+
+test("publication rejects near-full pages split into short filled claims", async (t) => {
+    const { published } = await stores(t);
+    const markdown = learnStylePageWithLength(6_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    await assert.rejects(
+        published.publish(
+            fragmentedBundle(fixture.bundle, markdown, 31),
+            [fixture.capture],
+        ),
+        (error) => {
+            assert.equal(
+                ["FULL_FETCH_CONTENT", "EXCERPT_BUDGET_EXCEEDED"].includes(
+                    error.code,
+                ),
+                true,
+            );
+            return true;
+        },
+    );
+    await assert.rejects(
+        published.get(RESEARCH_ID, 1),
+        expectStorageCode("PUBLISHED_NOT_FOUND"),
+    );
+    await assert.rejects(
+        published.publish(
+            fragmentedBundle(fixture.bundle, markdown, 31, 13, true),
+            [fixture.capture],
+        ),
+        (error) => {
+            assert.equal(
+                ["FULL_FETCH_CONTENT", "EXCERPT_BUDGET_EXCEEDED"].includes(
+                    error.code,
+                ),
+                true,
+            );
+            return true;
+        },
+    );
+});
+
+test("publication allows a bounded set of embedded short excerpts", async (t) => {
+    const { root, published } = await stores(t);
+    const markdown = learnStylePageWithLength(6_000);
+    const excerpt = markdown.slice(0, 80);
+    const fixture = makePublishedEvidence({ markdown, exactExcerpt: excerpt });
+    const bounded = clone(fixture.bundle);
+    bounded.claims = Array.from({ length: 12 }, (_value, index) => ({
+        id: `claim-bounded-short-${index + 1}`,
+        text: `Context${index}X${markdown.slice(500 + index * 100, 520 + index * 100)}Y`,
+        sourceIds: [bounded.sources[0].id],
+        support: "supported",
+    }));
+    const bundle = rehash(bounded);
+    assert.equal(
+        (await published.publish(bundle, [fixture.capture])).contentHash,
+        bundle.contentHash,
+    );
+    const retention = JSON.parse(await readFile(join(
+        root,
+        "published",
+        "retention",
+        fixture.capture.resultSha256,
+        "budget.json",
+    ), "utf8"));
+    assert.equal(retention.totalChars, excerpt.length);
 });
 
 test("publication retains every fetch capture hash, including zero-overlap captures", async (t) => {
@@ -563,6 +708,83 @@ test("unrelated handoff prose consumes no fetched-content budget", async (t) => 
     assert.deepEqual(
         await published.storeHandoff(handoff, [fixture.capture]),
         handoff,
+    );
+});
+
+test("handoffs reject ordered short fragments with alphanumeric filler", async (t) => {
+    const { published } = await stores(t);
+    const markdown = learnStylePageWithLength(2_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    await published.publish(fixture.bundle, [fixture.capture]);
+    const handoff = handoffFor(fixture.bundle);
+    handoff.unresolvedRisks = fragmentedFields(markdown, 7, 12).map((
+        text,
+        index,
+    ) => ({
+        id: `risk-fragment-${index + 1}`,
+        text,
+    }));
+    await assert.rejects(
+        published.storeHandoff(handoff, [fixture.capture]),
+        expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
+    );
+    const reversed = handoffFor(fixture.bundle);
+    reversed.unresolvedRisks = fragmentedFields(markdown, 31, 12, true).map((
+        text,
+        index,
+    ) => ({
+        id: `risk-reversed-fragment-${index + 1}`,
+        text,
+    }));
+    await assert.rejects(
+        published.storeHandoff(reversed, [fixture.capture]),
+        expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
+    );
+    for (const fragmentLength of [7, 1]) {
+        const reversedSubSeed = handoffFor(fixture.bundle);
+        reversedSubSeed.unresolvedRisks = fragmentedFields(
+            markdown,
+            fragmentLength,
+            13,
+            true,
+        ).map((text, index) => ({
+            id: `risk-reversed-sub-seed-${index + 1}`,
+            text,
+        }));
+        await assert.rejects(
+            published.storeHandoff(reversedSubSeed, [fixture.capture]),
+            expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
+        );
+    }
+    const manyFillers = foreignAsciiFillers(markdown);
+    assert.equal(manyFillers.length > 40, true);
+    for (const fillers of [["Z", "Y"], ["ZY"], manyFillers]) {
+        const multiFiller = handoffFor(fixture.bundle);
+        multiFiller.unresolvedRisks = fragmentedFields(
+            markdown,
+            7,
+            13,
+            true,
+            fillers,
+        ).map((text, index) => ({
+            id: `risk-multi-filler-${index + 1}`,
+            text,
+        }));
+        await assert.rejects(
+            published.storeHandoff(multiFiller, [fixture.capture]),
+            expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
+        );
+    }
+    await assert.rejects(
+        published.getHandoff(
+            fixture.bundle.parentSessionId,
+            fixture.bundle.researchId,
+            fixture.bundle.version,
+        ),
+        expectStorageCode("HANDOFF_NOT_FOUND"),
     );
 });
 

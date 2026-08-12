@@ -27,6 +27,15 @@ export const MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH = 12_000;
 export const MAX_EVIDENCE_CAPTURES = 500;
 
 const MIN_VERIFIED_EMBEDDED_SPAN = 32;
+const SHORT_FRAGMENT_SEED_LENGTH = 8;
+const MIN_SHORT_FRAGMENT_COVERAGE = 512;
+const MAX_SHORT_FRAGMENT_CANDIDATES = 20_000;
+const MAX_SHORT_FRAGMENT_SEED_OCCURRENCES = 256;
+const MAX_SHORT_FRAGMENT_VERIFICATION_STEPS = 4_194_304;
+const ORDERED_RECONSTRUCTION_WINDOW = 256;
+const ORDERED_RECONSTRUCTION_FILLER_RATIO = 16;
+const MAX_ORDERED_RECONSTRUCTION_STEPS = 16_777_216;
+const MIN_STRUCTURAL_FRAGMENT_PAGE = 512;
 const MAX_DECORATION_CANDIDATES = 16;
 const MAX_DECORATION_STRIDE = 8;
 const MAX_DECORATION_ALIGNMENT_STATES = 250_000;
@@ -575,14 +584,14 @@ function allocateVerifiedRequests(markdown, requests, initialIntervals) {
     return best;
 }
 
-function buildVerifiedWindowIndex(markdown) {
+function buildVerifiedWindowIndex(markdown, windowLength) {
     const windows = new Map();
     for (
         let index = 0;
-        index <= markdown.length - MIN_VERIFIED_EMBEDDED_SPAN;
+        index <= markdown.length - windowLength;
         index += 1
     ) {
-        const window = markdown.slice(index, index + MIN_VERIFIED_EMBEDDED_SPAN);
+        const window = markdown.slice(index, index + windowLength);
         const positions = windows.get(window) ?? [];
         positions.push(index);
         windows.set(window, positions);
@@ -590,26 +599,54 @@ function buildVerifiedWindowIndex(markdown) {
     return windows;
 }
 
-function longestVerifiedExactSpan(markdown, text, textStart, pagePositions) {
+function longestVerifiedExactSpan(
+    markdown,
+    text,
+    textStart,
+    pagePositions,
+    minimumLength,
+    fragmentBudget,
+) {
+    const consumeFragmentStep = () => {
+        if (fragmentBudget === undefined) {
+            return;
+        }
+        fragmentBudget.steps += 1;
+        if (fragmentBudget.steps > MAX_SHORT_FRAGMENT_VERIFICATION_STEPS) {
+            fail(
+                "SHORT_FRAGMENT_AMBIGUOUS",
+                "$",
+                "short exact fragments exceed the bounded equality-verification limit",
+            );
+        }
+    };
     let best;
     for (const pagePosition of pagePositions) {
         let left = 0;
         while (
             textStart - left > 0
             && pagePosition - left > 0
-            && text[textStart - left - 1] === markdown[pagePosition - left - 1]
         ) {
+            consumeFragmentStep();
+            if (text[textStart - left - 1] !== markdown[pagePosition - left - 1]) {
+                break;
+            }
             left += 1;
         }
-        let right = MIN_VERIFIED_EMBEDDED_SPAN;
+        let right = minimumLength;
         while (
             textStart + right < text.length
             && pagePosition + right < markdown.length
-            && text[textStart + right] === markdown[pagePosition + right]
         ) {
+            consumeFragmentStep();
+            if (text[textStart + right] !== markdown[pagePosition + right]) {
+                break;
+            }
             right += 1;
         }
         const candidate = {
+            sourceStart: pagePosition - left,
+            sourceEnd: pagePosition + right,
             textStart: textStart - left,
             textEnd: textStart + right,
             length: left + right,
@@ -624,25 +661,373 @@ function longestVerifiedExactSpan(markdown, text, textStart, pagePositions) {
     return best;
 }
 
-function verifiedEmbeddedSpans(markdown, text, windowIndex) {
+function verifiedEmbeddedSpans(
+    markdown,
+    text,
+    windowIndex,
+    minimumLength = MIN_VERIFIED_EMBEDDED_SPAN,
+) {
     const spans = [];
     for (
         let index = 0;
-        index <= text.length - MIN_VERIFIED_EMBEDDED_SPAN;
+        index <= text.length - minimumLength;
         index += 1
     ) {
-        const window = text.slice(index, index + MIN_VERIFIED_EMBEDDED_SPAN);
+        const window = text.slice(index, index + minimumLength);
         const positions = windowIndex.get(window);
         if (positions === undefined) {
             continue;
         }
-        const span = longestVerifiedExactSpan(markdown, text, index, positions);
+        const span = longestVerifiedExactSpan(
+            markdown,
+            text,
+            index,
+            positions,
+            minimumLength,
+        );
         if (span !== undefined) {
             spans.push(text.slice(span.textStart, span.textEnd));
             index = span.textEnd - 1;
         }
     }
     return spans;
+}
+
+function shortFragmentCandidates(markdown, prose, windowIndex) {
+    const candidates = [];
+    const fragmentBudget = { steps: 0 };
+    for (const entry of prose) {
+        const text = entry.text;
+        for (
+            let index = 0;
+            index <= text.length - SHORT_FRAGMENT_SEED_LENGTH;
+            index += 1
+        ) {
+            const window = text.slice(
+                index,
+                index + SHORT_FRAGMENT_SEED_LENGTH,
+            );
+            const positions = windowIndex.get(window);
+            if (
+                positions === undefined
+                || positions.length > MAX_SHORT_FRAGMENT_SEED_OCCURRENCES
+            ) {
+                continue;
+            }
+            fragmentBudget.steps += positions.length;
+            if (fragmentBudget.steps > MAX_SHORT_FRAGMENT_VERIFICATION_STEPS) {
+                fail(
+                    "SHORT_FRAGMENT_AMBIGUOUS",
+                    "$",
+                    "short exact fragments have too many source placements to verify safely",
+                );
+            }
+            const span = longestVerifiedExactSpan(
+                markdown,
+                text,
+                index,
+                positions,
+                SHORT_FRAGMENT_SEED_LENGTH,
+                fragmentBudget,
+            );
+            if (
+                span === undefined
+                || markdown.slice(span.sourceStart, span.sourceEnd)
+                    !== text.slice(span.textStart, span.textEnd)
+            ) {
+                continue;
+            }
+            const exactText = text.slice(span.textStart, span.textEnd);
+            if (exactText.length >= MIN_VERIFIED_EMBEDDED_SPAN) {
+                index = span.textEnd - 1;
+                continue;
+            }
+            candidates.push({
+                text: exactText,
+                positions: allOccurrences(markdown, exactText),
+            });
+            if (candidates.length > MAX_SHORT_FRAGMENT_CANDIDATES) {
+                fail(
+                    "SHORT_FRAGMENT_AMBIGUOUS",
+                    "$",
+                    "short exact fragments exceed the bounded candidate limit",
+                );
+            }
+            index = span.textEnd - 1;
+        }
+    }
+    return candidates;
+}
+
+function minimumShortFragmentCoverage(markdownLength) {
+    return Math.min(
+        markdownLength,
+        Math.max(
+            MIN_SHORT_FRAGMENT_COVERAGE,
+            Math.min(2_000, Math.ceil(markdownLength / 20)),
+        ),
+    );
+}
+
+function verifiedFragmentUnion(markdown, candidates) {
+    if (candidates.length === 0) {
+        return [];
+    }
+    const requestsByText = new Map();
+    for (const candidate of candidates) {
+        const existing = requestsByText.get(candidate.text);
+        if (existing === undefined) {
+            requestsByText.set(candidate.text, {
+                ...candidate,
+                count: 1,
+            });
+        } else {
+            existing.count += 1;
+        }
+    }
+    const intervals = allocateVerifiedRequests(
+        markdown,
+        [...requestsByText.values()],
+        [],
+    );
+    const minimumCoverage = minimumShortFragmentCoverage(markdown.length);
+    return intervalCoverage(markdown, intervals) >= minimumCoverage
+        ? intervals
+        : [];
+}
+
+function proseStreamGroup(path) {
+    const match = /^\$\.([A-Za-z]+)/.exec(path);
+    return match?.[1] ?? "other";
+}
+
+function orderedProseStreams(prose) {
+    const separator = "\0";
+    const groups = new Map();
+    const all = [];
+    for (const entry of prose) {
+        all.push(entry.text);
+        const group = proseStreamGroup(entry.path);
+        const values = groups.get(group) ?? [];
+        values.push(entry.text);
+        groups.set(group, values);
+    }
+    const streams = new Set([all.join(separator)]);
+    for (const values of groups.values()) {
+        streams.add(values.join(separator));
+    }
+    return [...streams];
+}
+
+function allocateStructuralFragmentRequests(markdown, requests) {
+    const requestsByText = new Map(requests.map((request) => [
+        request.text,
+        request,
+    ]));
+    const remainingByText = new Map(requests.map((request) => [
+        request.text,
+        Math.min(request.count, request.positions.length),
+    ]));
+    const lengths = [...new Set(requests.map(
+        (request) => request.text.length,
+    ))].sort((left, right) => right - left);
+    const intervals = [];
+    for (let sourceIndex = 0; sourceIndex < markdown.length;) {
+        let matchedLength = 0;
+        for (const length of lengths) {
+            if (sourceIndex + length > markdown.length) {
+                continue;
+            }
+            const text = markdown.slice(sourceIndex, sourceIndex + length);
+            const request = requestsByText.get(text);
+            if (
+                request !== undefined
+                && (remainingByText.get(text) ?? 0) > 0
+            ) {
+                remainingByText.set(text, remainingByText.get(text) - 1);
+                matchedLength = length;
+                break;
+            }
+        }
+        if (matchedLength === 0) {
+            sourceIndex += 1;
+            continue;
+        }
+        intervals.push({
+            start: sourceIndex,
+            end: sourceIndex + matchedLength,
+        });
+        sourceIndex += matchedLength;
+    }
+    return intervals;
+}
+
+function verifiedStructurallySeparatedFragments(markdown, prose) {
+    if (markdown.length < MIN_STRUCTURAL_FRAGMENT_PAGE) {
+        return [];
+    }
+    const sourceCharacters = new Set();
+    for (let index = 0; index < markdown.length; index += 1) {
+        sourceCharacters.add(markdown[index]);
+    }
+    const separatorSet = new Set();
+    for (const { text } of prose) {
+        for (let index = 0; index < text.length; index += 1) {
+            const character = text[index];
+            if (!sourceCharacters.has(character)) {
+                separatorSet.add(character);
+            }
+        }
+    }
+    if (separatorSet.size === 0) {
+        return [];
+    }
+    const minimumCoverage = minimumShortFragmentCoverage(markdown.length);
+    const requestsByText = new Map();
+    const addFragment = (fragment) => {
+        if (
+            fragment.length === 0
+            || fragment.length >= SHORT_FRAGMENT_SEED_LENGTH
+        ) {
+            return;
+        }
+        const positions = allOccurrences(markdown, fragment);
+        if (positions.length === 0) {
+            return;
+        }
+        const existing = requestsByText.get(fragment);
+        if (existing === undefined) {
+            requestsByText.set(fragment, {
+                text: fragment,
+                positions,
+                count: 1,
+            });
+        } else {
+            existing.count += 1;
+        }
+    };
+    for (const { text } of prose) {
+        let fragment = "";
+        for (let index = 0; index < text.length; index += 1) {
+            const character = text[index];
+            if (separatorSet.has(character)) {
+                addFragment(fragment);
+                fragment = "";
+            } else {
+                fragment += character;
+            }
+        }
+        addFragment(fragment);
+    }
+    if (requestsByText.size === 0) {
+        return [];
+    }
+    const intervals = allocateStructuralFragmentRequests(
+        markdown,
+        [...requestsByText.values()],
+    );
+    return intervalCoverage(markdown, intervals) >= minimumCoverage
+        ? intervals
+        : [];
+}
+
+function orderedWindowCoverage(markdown, prose, budget) {
+    let proseIndex = 0;
+    const intervals = [];
+    for (
+        let sourceStart = 0;
+        sourceStart < markdown.length;
+        sourceStart += ORDERED_RECONSTRUCTION_WINDOW
+    ) {
+        const sourceEnd = Math.min(
+            markdown.length,
+            sourceStart + ORDERED_RECONSTRUCTION_WINDOW,
+        );
+        const searchLimit = Math.min(
+            prose.length,
+            proseIndex
+                + (sourceEnd - sourceStart) * ORDERED_RECONSTRUCTION_FILLER_RATIO,
+        );
+        let candidateIndex = proseIndex;
+        let matched = true;
+        for (
+            let sourceIndex = sourceStart;
+            sourceIndex < sourceEnd;
+            sourceIndex += 1
+        ) {
+            while (
+                candidateIndex < searchLimit
+                && prose[candidateIndex] !== markdown[sourceIndex]
+            ) {
+                candidateIndex += 1;
+                budget.steps += 1;
+            }
+            budget.steps += 1;
+            if (budget.steps > MAX_ORDERED_RECONSTRUCTION_STEPS) {
+                const remaining = markdown.length - sourceStart;
+                const covered = intervals.reduce(
+                    (total, interval) => total + interval.end - interval.start,
+                    0,
+                );
+                if (
+                    covered + remaining > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH
+                    || (
+                        (covered + remaining) * NEAR_FULL_CONTENT_DENOMINATOR
+                        >= markdown.length * NEAR_FULL_CONTENT_NUMERATOR
+                    )
+                ) {
+                    fail(
+                        "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+                        "$",
+                        "ordered short fragments exceed the bounded alignment limit",
+                    );
+                }
+                return intervals;
+            }
+            if (candidateIndex >= searchLimit) {
+                matched = false;
+                break;
+            }
+            candidateIndex += 1;
+        }
+        if (matched) {
+            intervals.push({ start: sourceStart, end: sourceEnd });
+            proseIndex = candidateIndex;
+        }
+    }
+    return intervals;
+}
+
+function verifiedOrderedReconstructionIntervals(markdown, prose) {
+    const minimumCoverage = minimumShortFragmentCoverage(markdown.length);
+    const budget = { steps: 0 };
+    let best = [];
+    let bestCoverage = 0;
+    for (const stream of orderedProseStreams(prose)) {
+        if (stream.length < minimumCoverage) {
+            continue;
+        }
+        const intervals = orderedWindowCoverage(markdown, stream, budget);
+        const covered = intervals.reduce(
+            (total, interval) => total + interval.end - interval.start,
+            0,
+        );
+        if (
+            covered * NEAR_FULL_CONTENT_DENOMINATOR
+            >= markdown.length * NEAR_FULL_CONTENT_NUMERATOR
+        ) {
+            fail(
+                "FULL_FETCH_CONTENT",
+                "$",
+                "ordered persisted fragments cannot reconstruct a near-complete fetched page",
+            );
+        }
+        if (covered > bestCoverage) {
+            best = intervals;
+            bestCoverage = covered;
+        }
+    }
+    return bestCoverage >= minimumCoverage ? best : [];
 }
 
 function isDecorationCharacter(character) {
@@ -1040,7 +1425,24 @@ function retentionManifest(
         initialIntervals,
         "$.initialIntervals",
     );
-    const windowIndex = buildVerifiedWindowIndex(markdown);
+    const normalizedProse = prose.map((entry) => {
+        const text = canonicalizeLineEndings(entry.text);
+        if (Array.from(text).some((character) => (
+            CONTROL_CHARACTER_PATTERN.test(character)
+            && !["\t", "\n", "\r"].includes(character)
+        ))) {
+            fail(
+                "UNSAFE_PERSISTED_TEXT",
+                entry.path,
+                "persisted evidence text cannot contain hidden control characters",
+            );
+        }
+        return { path: entry.path, text };
+    });
+    const windowIndex = buildVerifiedWindowIndex(
+        markdown,
+        MIN_VERIFIED_EMBEDDED_SPAN,
+    );
     const addRequest = (text, count) => {
         const existing = requestsByText.get(text);
         if (existing === undefined) {
@@ -1071,20 +1473,10 @@ function retentionManifest(
         };
     };
 
-    for (const entry of prose) {
-        const text = canonicalizeLineEndings(entry.text);
+    for (const entry of normalizedProse) {
+        const { text } = entry;
         if (!text) {
             continue;
-        }
-        if (Array.from(text).some((character) => (
-            CONTROL_CHARACTER_PATTERN.test(character)
-            && !["\t", "\n", "\r"].includes(character)
-        ))) {
-            fail(
-                "UNSAFE_PERSISTED_TEXT",
-                entry.path,
-                "persisted evidence text cannot contain hidden control characters",
-            );
         }
         if (text.includes(markdown)) {
             fail(
@@ -1127,11 +1519,37 @@ function retentionManifest(
             addRequest(span, count);
         }
     }
-    const intervals = allocateVerifiedRequests(
+    const separatedIntervals = verifiedStructurallySeparatedFragments(
+        markdown,
+        normalizedProse,
+    );
+    const orderedIntervals = verifiedOrderedReconstructionIntervals(
+        markdown,
+        normalizedProse,
+    );
+    const allocatedIntervals = allocateVerifiedRequests(
         markdown,
         [...requestsByText.values()],
         normalizedInitialIntervals,
     );
+    const fragmentWindowIndex = buildVerifiedWindowIndex(
+        markdown,
+        SHORT_FRAGMENT_SEED_LENGTH,
+    );
+    const fragmentIntervals = verifiedFragmentUnion(
+        markdown,
+        shortFragmentCandidates(
+            markdown,
+            normalizedProse,
+            fragmentWindowIndex,
+        ),
+    );
+    const intervals = [
+        ...allocatedIntervals,
+        ...fragmentIntervals,
+        ...separatedIntervals,
+        ...orderedIntervals,
+    ];
     const merged = mergeIntervals(markdown, intervals);
     const cumulative = mergeIntervals(markdown, [
         ...normalizedInitialIntervals,

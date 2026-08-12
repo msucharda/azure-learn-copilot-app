@@ -37,6 +37,96 @@ function learnStylePage(paragraphs = 8) {
     ].join("\n\n");
 }
 
+function learnStylePageWithLength(length) {
+    const paragraphs = [];
+    for (let index = 0; paragraphs.join("").length < length; index += 1) {
+        paragraphs.push(
+            `Routing stage ${index} evaluates probe state ${String(index).padStart(5, "0")} `
+            + `before selecting an origin for workload segment ${index}. `,
+        );
+    }
+    return paragraphs.join("").slice(0, length);
+}
+
+function unrelatedEnglishWithLength(length) {
+    const paragraphs = [];
+    for (let index = 0; paragraphs.join("").length < length; index += 1) {
+        paragraphs.push(
+            `Workshop cohort ${index} alternates facilitation exercises, reflective discussion, `
+            + `lunch breaks, and participant feedback before the next planning activity. `,
+        );
+    }
+    return paragraphs.join("").slice(0, length);
+}
+
+function repeatNaturalLanguage(text, length) {
+    return `${text} `.repeat(Math.ceil(length / (text.length + 1))).slice(
+        0,
+        length,
+    );
+}
+
+function foreignAsciiFillers(markdown) {
+    return Array.from(
+        { length: 94 },
+        (_value, index) => String.fromCharCode(index + 33),
+    ).filter((character) => !markdown.includes(character));
+}
+
+function fragmentedFields(
+    markdown,
+    fragmentLength,
+    fieldCount = 13,
+    reverse = false,
+    fillers = ["Z"],
+) {
+    const fragments = markdown.match(new RegExp(
+        `[\\s\\S]{1,${fragmentLength}}`,
+        "g",
+    ));
+    if (reverse) {
+        fragments.reverse();
+    }
+    const fragmentsPerField = Math.ceil(fragments.length / fieldCount);
+    return Array.from({ length: fieldCount }, (_value, index) => {
+        const selected = fragments.slice(
+            index * fragmentsPerField,
+            (index + 1) * fragmentsPerField,
+        );
+        const fieldStart = index * fragmentsPerField;
+        const joined = selected.map((fragment, selectedIndex) => (
+            selectedIndex === 0
+                ? fragment
+                : `${fillers[(fieldStart + selectedIndex - 1) % fillers.length]}${fragment}`
+        )).join("");
+        return selected.length === 0 ? "" : `Q${joined}Q`;
+    }).filter(Boolean);
+}
+
+function withFragmentedClaims(
+    bundleInput,
+    markdown,
+    fragmentLength,
+    fieldCount = 13,
+    reverse = false,
+    fillers = ["Z"],
+) {
+    const bundle = clone(bundleInput);
+    bundle.claims = fragmentedFields(
+        markdown,
+        fragmentLength,
+        fieldCount,
+        reverse,
+        fillers,
+    ).map((text, index) => ({
+        id: `claim-fragment-${index + 1}`,
+        text,
+        sourceIds: [bundle.sources[0].id],
+        support: "supported",
+    }));
+    return rehash(bundle);
+}
+
 function withUnrelatedEnglishProse(bundleInput) {
     const bundle = clone(bundleInput);
     bundle.question = {
@@ -168,6 +258,263 @@ test("claim prose cannot contain a complete fetched page", () => {
         ContractValidationError,
         "FULL_FETCH_CONTENT",
     );
+});
+
+test("31-character fragments with alphanumeric filler exceed the aggregate budget", () => {
+    const markdown = learnStylePageWithLength(20_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    assert.throws(
+        () => validateResearchBundle(
+            withFragmentedClaims(fixture.bundle, markdown, 31),
+            [fixture.capture],
+        ),
+        (error) => {
+            assert.equal(error instanceof ContractValidationError, true);
+            assert.equal(
+                ["FULL_FETCH_CONTENT", "EXCERPT_BUDGET_EXCEEDED"].includes(
+                    error.code,
+                ),
+                true,
+            );
+            return true;
+        },
+    );
+});
+
+test("reordered 31-character fragments cannot bypass aggregate retention", () => {
+    const markdown = learnStylePageWithLength(20_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    assert.throws(
+        () => validateResearchBundle(
+            withFragmentedClaims(fixture.bundle, markdown, 31, 13, true),
+            [fixture.capture],
+        ),
+        (error) => {
+            assert.equal(error instanceof ContractValidationError, true);
+            assert.equal(
+                ["FULL_FETCH_CONTENT", "EXCERPT_BUDGET_EXCEEDED"].includes(
+                    error.code,
+                ),
+                true,
+            );
+            return true;
+        },
+    );
+});
+
+test("reordered sub-seed fragments cannot reconstruct a near-full page", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    for (const fragmentLength of [7, 1]) {
+        const fixture = makePublishedEvidence({
+            markdown,
+            exactExcerpt: markdown.slice(0, 80),
+        });
+        assert.throws(
+            () => validateResearchBundle(
+                withFragmentedClaims(
+                    fixture.bundle,
+                    markdown,
+                    fragmentLength,
+                    13,
+                    true,
+                ),
+                [fixture.capture],
+            ),
+            (error) => {
+                assert.equal(error instanceof ContractValidationError, true);
+                assert.equal(error.code, "FULL_FETCH_CONTENT");
+                return true;
+            },
+        );
+    }
+});
+
+test("reordered sub-seed fragments cannot alternate foreign fillers", () => {
+    const markdown = learnStylePageWithLength(2_000);
+    const manyFillers = foreignAsciiFillers(markdown);
+    assert.equal(manyFillers.length > 40, true);
+    for (const fillers of [["Z", "Y"], ["ZY"], manyFillers]) {
+        const fixture = makePublishedEvidence({
+            markdown,
+            exactExcerpt: markdown.slice(0, 80),
+        });
+        assert.throws(
+            () => validateResearchBundle(
+                withFragmentedClaims(
+                    fixture.bundle,
+                    markdown,
+                    7,
+                    13,
+                    true,
+                    fillers,
+                ),
+                [fixture.capture],
+            ),
+            (error) => {
+                assert.equal(error instanceof ContractValidationError, true);
+                assert.equal(error.code, "FULL_FETCH_CONTENT");
+                return true;
+            },
+        );
+    }
+});
+
+test("reordered multi-filler fragments preserve near-full accounting", () => {
+    for (const pageLength of [4_000, 6_000, 8_000]) {
+        const markdown = learnStylePageWithLength(pageLength);
+        const retained = markdown.slice(0, Math.ceil(pageLength * 0.94));
+        const fixture = makePublishedEvidence({
+            markdown,
+            exactExcerpt: markdown.slice(0, 80),
+        });
+        assert.throws(
+            () => validateResearchBundle(
+                withFragmentedClaims(
+                    fixture.bundle,
+                    retained,
+                    7,
+                    13,
+                    true,
+                    foreignAsciiFillers(markdown),
+                ),
+                [fixture.capture],
+            ),
+            (error) => {
+                assert.equal(error instanceof ContractValidationError, true);
+                assert.equal(error.code, "FULL_FETCH_CONTENT");
+                return true;
+            },
+        );
+    }
+});
+
+test("ordered reconstruction catches fragments below every exact anchor", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    for (const fragmentLength of [31, 7, 1]) {
+        const fixture = makePublishedEvidence({
+            markdown,
+            exactExcerpt: markdown.slice(0, 80),
+        });
+        assert.throws(
+            () => validateResearchBundle(
+                withFragmentedClaims(
+                    fixture.bundle,
+                    markdown,
+                    fragmentLength,
+                ),
+                [fixture.capture],
+            ),
+            (error) => {
+                assert.equal(error instanceof ContractValidationError, true);
+                assert.equal(
+                    ["FULL_FETCH_CONTENT", "EXCERPT_BUDGET_EXCEEDED"].includes(
+                        error.code,
+                    ),
+                    true,
+                );
+                return true;
+            },
+        );
+    }
+});
+
+test("single-character reconstruction contributes verified source intervals", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    const baseline = validateResearchBundleWithRetention(
+        fixture.bundle,
+        [fixture.capture],
+    ).retentionManifests[0].totalChars;
+    const result = validateResearchBundleWithRetention(
+        withFragmentedClaims(fixture.bundle, markdown.slice(0, 900), 1),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars >= 900, true);
+    assert.equal(
+        result.retentionManifests[0].totalChars <= 900 + baseline,
+        true,
+    );
+});
+
+test("sub-anchor fragments independently enforce the absolute excerpt budget", () => {
+    const markdown = learnStylePageWithLength(20_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    assert.throws(
+        () => validateResearchBundle(
+            withFragmentedClaims(
+                fixture.bundle,
+                markdown.slice(0, 13_000),
+                1,
+            ),
+            [fixture.capture],
+        ),
+        (error) => {
+            assert.equal(error instanceof ContractValidationError, true);
+            assert.equal(error.code, "EXCERPT_BUDGET_EXCEEDED");
+            return true;
+        },
+    );
+});
+
+test("ordered short fragments remain detectable across field types", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    const fields = fragmentedFields(markdown, 31, 12);
+    const split = clone(fixture.bundle);
+    split.question.original = fields[0];
+    split.question.normalized = fields[1];
+    split.claims = fields.slice(2).map((text, index) => ({
+        id: `claim-cross-field-${index + 1}`,
+        text,
+        sourceIds: [split.sources[0].id],
+        support: "supported",
+    }));
+    assert.throws(
+        () => validateResearchBundle(rehash(split), [fixture.capture]),
+        (error) => {
+            assert.equal(error instanceof ContractValidationError, true);
+            assert.equal(
+                ["FULL_FETCH_CONTENT", "EXCERPT_BUDGET_EXCEEDED"].includes(
+                    error.code,
+                ),
+                true,
+            );
+            return true;
+        },
+    );
+});
+
+test("bounded embedded short excerpts remain publishable", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    const excerpt = markdown.slice(0, 80);
+    const fixture = makePublishedEvidence({ markdown, exactExcerpt: excerpt });
+    const bounded = clone(fixture.bundle);
+    bounded.claims = Array.from({ length: 12 }, (_value, index) => ({
+        id: `claim-bounded-short-${index + 1}`,
+        text: `Context${index}X${markdown.slice(500 + index * 100, 520 + index * 100)}Y`,
+        sourceIds: [bounded.sources[0].id],
+        support: "supported",
+    }));
+    const result = validateResearchBundleWithRetention(
+        rehash(bounded),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, excerpt.length);
 });
 
 test("decorated source fragments are included in full-page accounting", () => {
@@ -550,6 +897,94 @@ test("large Learn-style pages ignore bounded unrelated English prose", () => {
         [fixture.capture],
     );
     assert.equal(result.retentionManifests[0].totalChars, excerpt.length);
+});
+
+test("ordered reconstruction ignores substantial unrelated English prose", () => {
+    const markdown = learnStylePageWithLength(20_000);
+    const excerpt = markdown.slice(0, 80);
+    const fixture = makePublishedEvidence({ markdown, exactExcerpt: excerpt });
+    const baseline = validateResearchBundleWithRetention(
+        fixture.bundle,
+        [fixture.capture],
+    ).retentionManifests[0].totalChars;
+    const unrelated = clone(fixture.bundle);
+    unrelated.claims = fragmentedFields(
+        unrelatedEnglishWithLength(15_000),
+        3_000,
+        13,
+    ).map((text, index) => ({
+        id: `claim-unrelated-long-${index + 1}`,
+        text,
+        sourceIds: [unrelated.sources[0].id],
+        support: "supported",
+    }));
+    const result = validateResearchBundleWithRetention(
+        rehash(unrelated),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, baseline);
+});
+
+test("unordered reconstruction ignores high-volume unrelated English prose", () => {
+    const markdown = learnStylePageWithLength(6_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    const baseline = validateResearchBundleWithRetention(
+        fixture.bundle,
+        [fixture.capture],
+    ).retentionManifests[0].totalChars;
+    const unrelated = clone(fixture.bundle);
+    unrelated.claims = fragmentedFields(
+        unrelatedEnglishWithLength(24_000),
+        3_000,
+        13,
+    ).map((text, index) => ({
+        id: `claim-unrelated-volume-${index + 1}`,
+        text,
+        sourceIds: [unrelated.sources[0].id],
+        support: "supported",
+    }));
+    const result = validateResearchBundleWithRetention(
+        rehash(unrelated),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, baseline);
+});
+
+test("low-digit unrelated English cannot resemble a page by character counts", () => {
+    const markdown = repeatNaturalLanguage(
+        "Gardeners prepare healthy soil, rotate seasonal vegetables, prune flowering shrubs, and water young seedlings before sunrise.",
+        2_600,
+    );
+    const unrelatedProse = repeatNaturalLanguage(
+        "Cooks knead bread dough, simmer fragrant sauces, sharpen kitchen knives, and arrange fresh ingredients before serving dinner.",
+        3_400,
+    );
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    const baseline = validateResearchBundleWithRetention(
+        fixture.bundle,
+        [fixture.capture],
+    ).retentionManifests[0].totalChars;
+    const unrelated = clone(fixture.bundle);
+    unrelated.claims = fragmentedFields(unrelatedProse, 850, 4).map((
+        text,
+        index,
+    ) => ({
+        id: `claim-unrelated-low-digit-${index + 1}`,
+        text,
+        sourceIds: [unrelated.sources[0].id],
+        support: "supported",
+    }));
+    const result = validateResearchBundleWithRetention(
+        rehash(unrelated),
+        [fixture.capture],
+    );
+    assert.equal(result.retentionManifests[0].totalChars, baseline);
 });
 
 test("overlap-aware allocation bounds accept provably bounded repeats", () => {
