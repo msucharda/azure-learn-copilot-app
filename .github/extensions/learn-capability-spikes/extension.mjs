@@ -203,7 +203,7 @@ async function runResearcherProbe() {
 session = await joinSession({
     tools: [
         {
-            name: "record_learn_evidence",
+            name: "record_learn_spike_evidence",
             description: "Record bounded, hashed Microsoft Learn evidence when hook capture is unavailable",
             parameters: {
                 type: "object",

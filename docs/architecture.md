@@ -1,18 +1,20 @@
 # Learn research architecture
 
-Status: schema version 1 contracts are implemented. Reference storage, the production canvas, nested-session orchestration, and rate-limit behavior are deferred.
+Status: schema version 1 contracts, deterministic evidence validation, the production extension tools, and atomic reference storage are implemented. The production canvas, nested-session orchestration, and rate-limit behavior are deferred.
 
 ## Repository boundaries
 
 | Path | Responsibility |
 | --- | --- |
-| `.github/extensions/learn-references/lib/` | Dependency-free evidence, lifecycle, and handoff validators |
+| `.github/extensions/learn-references/extension.mjs` | Production tool registration and configured store startup |
+| `.github/extensions/learn-references/lib/` | Dependency-free contracts, hashing, Learn adapter, tool handlers, and storage |
 | `.github/extensions/learn-references/fixtures/` | Bounded valid and invalid schema version 1 examples |
+| `.github/extensions/learn-references/test-support/` | Bounded generated test inputs; no fetched Learn pages |
 | `.github/extensions/learn-capability-spikes/` | Retained PR 0 diagnostics; not the production reference store |
-| `test/learn-reference-contracts.test.mjs` | Contract and lifecycle tests using `node:test` |
+| `test/*.test.mjs` | Contract, adapter, storage, and production-tool tests using `node:test` |
 | `docs/spikes/000-capability-spikes.md` | Validated runtime observations that constrain production design |
 
-`learn-references` intentionally has no `extension.mjs`. Adding the production extension, storage adapter, and canvas is later work.
+The retained spike fallback tool is renamed `record_learn_spike_evidence`; the production extension owns `record_learn_evidence`.
 
 ## Evidence bundle schema version 1
 
@@ -54,7 +56,9 @@ This narrow policy excludes redirectors and third-party mirrors. A future schema
 
 The contract limits bundles to 200 claims, 200 sources, and 50 unresolved items. Exact excerpts are limited to 6,000 characters. A handoff contains at most 20 executive findings and 20 unresolved risks; it never embeds the evidence bundle or a fetched Learn page.
 
-SHA-256 fields are lowercase-normalized 64-character hexadecimal digests. The validator checks their representation. Digest creation and persistence belong to the future capture and storage adapters.
+SHA-256 fields are lowercase-normalized 64-character hexadecimal digests. Evidence content hashes use canonical JSON with recursively sorted object keys over normalized immutable bundle fields. `status`, `lifecycle`, and `contentHash` are excluded, so a valid published-to-superseded lifecycle transition does not change the digest. Validation, publication, supersession, and published reads recompute the digest.
+
+Fetched Markdown hashes normalize CRLF and lone CR line endings to LF and make no other content transformation. Exact excerpts must occur byte-for-byte after that line-ending normalization. Leading, trailing, and repeated whitespace remains significant.
 
 ## Lifecycle
 
@@ -73,7 +77,7 @@ These are the only allowed status transitions:
 
 Lifecycle timestamps are status-specific, UTC, ordered, and strict. For example, a published bundle requires `createdAt`, `validatingAt`, `validatedAt`, `publishedAt`, and `updatedAt`, while a draft cannot carry later-stage timestamps.
 
-The storage design in the next layer must preserve the distinction between immutable version content and lifecycle metadata so it can atomically mark a published version superseded without rewriting its evidence.
+Published storage keeps immutable version content in `payload.json`, original lifecycle history in `lifecycle.json`, all fetched-content hashes in `retention.json`, and an atomic `commit.json` visibility marker. Supersession exclusively creates append-only transition metadata and revalidates the v1 transition plus the unchanged content digest.
 
 ## Child-to-parent handoff
 
@@ -111,9 +115,33 @@ No `.github/mcp.json` is added in this layer. The current app runtime already su
 1. the official Microsoft Azure Agent Skills plugin is installed externally and its name/version are recorded when invoked;
 2. the app runtime or parent orchestrator supplies `https://learn.microsoft.com/api/mcp`;
 3. the connection dynamically discovers tools and schemas;
-4. the success hook records bounded pre-paraphrase evidence, while protocol and domain failures are captured at the future adapter boundary because wrapper failures can appear as successful text.
+4. the adapter rejects protocol, wrapper, schema, and domain failures before any evidence record is written.
+
+The production `LearnMcpAdapter` accepts transport functions, discovers the three logical operations from `tools/list` schemas on every connection, and treats runtime names as opaque. The production extension connects lazily to the exact `https://learn.microsoft.com` host, disables redirects, invokes the discovered tool itself, and records only the normalized result. Callers cannot submit a result body or digest as evidence. Tests use a faithful fake transport with arbitrary names and argument spellings. The extension does not automatically capture success hooks because the confirmed hook payload does not carry both dynamically discovered schemas and a trusted `researchId`; `record_learn_evidence` is the reliable, trusted execution boundary.
 
 If a later deployment establishes repository-owned MCP configuration as the team standard, it can add the confirmed HTTP endpoint shape then. That decision is deployment configuration, not part of schema version 1.
+
+## Evidence authority and result adaptation
+
+Documentation search and code-sample search are discovery operations. Only a successful logical `docs-fetch` result for the exact canonical and retrieval URL can authorize a published article source. The source digest must match the fetched Markdown digest, its verification state must be `verified`, and its exact excerpt must occur in that Markdown.
+
+`retrievedAt` is not caller-authored provenance: it must equal `observedAt` on one matching trusted fetch capture. Repeated unchanged fetches remain distinguishable by that timestamp.
+
+The adapter accepts bounded raw arrays, `results` objects, `structuredContent.results`, MCP text blocks, JSON-RPC success envelopes, and wrapper `ToolResultObject`-like shapes. It rejects JSON-RPC errors, `isError`, non-success result types, malformed JSON, schema drift, oversized bodies, and failure-shaped text returned through a nominally successful wrapper. Search bodies are reduced to counts, hashes, bounded previews, and Learn URLs. Bounded fetch Markdown is retained only in the workspace-local capture store and never copied to published records.
+
+## Storage model
+
+Draft bundles and fetch captures use a workspace-hashed root under `$COPILOT_HOME/learn-references/drafts` by default or `COPILOT_LEARN_DRAFT_ROOT` when configured. Published artifacts use the extension-owned cross-session root under `$COPILOT_HOME/learn-references/published` by default or `COPILOT_LEARN_PUBLISHED_ROOT`.
+
+Published versions are keyed by `(researchId, version)`. A cross-process store lock serializes semantic preflight, while fsynced temporary files, exclusive atomic links, directory synchronization, and a final commit marker prevent partial or duplicate immutable records from becoming valid. Locks with dead owners fail closed for explicit operator cleanup rather than risking unsafe takeover. An orphan payload, lifecycle, or retention-index file is explicitly incomplete. The commit binds the immutable content digest plus hashes of the initial lifecycle and complete fetch-retention index. Equivalent concurrent publication is idempotent, while different immutable content at the same key conflicts. Latest reads derive the greatest completely committed version, so publication order and a crash after commit cannot regress it.
+
+Supersession is an exclusive, append-once `supersession.json` metadata record. Readers compose it with the original published lifecycle and validate the v1 transition, so immutable payload and original lifecycle history are never rewritten.
+
+Every fetched-content digest also has one immutable retention budget. Validation uses one occurrence allocator for exact, repeated, and character-level decorated source-derived spans across all persisted bundle prose, including reverse-ordered fragments split across fields. Retention records contain only covered intervals and decorated-fragment hashes/counts, group URL aliases by fetched-content hash, and require cumulative coverage to remain below both the page length and the 12,000-character cap. The first durable reservation establishes the budget; later versions and research IDs may reuse approved ranges and decorated fragments but cannot add new page content. Each publication commits the hashes of all fetch captures, including zero-overlap and undeclared discovery-time fetches, in `retention.json`; valid no-evidence bundles use an empty hash list. Handoffs add immutable, cumulative reservations against every committed fetch hash. All semantic conflicts are rejected during locked preflight, and the bundle commit marker is created only after retention and any handoff succeed, so partial payload/lifecycle files are never readable evidence.
+
+Handoff envelopes and acknowledgements use separate roots and bounded schemas. Duplicate acknowledgements for `(parentSessionId, researchId, version)` are idempotent only when the normalized data is identical.
+
+Path components are contract-validated, every resolved path stays beneath its configured root, and directory/file symlinks are rejected. See `docs/operations.md` for layout and retention details.
 
 ## Validation
 

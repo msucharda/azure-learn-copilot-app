@@ -116,6 +116,16 @@ function normalizeClaim(value, path) {
     };
 }
 
+function normalizeExactExcerpt(value, path) {
+    if (typeof value !== "string") {
+        fail("INVALID_TYPE", path, "must be a string");
+    }
+    if (value.length < 1 || value.length > 6_000 || value.trim().length === 0) {
+        fail("INVALID_LENGTH", path, "must contain 1 through 6000 non-empty characters");
+    }
+    return value;
+}
+
 function normalizeSource(value, path) {
     const object = requireObject(
         value,
@@ -155,9 +165,7 @@ function normalizeSource(value, path) {
         sectionHeading: normalizeString(object.sectionHeading, `${path}.sectionHeading`, {
             max: 500,
         }),
-        exactExcerpt: normalizeString(object.exactExcerpt, `${path}.exactExcerpt`, {
-            max: 6_000,
-        }),
+        exactExcerpt: normalizeExactExcerpt(object.exactExcerpt, `${path}.exactExcerpt`),
         whyItMatters: normalizeString(object.whyItMatters, `${path}.whyItMatters`, {
             max: 2_000,
         }),

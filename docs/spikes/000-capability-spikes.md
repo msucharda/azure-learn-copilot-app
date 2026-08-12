@@ -167,6 +167,8 @@ If MCP initialization fails, use the installed skill's bounded link index and pa
 
 Use the success hook for automatic capture. Store hashes/counts and approved source metadata, never full pages. Keep `record_learn_evidence` as the explicit fallback. Treat the extension hook and canvas APIs as experimental SDK contracts.
 
+Production compatibility update: the retained diagnostic extension now exposes `record_learn_spike_evidence` to avoid colliding with the production `learn-references` extension. The production extension owns `record_learn_evidence`; the observations and original fallback shape below remain the historical PR 0 result.
+
 ### Fallback
 
 Call:
