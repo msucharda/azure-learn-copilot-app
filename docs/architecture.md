@@ -1,6 +1,6 @@
 # Learn research architecture
 
-Status: schema version 1 contracts, deterministic evidence validation, production extension tools, compact official-skill routing, production researcher/critic agents, atomic reference storage, the read-only reference canvas, and nested-session publish-back are implemented. Rate-limit behavior remains deferred.
+Status: schema version 1 contracts, deterministic evidence validation, production extension tools, bounded retry, compact official-skill routing, production researcher/critic agents, atomic reference storage, the read-only reference canvas, nested-session publish-back, opt-in local telemetry, and deterministic release evaluation are implemented.
 
 ## Repository boundaries
 
@@ -24,6 +24,12 @@ The retained spike fallback tool is renamed `record_learn_spike_evidence`; the p
 The generated router is project context, not a runtime service, policy layer, evidence source, or official plugin. It currently allows only `azure-functions` and `microsoft-foundry`, has no fallback, and returns unresolved for excluded or uncovered products. On a resolved route the researcher invokes exactly one external skill and progressively reads only the relevant category. The selected external skill's observed plugin metadata populates `officialSkill`; missing metadata is not inferred, and generation dates older than three calendar months produce a visible warning.
 
 The researcher sends all successful logical Learn operations through `record_learn_evidence`. Search is discovery only, code-sample search is reserved for SDK/code verification, and exact excerpts are authorized only by successful fetch captures. The citation critic neither fetches nor rewrites and cannot override deterministic validation.
+
+The transport retries only 429, transient 5xx, timeouts, and network failures. Attempts, jitter,
+`Retry-After`, and aggregate delay are bounded and injectable for deterministic tests. The same
+JSON-RPC request identifier and body are retained across attempts, preserving correlation.
+Redirects, invalid hosts, caller errors, schema drift, protocol failures after a response, and
+domain validation failures are not retried.
 
 ## Production reference canvas
 
@@ -161,6 +167,17 @@ Documentation search and code-sample search are discovery operations. Only a suc
 `retrievedAt` is not caller-authored provenance: it must equal `observedAt` on one matching trusted fetch capture. Repeated unchanged fetches remain distinguishable by that timestamp.
 
 The adapter accepts bounded raw arrays, `results` objects, `structuredContent.results`, MCP text blocks, JSON-RPC success envelopes, and wrapper `ToolResultObject`-like shapes. It rejects JSON-RPC errors, `isError`, non-success result types, malformed JSON, schema drift, oversized bodies, and failure-shaped text returned through a nominally successful wrapper. Search bodies are reduced to counts, hashes, bounded previews, and Learn URLs. Bounded fetch Markdown is retained only in the workspace-local capture store and never copied to published records.
+
+No fetched-page cache exists. The record path intentionally performs a fresh Learn operation, and
+long-lived evidence is re-fetched before reuse. A content cache keyed by URL and a prior digest
+could not determine freshness without fetching and would risk stale excerpt reuse. Active
+connection tool discovery is the only in-memory metadata reuse: one validated operation mapping,
+refreshed after a five-minute default TTL. Search and code results are never cached.
+
+Opt-in telemetry observes only bounded operation metadata after schema validation. It never receives
+prompts, questions, URLs, excerpts, pages, argument JSON, session messages, secrets, absolute paths,
+or raw errors. Telemetry storage is local, symlink-safe, bounded, and rotated. A telemetry failure
+is explicit to the operator and cannot transform a failed research operation into success.
 
 ## Storage model
 

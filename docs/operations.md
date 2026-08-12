@@ -9,10 +9,23 @@ The production extension is `.github/extensions/learn-references/extension.mjs`.
 | Draft bundles and captured fetch Markdown | `COPILOT_LEARN_DRAFT_ROOT` | `$COPILOT_HOME/learn-references/drafts/<workspaceHash>` or the equivalent under `~/.copilot` | Current workspace only |
 | Published evidence, lifecycle, handoffs, acknowledgements | `COPILOT_LEARN_PUBLISHED_ROOT` | `$COPILOT_HOME/learn-references/published` or `~/.copilot/learn-references/published` | Cross-session |
 | Learn MCP endpoint | `COPILOT_LEARN_MCP_ENDPOINT` | `https://learn.microsoft.com/api/mcp` | Network transport; exact Learn host only |
+| Local telemetry | `COPILOT_LEARN_REFERENCES_TELEMETRY=1` and optional `COPILOT_LEARN_REFERENCES_TELEMETRY_ROOT` | Disabled | Bounded local operational metadata only |
 
 Tests always configure fresh operating-system temporary directories. Runtime data is never written into the repository. A configured root may not itself be a symbolic link; descendants are checked on every access.
 
 The default draft root is durable but workspace-keyed and separate from the cross-session published root. Delete a workspace's draft root after its captures are no longer needed. Published versions have no automatic expiry or garbage collection; retain them according to the surrounding application's evidence policy.
+
+Workspace draft captures may contain bounded fetched Markdown. Published records contain only
+bounded excerpts, hashes, lifecycle metadata, retention intervals, handoffs, and acknowledgements.
+Telemetry and evaluation reports contain no full fetched page. Cleanup must target only the exact
+configured draft, published, or telemetry root.
+
+When enabled, telemetry stores allowlisted NDJSON operation events in at most four 256 KiB files
+(1 MiB maximum retained payload before filesystem metadata). Files use owner-only permissions,
+rotation is serialized, and roots/files may not be symbolic links. Events contain only timestamp,
+operation/outcome, bounded duration/counts, coarse error kind, optional retry/cache state, and an
+opaque research-ID hash. They never contain prompts, questions, URLs, excerpts, pages, argument
+JSON, session messages, secrets, raw errors, or absolute paths.
 
 ## Published layout
 
@@ -45,6 +58,11 @@ A read requires payload, lifecycle, and commit files and recomputes the immutabl
 8. After publishing a valid later version, call `supersede_research_bundle` only when lifecycle metadata for an older version should become superseded.
 
 Tool handlers throw structured contract, adapter, or storage errors. Failed adapter/validation calls do not create success-shaped evidence records.
+
+The HTTP transport defaults to three attempts, 100 ms exponential base delay, 1,000 ms per-delay
+cap, 2,000 ms total-delay cap, 2,000 ms bounded `Retry-After`, and 25% jitter. Configuration and
+hard safety caps are listed in `docs/setup.md`. Only 429, transient 5xx, timeout, and network
+failures retry. Rate limits and outages remain explicit failures.
 
 ## Reference canvas operation
 
@@ -90,6 +108,10 @@ The end-to-end live publish probe is intentionally manual because production pub
 
 Automatic production hook capture is intentionally not registered. The confirmed hook shape does not provide both dynamically discovered tool schemas and a trusted `researchId`, so name heuristics would weaken the boundary. Use `record_learn_evidence` until the runtime supplies those values.
 
+Fetched pages are not cached. This preserves the always-live evidence capture boundary and prevents
+stale excerpts from being reused. Re-fetch before reusing long-lived evidence. Microsoft does not
+publish a numeric Learn MCP rate-limit quota, so no bundle, report, or release note may claim one.
+
 ## Skill routing and freshness
 
 The generated project router is validated with:
@@ -100,7 +122,7 @@ python .github/skills/repository-skill-generator/scripts/manage_project_skills.p
 
 It contains two exact external entries, `azure-functions` and `microsoft-foundry`, and no fallback. Excluded neighboring products and unknown products remain unresolved. The researcher records plugin name/version and generation date only when exposed by trusted runtime metadata or kickoff context. A generation date older than three calendar months is visibly stale; absent metadata remains absent.
 
-Skill files cannot prove context reduction if the host injects the complete installed-skill catalog. Do not add telemetry or claim savings. For an out-of-band observation, run equivalent bounded prompts in fresh sessions: one with plugin-wide discovery and one with compact-router selection to the exact skill. Compare only host-visible input-token totals and skill/tool loading events, record host/model/plugin versions and prompt hashes, and report the observation without generalizing beyond that runtime.
+Skill files and local operation telemetry cannot prove context reduction if the host injects the complete installed-skill catalog. Do not claim savings. For an out-of-band observation, run equivalent bounded prompts in fresh sessions: one with plugin-wide discovery and one with compact-router selection to the exact skill. Compare only host-visible input-token totals and skill/tool loading events, record host/model/plugin versions and prompt hashes, and report the observation without generalizing beyond that runtime.
 
 Project agent and skill changes may require a fresh turn or session before the runtime picker sees them. Reload extensions separately, inspect diagnostics, and use a fresh session for the bounded router-to-skill-to-fetch/record probe.
 
@@ -117,3 +139,33 @@ Check every production module:
 ```sh
 find .github/extensions -name '*.mjs' -print0 | xargs -0 -n1 node --check
 ```
+
+Run the deterministic offline benchmark:
+
+```sh
+node scripts/run-release-evaluation.mjs
+```
+
+For an explicit bounded live check, use the runner's live option only from an environment where
+network access is approved. It must cap requests and timeouts, validate every returned citation as
+an exact HTTPS `learn.microsoft.com` URL, and report `PASS`, `FAIL`, or `SKIP`. `SKIP` is required
+when live access is unavailable or not requested; do not fabricate a pass.
+
+```sh
+node scripts/check-release-live-urls.mjs          # SKIP
+node scripts/check-release-live-urls.mjs --live   # bounded PASS or FAIL
+```
+
+## Manual runtime release checklist
+
+1. Create a user-initiated Side Chat and verify the router selects at most one official skill.
+2. Confirm stale or absent skill provenance is visible and no token-savings claim is made.
+3. Under fresh temporary draft and published roots, prepare one research identity.
+4. Start a coordinated child, record a bounded fresh fetch, persist the draft, and inspect draft canvas text.
+5. Send an explicit publish turn, read the immutable publication back, and deliver the bounded handoff.
+6. In the parent, verify and acknowledge it; confirm duplicate and stale delivery do not regress state.
+7. Open the published canvas, publish version 2, supersede version 1, then remove only the temporary roots.
+
+Short attributed excerpts with canonical Learn links support product research. They are not a
+license to redistribute full pages. Obtain legal review before commercial release; this is not
+legal advice.

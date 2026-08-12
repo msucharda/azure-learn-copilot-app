@@ -14,6 +14,7 @@ const MAX_SEARCH_RESULTS = 100;
 const MAX_SEARCH_RESULT_LENGTH = 20_000;
 const MAX_SEARCH_BODY_LENGTH = 512_000;
 const MAX_PREVIEW_LENGTH = 1_000;
+const DEFAULT_METADATA_CACHE_TTL_MS = 300_000;
 
 export class LearnMcpAdapterError extends Error {
     constructor(code, message, { operation, cause, details } = {}) {
@@ -548,24 +549,58 @@ function fetchContext(descriptor, args) {
 }
 
 export class LearnMcpAdapter {
-    constructor({ listTools, callTool }) {
+    constructor({
+        listTools,
+        callTool,
+        metadataCacheTtlMs = DEFAULT_METADATA_CACHE_TTL_MS,
+        clock = Date.now,
+    }) {
         if (typeof listTools !== "function" || typeof callTool !== "function") {
             throw new TypeError("LearnMcpAdapter requires listTools and callTool functions");
         }
+        if (
+            !Number.isSafeInteger(metadataCacheTtlMs)
+            || metadataCacheTtlMs < 1_000
+            || metadataCacheTtlMs > 3_600_000
+        ) {
+            throw new TypeError("metadataCacheTtlMs must be from 1000 through 3600000");
+        }
+        if (typeof clock !== "function") {
+            throw new TypeError("LearnMcpAdapter clock must be a function");
+        }
         this.listTools = listTools;
         this.callTool = callTool;
+        this.metadataCacheTtlMs = metadataCacheTtlMs;
+        this.clock = clock;
         this.operations = null;
+        this.operationsObservedAt = undefined;
+        this.refreshPromise = undefined;
     }
 
     async connect() {
-        let result;
-        try {
-            result = await this.listTools();
-        } catch (cause) {
-            adapterFail("PROTOCOL_FAILURE", "Learn MCP tools/list failed", { cause });
+        if (this.refreshPromise) {
+            return this.refreshPromise;
         }
-        this.operations = discoverLearnOperations(result);
-        return this.operations;
+        const refresh = (async () => {
+            let result;
+            try {
+                result = await this.listTools();
+            } catch (cause) {
+                adapterFail("PROTOCOL_FAILURE", "Learn MCP tools/list failed", { cause });
+            }
+            const operations = discoverLearnOperations(result);
+            this.operations = operations;
+            this.operationsObservedAt = this.clock();
+            return operations;
+        })();
+        this.refreshPromise = refresh;
+        try {
+            return await refresh;
+        } finally {
+            if (this.refreshPromise === refresh) {
+                this.refreshPromise = undefined;
+            }
+        }
     }
 
     async execute(operation, args) {
@@ -573,6 +608,12 @@ export class LearnMcpAdapter {
             adapterFail("NOT_CONNECTED", "Learn MCP operations must be discovered before execution", {
                 operation,
             });
+        }
+        if (
+            this.operationsObservedAt === undefined
+            || this.clock() - this.operationsObservedAt >= this.metadataCacheTtlMs
+        ) {
+            await this.connect();
         }
         const descriptor = this.operations[operation];
         if (!descriptor) {
@@ -598,4 +639,25 @@ export class LearnMcpAdapter {
             runtimeToolName: descriptor.runtimeName,
         };
     }
+}
+
+export function resolveLearnMcpAdapterOptions(env = process.env) {
+    const raw = env.COPILOT_LEARN_METADATA_CACHE_TTL_MS;
+    if (raw === undefined || raw === "") {
+        return { metadataCacheTtlMs: DEFAULT_METADATA_CACHE_TTL_MS };
+    }
+    if (!/^\d+$/.test(raw)) {
+        throw new TypeError("COPILOT_LEARN_METADATA_CACHE_TTL_MS must be an integer");
+    }
+    const metadataCacheTtlMs = Number(raw);
+    if (
+        !Number.isSafeInteger(metadataCacheTtlMs)
+        || metadataCacheTtlMs < 1_000
+        || metadataCacheTtlMs > 3_600_000
+    ) {
+        throw new TypeError(
+            "COPILOT_LEARN_METADATA_CACHE_TTL_MS must be from 1000 through 3600000",
+        );
+    }
+    return { metadataCacheTtlMs };
 }

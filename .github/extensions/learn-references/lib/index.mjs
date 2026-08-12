@@ -44,11 +44,13 @@ export {
     LearnMcpAdapterError,
     adaptLearnMcpResult,
     discoverLearnOperations,
+    resolveLearnMcpAdapterOptions,
 } from "./learn-mcp-adapter.mjs";
 export {
     LearnMcpHttpTransport,
     LearnMcpTransportError,
     createLearnMcpHttpAdapterTransport,
+    resolveLearnMcpHttpOptions,
 } from "./learn-mcp-http.mjs";
 export {
     DraftEvidenceStore,
@@ -72,6 +74,15 @@ export {
     VALIDATE_RESEARCH_BUNDLE_SCHEMA,
 } from "./tool-schemas.mjs";
 export { createLearnReferenceTools } from "./tools.mjs";
+export {
+    LocalStructuredTelemetry,
+    LocalTelemetryError,
+    TELEMETRY_MAX_FILE_BYTES,
+    TELEMETRY_MAX_FILES,
+    createLocalTelemetryFromEnv,
+    opaqueTelemetryHash,
+    telemetryErrorKind,
+} from "./local-telemetry.mjs";
 export {
     deepResearchKickoff,
     normalizeResearchStart,

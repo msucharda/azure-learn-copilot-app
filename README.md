@@ -1,6 +1,6 @@
 # azure-learn-copilot-app
 
-Foundation for a sourced Microsoft Learn research-agent system. The production pipeline implements deterministic validation, bounded Learn-result adaptation, atomic published storage, compact official-skill routing, isolated nested research, verified publish-back, and a read-only reference canvas.
+Foundation for a sourced Microsoft Learn research-agent system. The production pipeline implements deterministic validation, bounded Learn-result adaptation and retry, atomic published storage, compact official-skill routing, isolated nested research, verified publish-back, privacy-safe opt-in local telemetry, an offline release benchmark, and a read-only reference canvas.
 
 ## Retained spike scaffold
 
@@ -11,6 +11,9 @@ Foundation for a sourced Microsoft Learn research-agent system. The production p
 - `test/contracts.test.mjs` validates evidence bounds and hashing with Node built-ins.
 
 The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoint remain external dependencies; nothing is vendored.
+
+See [setup](docs/setup.md), [architecture](docs/architecture.md),
+[operations](docs/operations.md), and [troubleshooting](docs/troubleshooting.md).
 
 ## Production evidence pipeline
 
@@ -37,6 +40,18 @@ node --test
 ```
 
 This command runs the retained PR 0 tests and all production contract tests with Node built-ins.
+
+Run the deterministic offline release gates separately:
+
+```sh
+node scripts/run-release-evaluation.mjs
+```
+
+The runner writes its bounded report only when an explicit output path is supplied and exits
+nonzero when any gate fails. Live Learn and citation URL checks are never part of the default
+test suite. Use the explicit bounded live command documented in
+[operations](docs/operations.md); it reports `PASS`, `FAIL`, or `SKIP` rather than turning a
+network outage into a flaky default test.
 
 Check every production extension module with:
 
@@ -84,7 +99,8 @@ An unresolved route uses `null` for the skill and alias fields. The router lazil
 
 ## Context measurement limitation
 
-A compact project router reduces decision material only if the Copilot host can avoid injecting the complete installed skill inventory. Skills alone cannot guarantee that behavior. Before claiming context savings, manually compare equivalent sessions for plugin-wide discovery versus compact-router-to-exact-skill invocation, using host-visible input-token and skill/tool-loading events. If the host always injects global descriptions, have the parent context preselect the exact official skill and, where the product supports it, start a restricted researcher context. This repository adds no telemetry or runtime routing component.
+A compact project router reduces decision material only if the Copilot host can avoid injecting the complete installed skill inventory. Skills alone cannot guarantee that behavior. Before claiming context savings, manually compare equivalent sessions for plugin-wide discovery versus compact-router-to-exact-skill invocation, using host-visible input-token and skill/tool-loading events. If the host always injects global descriptions, have the parent context preselect the exact official skill and, where the product supports it, start a restricted researcher context. Compact routing token savings remain unproven when the host injects all installed plugin
+descriptions. Do not claim savings without an out-of-band A/B observation.
 
 The generator's standard-library helper supports deterministic scanning, application, and validation:
 

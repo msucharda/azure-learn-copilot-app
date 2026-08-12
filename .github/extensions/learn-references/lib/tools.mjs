@@ -36,6 +36,10 @@ import {
     normalizeSessionId,
     requireObject,
 } from "./validation.mjs";
+import {
+    opaqueTelemetryHash,
+    telemetryErrorKind,
+} from "./local-telemetry.mjs";
 
 function successResult(value) {
     return {
@@ -43,6 +47,14 @@ function successResult(value) {
         structuredContent: value,
         textResultForLlm: JSON.stringify(value),
     };
+}
+
+async function emitTelemetry(telemetry, event, reportTelemetryFailure) {
+    try {
+        await telemetry.record(event);
+    } catch (error) {
+        reportTelemetryFailure(error?.code ?? "UNKNOWN_TELEMETRY_FAILURE");
+    }
 }
 
 function normalizeArgumentsJson(value) {
@@ -132,13 +144,17 @@ export function createLearnReferenceTools({
     learnAdapter,
     now = () => new Date().toISOString(),
     uuid = randomUUID,
+    telemetry,
+    reportTelemetryFailure = (code) => {
+        console.error(`[learn-references] local telemetry write failed (${code})`);
+    },
 }) {
     if (!draftStore || !publishedStore || typeof learnAdapter?.execute !== "function") {
         throw new TypeError(
             "createLearnReferenceTools requires draft/published stores and a trusted Learn adapter",
         );
     }
-    return [
+    const tools = [
         {
             name: "prepare_learn_research",
             description: "Prepare bounded quick or nested Microsoft Learn research state",
@@ -418,4 +434,47 @@ export function createLearnReferenceTools({
             },
         },
     ];
+    if (!telemetry) {
+        return tools;
+    }
+    return tools.map((tool) => ({
+        ...tool,
+        handler: async (input) => {
+            const started = Date.now();
+            const researchId = input?.researchId ?? input?.bundle?.researchId;
+            const researchIdHash = opaqueTelemetryHash(researchId);
+            try {
+                const result = await tool.handler(input);
+                await emitTelemetry(telemetry, {
+                    operation: tool.name,
+                    outcome: "success",
+                    durationMs: Math.min(3_600_000, Math.max(0, Date.now() - started)),
+                    ...(Number.isInteger(result?.structuredContent?.resultCount)
+                        ? { resultCount: result.structuredContent.resultCount }
+                        : {}),
+                    ...(researchIdHash
+                        ? { researchIdHash }
+                        : {}),
+                    ...(tool.name === "record_learn_evidence"
+                        ? { cacheStatus: "bypass" }
+                        : {}),
+                }, reportTelemetryFailure);
+                return result;
+            } catch (error) {
+                await emitTelemetry(telemetry, {
+                    operation: tool.name,
+                    outcome: "failure",
+                    durationMs: Math.min(3_600_000, Math.max(0, Date.now() - started)),
+                    errorKind: telemetryErrorKind(error),
+                    ...(researchIdHash
+                        ? { researchIdHash }
+                        : {}),
+                    ...(tool.name === "record_learn_evidence"
+                        ? { cacheStatus: "bypass" }
+                        : {}),
+                }, reportTelemetryFailure);
+                throw error;
+            }
+        },
+    }));
 }
