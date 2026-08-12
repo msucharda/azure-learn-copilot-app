@@ -335,7 +335,13 @@ function allOccurrences(value, needle) {
     return positions;
 }
 
-function allocateVerifiedOccurrence(text, positions, states, covered) {
+function allocateVerifiedOccurrence(
+    text,
+    positions,
+    states,
+    covered,
+    preferredPrefix,
+) {
     const state = states.get(text) ?? { used: new Set() };
     const available = positions.filter((position) => !state.used.has(position));
     const candidates = available.length > 0 ? available : positions;
@@ -345,12 +351,24 @@ function allocateVerifiedOccurrence(text, positions, states, covered) {
     }
     let selected = candidates[0];
     let greatestGain = -1;
+    let greatestPreferredOverlap = -1;
     for (const position of candidates) {
         const overlap = prefix[position + text.length] - prefix[position];
         const gain = text.length - overlap;
-        if (gain > greatestGain) {
+        const preferredOverlap = (
+            preferredPrefix[position + text.length]
+            - preferredPrefix[position]
+        );
+        if (
+            gain > greatestGain
+            || (
+                gain === greatestGain
+                && preferredOverlap > greatestPreferredOverlap
+            )
+        ) {
             selected = position;
             greatestGain = gain;
+            greatestPreferredOverlap = preferredOverlap;
         }
     }
     for (let index = selected; index < selected + text.length; index += 1) {
@@ -385,7 +403,13 @@ function byteCoverageIntervals(covered) {
     return intervals;
 }
 
-function greedyVerifiedRequests(markdown, requests, initialIntervals, ordered) {
+function greedyVerifiedRequests(
+    markdown,
+    requests,
+    initialIntervals,
+    ordered,
+    preferredPrefix,
+) {
     const covered = new Uint8Array(markdown.length);
     markCovered(covered, initialIntervals);
     const states = new Map();
@@ -397,6 +421,7 @@ function greedyVerifiedRequests(markdown, requests, initialIntervals, ordered) {
                 request.positions,
                 states,
                 covered,
+                preferredPrefix,
             );
             if (start !== undefined) {
                 intervals.push({ start, end: start + request.text.length });
@@ -458,7 +483,29 @@ function optimisticCandidateCoverage(markdown, initialIntervals, groups) {
     return coverage;
 }
 
-function allocateVerifiedRequests(markdown, requests, initialIntervals) {
+function allocateVerifiedRequests(
+    markdown,
+    requests,
+    initialIntervals,
+    { preferredIntervals = [] } = {},
+) {
+    const preferred = new Uint8Array(markdown.length);
+    markCovered(preferred, preferredIntervals);
+    const preferredPrefix = new Uint32Array(preferred.length + 1);
+    for (let index = 0; index < preferred.length; index += 1) {
+        preferredPrefix[index + 1] = preferredPrefix[index] + preferred[index];
+    }
+    const preferredCoverage = (intervals) => {
+        const covered = new Uint8Array(markdown.length);
+        markCovered(covered, intervals);
+        let total = 0;
+        for (let index = 0; index < covered.length; index += 1) {
+            if (covered[index] && preferred[index]) {
+                total += 1;
+            }
+        }
+        return total;
+    };
     const constrainedFirst = [...requests].sort((left, right) => (
         left.positions.length - right.positions.length
         || right.text.length - left.text.length
@@ -470,11 +517,27 @@ function allocateVerifiedRequests(markdown, requests, initialIntervals) {
         || left.text.localeCompare(right.text)
     ));
     const greedyCandidates = [
-        greedyVerifiedRequests(markdown, requests, initialIntervals, constrainedFirst),
-        greedyVerifiedRequests(markdown, requests, initialIntervals, longestFirst),
+        greedyVerifiedRequests(
+            markdown,
+            requests,
+            initialIntervals,
+            constrainedFirst,
+            preferredPrefix,
+        ),
+        greedyVerifiedRequests(
+            markdown,
+            requests,
+            initialIntervals,
+            longestFirst,
+            preferredPrefix,
+        ),
     ];
     let best = greedyCandidates[0];
     let greatestCoverage = intervalCoverage(markdown, [
+        ...initialIntervals,
+        ...best,
+    ]);
+    let greatestPreferredCoverage = preferredCoverage([
         ...initialIntervals,
         ...best,
     ]);
@@ -483,9 +546,20 @@ function allocateVerifiedRequests(markdown, requests, initialIntervals) {
             ...initialIntervals,
             ...candidate,
         ]);
-        if (coverage > greatestCoverage) {
+        const candidatePreferredCoverage = preferredCoverage([
+            ...initialIntervals,
+            ...candidate,
+        ]);
+        if (
+            coverage > greatestCoverage
+            || (
+                coverage === greatestCoverage
+                && candidatePreferredCoverage > greatestPreferredCoverage
+            )
+        ) {
             best = candidate;
             greatestCoverage = coverage;
+            greatestPreferredCoverage = candidatePreferredCoverage;
         }
     }
     const safeCoverageLimit = Math.min(
@@ -521,12 +595,19 @@ function allocateVerifiedRequests(markdown, requests, initialIntervals) {
     }
     const coverageCounts = new Uint32Array(markdown.length);
     let currentCoverage = 0;
+    let currentPreferredCoverage = 0;
     const apply = (start, end, delta) => {
         for (let index = start; index < end; index += 1) {
             if (delta > 0 && coverageCounts[index] === 0) {
                 currentCoverage += 1;
+                if (preferred[index]) {
+                    currentPreferredCoverage += 1;
+                }
             } else if (delta < 0 && coverageCounts[index] === 1) {
                 currentCoverage -= 1;
+                if (preferred[index]) {
+                    currentPreferredCoverage -= 1;
+                }
             }
             coverageCounts[index] += delta;
         }
@@ -551,8 +632,17 @@ function allocateVerifiedRequests(markdown, requests, initialIntervals) {
             return;
         }
         if (groupIndex === groups.length) {
-            greatestCoverage = currentCoverage;
-            best = selected.map((interval) => ({ ...interval }));
+            if (
+                currentCoverage > greatestCoverage
+                || (
+                    currentCoverage === greatestCoverage
+                    && currentPreferredCoverage > greatestPreferredCoverage
+                )
+            ) {
+                greatestCoverage = currentCoverage;
+                greatestPreferredCoverage = currentPreferredCoverage;
+                best = selected.map((interval) => ({ ...interval }));
+            }
             return;
         }
         const group = groups[groupIndex];
@@ -583,14 +673,24 @@ function allocateVerifiedRequests(markdown, requests, initialIntervals) {
         choose(0, group.selectedCount);
     };
     searchGroup(0);
-    if (
-        truncated
-        && optimisticCandidateCoverage(
+    const optimisticCoverage = truncated
+        ? optimisticCandidateCoverage(
             markdown,
             initialIntervals,
             groups,
-        ) > safeCoverageLimit
-    ) {
+        )
+        : 0;
+    if (truncated && optimisticCoverage > safeCoverageLimit) {
+        if (
+            optimisticCoverage * NEAR_FULL_CONTENT_DENOMINATOR
+            >= markdown.length * NEAR_FULL_CONTENT_NUMERATOR
+        ) {
+            fail(
+                "FULL_FETCH_CONTENT",
+                "$",
+                "ambiguous verified spans can reconstruct a near-complete fetched page",
+            );
+        }
         fail(
             "RETENTION_ALLOCATION_AMBIGUOUS",
             "$",
@@ -709,18 +809,29 @@ function verifiedEmbeddedSpans(
             minimumLength,
         );
         if (span !== undefined) {
-            spans.push(text.slice(span.textStart, span.textEnd));
+            spans.push({
+                text: text.slice(span.textStart, span.textEnd),
+                textStart: span.textStart,
+                textEnd: span.textEnd,
+            });
             index = span.textEnd - 1;
         }
     }
     return spans;
 }
 
-function shortFragmentCandidates(markdown, prose, windowIndex) {
+function shortFragmentCandidates(
+    markdown,
+    prose,
+    detectedByPath,
+    windowIndex,
+) {
     const candidates = [];
     const fragmentBudget = { steps: 0 };
     for (const entry of prose) {
         const text = entry.text;
+        const detected = detectedByPath.get(entry.path)
+            ?? new Uint8Array(text.length);
         for (
             let index = 0;
             index <= text.length - SHORT_FRAGMENT_SEED_LENGTH;
@@ -760,21 +871,45 @@ function shortFragmentCandidates(markdown, prose, windowIndex) {
             ) {
                 continue;
             }
-            const exactText = text.slice(span.textStart, span.textEnd);
-            if (exactText.length >= MIN_VERIFIED_EMBEDDED_SPAN) {
+            if (span.length >= MIN_VERIFIED_EMBEDDED_SPAN) {
                 index = span.textEnd - 1;
                 continue;
             }
-            candidates.push({
-                text: exactText,
-                positions: allOccurrences(markdown, exactText),
-            });
-            if (candidates.length > MAX_SHORT_FRAGMENT_CANDIDATES) {
-                fail(
-                    "SHORT_FRAGMENT_AMBIGUOUS",
-                    "$",
-                    "short exact fragments exceed the bounded candidate limit",
-                );
+            for (
+                let rangeStart = span.textStart;
+                rangeStart < span.textEnd;
+            ) {
+                while (
+                    rangeStart < span.textEnd
+                    && detected[rangeStart]
+                ) {
+                    rangeStart += 1;
+                }
+                let rangeEnd = rangeStart;
+                while (
+                    rangeEnd < span.textEnd
+                    && !detected[rangeEnd]
+                ) {
+                    rangeEnd += 1;
+                }
+                const exactText = text.slice(rangeStart, rangeEnd);
+                if (exactText.length >= SHORT_FRAGMENT_SEED_LENGTH) {
+                    candidates.push({
+                        path: entry.path,
+                        textStart: rangeStart,
+                        textEnd: rangeEnd,
+                        text: exactText,
+                        positions: allOccurrences(markdown, exactText),
+                    });
+                    if (candidates.length > MAX_SHORT_FRAGMENT_CANDIDATES) {
+                        fail(
+                            "SHORT_FRAGMENT_AMBIGUOUS",
+                            "$",
+                            "short exact fragments exceed the bounded candidate limit",
+                        );
+                    }
+                }
+                rangeStart = Math.max(rangeEnd, rangeStart + 1);
             }
             index = span.textEnd - 1;
         }
@@ -792,31 +927,58 @@ function minimumShortFragmentCoverage(markdownLength) {
     );
 }
 
-function verifiedFragmentUnion(markdown, candidates) {
+function verifiedFragmentRequests(markdown, candidates) {
     if (candidates.length === 0) {
-        return [];
+        return {
+            requests: [],
+            preferredIntervals: [],
+            coveredRanges: [],
+        };
     }
-    const requestsByText = new Map();
-    for (const candidate of candidates) {
-        const existing = requestsByText.get(candidate.text);
-        if (existing === undefined) {
-            requestsByText.set(candidate.text, {
-                ...candidate,
-                count: 1,
-            });
-        } else {
-            existing.count += 1;
-        }
-    }
-    const intervals = allocateVerifiedRequests(
-        markdown,
-        [...requestsByText.values()],
-        [],
-    );
     const minimumCoverage = minimumShortFragmentCoverage(markdown.length);
-    return intervalCoverage(markdown, intervals) >= minimumCoverage
-        ? intervals
-        : [];
+    const candidatesByGroup = new Map();
+    for (const candidate of candidates) {
+        const group = proseStreamGroup(candidate.path);
+        const grouped = candidatesByGroup.get(group) ?? [];
+        grouped.push(candidate);
+        candidatesByGroup.set(group, grouped);
+    }
+    const qualified = {
+        requests: [],
+        preferredIntervals: [],
+        coveredRanges: [],
+    };
+    for (const groupedCandidates of candidatesByGroup.values()) {
+        const requestsByText = new Map();
+        for (const candidate of groupedCandidates) {
+            const existing = requestsByText.get(candidate.text);
+            if (existing === undefined) {
+                requestsByText.set(candidate.text, {
+                    ...candidate,
+                    count: 1,
+                });
+            } else {
+                existing.count += 1;
+            }
+        }
+        const requests = [...requestsByText.values()];
+        const intervals = allocateVerifiedRequests(
+            markdown,
+            requests,
+            [],
+        );
+        if (intervalCoverage(markdown, intervals) < minimumCoverage) {
+            continue;
+        }
+        qualified.requests.push(...requests);
+        qualified.preferredIntervals.push(...intervals);
+        qualified.coveredRanges.push(...groupedCandidates.map((candidate) => ({
+                path: candidate.path,
+                start: candidate.textStart,
+                end: candidate.textEnd,
+            })));
+    }
+    return qualified;
 }
 
 function proseStreamGroup(path) {
@@ -824,7 +986,18 @@ function proseStreamGroup(path) {
     return match?.[1] ?? "other";
 }
 
-function orderedProseStreams(prose) {
+function detectedProseByPath(prose, ranges) {
+    const detected = new Map(prose.map((entry) => [
+        entry.path,
+        new Uint8Array(entry.text.length),
+    ]));
+    for (const range of ranges) {
+        detected.get(range.path)?.fill(1, range.start, range.end);
+    }
+    return detected;
+}
+
+function orderedProseStreams(prose, detectedByPath) {
     const separator = "\0";
     const groups = new Map();
     const all = [];
@@ -832,17 +1005,48 @@ function orderedProseStreams(prose) {
         if (entry.wholeSourceMatch) {
             continue;
         }
-        all.push(entry.text);
+        all.push(entry);
         const group = proseStreamGroup(entry.path);
         const values = groups.get(group) ?? [];
-        values.push(entry.text);
+        values.push(entry);
         groups.set(group, values);
     }
-    const streams = new Set([all.join(separator)]);
-    for (const values of groups.values()) {
-        streams.add(values.join(separator));
+    const concatenate = (entries) => {
+        const textParts = [];
+        const detectedParts = [];
+        for (const [index, entry] of entries.entries()) {
+            if (index > 0) {
+                textParts.push(separator);
+                detectedParts.push(Uint8Array.of(1));
+            }
+            textParts.push(entry.text);
+            detectedParts.push(
+                detectedByPath.get(entry.path)
+                ?? new Uint8Array(entry.text.length),
+            );
+        }
+        const text = textParts.join("");
+        const detected = new Uint8Array(text.length);
+        let offset = 0;
+        for (const part of detectedParts) {
+            detected.set(part, offset);
+            offset += part.length;
+        }
+        return { text, detected };
+    };
+    const streamsByText = new Map();
+    for (const entries of [all, ...groups.values()]) {
+        const stream = concatenate(entries);
+        const existing = streamsByText.get(stream.text);
+        if (existing === undefined) {
+            streamsByText.set(stream.text, stream);
+        } else {
+            for (let index = 0; index < stream.detected.length; index += 1) {
+                existing.detected[index] ||= stream.detected[index];
+            }
+        }
     }
-    return [...streams];
+    return [...streamsByText.values()];
 }
 
 function allocateStructuralFragmentRequests(markdown, requests) {
@@ -888,9 +1092,17 @@ function allocateStructuralFragmentRequests(markdown, requests) {
     return intervals;
 }
 
-function verifiedStructurallySeparatedFragments(markdown, prose) {
+function verifiedStructurallySeparatedFragmentRequests(
+    markdown,
+    prose,
+    detectedByPath,
+) {
     if (markdown.length < MIN_STRUCTURAL_FRAGMENT_PAGE) {
-        return [];
+        return {
+            requests: [],
+            preferredIntervals: [],
+            coveredRanges: [],
+        };
     }
     const sourceCharacters = new Set();
     for (let index = 0; index < markdown.length; index += 1) {
@@ -906,14 +1118,20 @@ function verifiedStructurallySeparatedFragments(markdown, prose) {
         }
     }
     if (separatorSet.size === 0) {
-        return [];
+        return {
+            requests: [],
+            preferredIntervals: [],
+            coveredRanges: [],
+        };
     }
     const minimumCoverage = minimumShortFragmentCoverage(markdown.length);
-    const requestsByText = new Map();
-    const addFragment = (fragment) => {
+    const requestsByGroup = new Map();
+    const addFragment = (fragment, path, start, end) => {
+        const detected = detectedByPath.get(path);
         if (
             fragment.length === 0
             || fragment.length >= SHORT_FRAGMENT_SEED_LENGTH
+            || detected?.subarray(start, end).some(Boolean)
         ) {
             return;
         }
@@ -921,9 +1139,16 @@ function verifiedStructurallySeparatedFragments(markdown, prose) {
         if (positions.length === 0) {
             return;
         }
-        const existing = requestsByText.get(fragment);
+        const groupName = proseStreamGroup(path);
+        const group = requestsByGroup.get(groupName) ?? {
+            requestsByText: new Map(),
+            coveredRanges: [],
+        };
+        requestsByGroup.set(groupName, group);
+        group.coveredRanges.push({ path, start, end });
+        const existing = group.requestsByText.get(fragment);
         if (existing === undefined) {
-            requestsByText.set(fragment, {
+            group.requestsByText.set(fragment, {
                 text: fragment,
                 positions,
                 count: 1,
@@ -932,29 +1157,47 @@ function verifiedStructurallySeparatedFragments(markdown, prose) {
             existing.count += 1;
         }
     };
-    for (const { text } of prose) {
+    for (const { path, text } of prose) {
         let fragment = "";
+        let fragmentStart = 0;
         for (let index = 0; index < text.length; index += 1) {
             const character = text[index];
             if (separatorSet.has(character)) {
-                addFragment(fragment);
+                addFragment(fragment, path, fragmentStart, index);
                 fragment = "";
+                fragmentStart = index + 1;
             } else {
                 fragment += character;
             }
         }
-        addFragment(fragment);
+        addFragment(fragment, path, fragmentStart, text.length);
     }
-    if (requestsByText.size === 0) {
-        return [];
+    if (requestsByGroup.size === 0) {
+        return {
+            requests: [],
+            preferredIntervals: [],
+            coveredRanges: [],
+        };
     }
-    const intervals = allocateStructuralFragmentRequests(
-        markdown,
-        [...requestsByText.values()],
-    );
-    return intervalCoverage(markdown, intervals) >= minimumCoverage
-        ? intervals
-        : [];
+    const qualified = {
+        requests: [],
+        preferredIntervals: [],
+        coveredRanges: [],
+    };
+    for (const group of requestsByGroup.values()) {
+        const requests = [...group.requestsByText.values()];
+        const intervals = allocateStructuralFragmentRequests(
+            markdown,
+            requests,
+        );
+        if (intervalCoverage(markdown, intervals) < minimumCoverage) {
+            continue;
+        }
+        qualified.requests.push(...requests);
+        qualified.preferredIntervals.push(...intervals);
+        qualified.coveredRanges.push(...group.coveredRanges);
+    }
+    return qualified;
 }
 
 function consumeOrderedStep(budget) {
@@ -1093,6 +1336,7 @@ function matchOrderedForwardWindow(
     );
     let proseIndex = proseStart;
     let matchedStart;
+    const positions = [];
     for (
         let sourceIndex = sourceStart;
         sourceIndex < sourceEnd;
@@ -1110,9 +1354,10 @@ function matchOrderedForwardWindow(
             return undefined;
         }
         matchedStart ??= proseIndex;
+        positions.push(proseIndex);
         proseIndex += 1;
     }
-    return { start: matchedStart, end: proseIndex };
+    return { start: matchedStart, end: proseIndex, positions };
 }
 
 function matchOrderedBackwardWindow(
@@ -1131,6 +1376,7 @@ function matchOrderedBackwardWindow(
     );
     let proseIndex = proseEnd - 1;
     let matchedEnd;
+    const positions = [];
     for (
         let sourceIndex = sourceEnd - 1;
         sourceIndex >= sourceStart;
@@ -1148,14 +1394,44 @@ function matchOrderedBackwardWindow(
             return undefined;
         }
         matchedEnd ??= proseIndex + 1;
+        positions.push(proseIndex);
         proseIndex -= 1;
     }
-    return { start: proseIndex + 1, end: matchedEnd };
+    positions.reverse();
+    return { start: proseIndex + 1, end: matchedEnd, positions };
+}
+
+function undetectedMappedSourceIntervals(
+    sourceStart,
+    prosePositions,
+    detected,
+) {
+    const intervals = [];
+    let intervalStart;
+    for (let index = 0; index < prosePositions.length; index += 1) {
+        if (!detected[prosePositions[index]]) {
+            intervalStart ??= sourceStart + index;
+        } else if (intervalStart !== undefined) {
+            intervals.push({
+                start: intervalStart,
+                end: sourceStart + index,
+            });
+            intervalStart = undefined;
+        }
+    }
+    if (intervalStart !== undefined) {
+        intervals.push({
+            start: intervalStart,
+            end: sourceStart + prosePositions.length,
+        });
+    }
+    return intervals;
 }
 
 function orderedAnchoredCoverage(
     markdown,
     prose,
+    detected,
     longWindowIndex,
     fragmentWindowIndex,
     anchorBudget,
@@ -1175,6 +1451,11 @@ function orderedAnchoredCoverage(
         ambiguousSource,
         ambiguousWindows,
     );
+    for (let index = 0; index < detected.length; index += 1) {
+        if (detected[index]) {
+            ambiguousText[index] = 0;
+        }
+    }
     const ambiguity = () => ({
         chars: ambiguousText.reduce(
             (total, value) => total + value,
@@ -1189,10 +1470,15 @@ function orderedAnchoredCoverage(
         };
     }
     ambiguousText.fill(0, anchor.textStart, anchor.textEnd);
-    const intervals = [{
-        start: anchor.sourceStart,
-        end: anchor.sourceEnd,
-    }];
+    const anchorPositions = Array.from(
+        { length: anchor.length },
+        (_value, index) => anchor.textStart + index,
+    );
+    const intervals = undetectedMappedSourceIntervals(
+        anchor.sourceStart,
+        anchorPositions,
+        detected,
+    );
     const recordAmbiguousExtension = (
         sourceStart,
         sourceEnd,
@@ -1200,7 +1486,10 @@ function orderedAnchoredCoverage(
         sourceIntervals,
     ) => {
         ambiguousText.fill(0, match.start, match.end);
-        extensionAmbiguousChars += sourceEnd - sourceStart;
+        extensionAmbiguousChars += sourceIntervals.reduce(
+            (total, interval) => total + interval.end - interval.start,
+            0,
+        );
         for (const interval of sourceIntervals) {
             ambiguousSource.fill(1, interval.start, interval.end);
         }
@@ -1236,15 +1525,20 @@ function orderedAnchoredCoverage(
             reverseMatch?.start === match.start
             && reverseMatch.end === match.end
         );
+        const novelIntervals = undetectedMappedSourceIntervals(
+            sourceStart,
+            match.positions,
+            detected,
+        );
         if (uniqueMapping) {
             ambiguousText.fill(0, match.start, match.end);
-            intervals.push({ start: sourceStart, end: sourceEnd });
+            intervals.push(...novelIntervals);
         } else {
             recordAmbiguousExtension(
                 sourceStart,
                 sourceEnd,
                 match,
-                [{ start: sourceStart, end: sourceEnd }],
+                novelIntervals,
             );
         }
         sourceStart = sourceEnd;
@@ -1281,18 +1575,20 @@ function orderedAnchoredCoverage(
             forwardMatch?.start === match.start
             && forwardMatch.end === match.end
         );
+        const novelIntervals = undetectedMappedSourceIntervals(
+            previousSourceStart,
+            match.positions,
+            detected,
+        );
         if (uniqueMapping) {
             ambiguousText.fill(0, match.start, match.end);
-            intervals.push({
-                start: previousSourceStart,
-                end: sourceEnd,
-            });
+            intervals.push(...novelIntervals);
         } else {
             recordAmbiguousExtension(
                 previousSourceStart,
                 sourceEnd,
                 match,
-                [{ start: previousSourceStart, end: sourceEnd }],
+                novelIntervals,
             );
         }
         sourceEnd = previousSourceStart;
@@ -1307,6 +1603,7 @@ function orderedAnchoredCoverage(
 function verifiedOrderedReconstructionIntervals(
     markdown,
     prose,
+    detectedByPath,
     longWindowIndex,
     fragmentWindowIndex,
 ) {
@@ -1320,13 +1617,14 @@ function verifiedOrderedReconstructionIntervals(
     let best = [];
     let bestCoverage = 0;
     let greatestAmbiguity = { chars: 0, intervals: [] };
-    for (const stream of orderedProseStreams(prose)) {
-        if (stream.length < minimumCoverage) {
+    for (const stream of orderedProseStreams(prose, detectedByPath)) {
+        if (stream.text.length < minimumCoverage) {
             continue;
         }
         const orderedCoverage = orderedAnchoredCoverage(
             markdown,
-            stream,
+            stream.text,
+            stream.detected,
             longWindowIndex,
             fragmentWindowIndex,
             anchorBudget,
@@ -1362,21 +1660,51 @@ function isDecorationCharacter(character) {
     return DECORATION_CHARACTER_PATTERN.test(character);
 }
 
-function collapseRuns(text, character, maximumRun) {
-    let collapsed = "";
+function indexedCharacters(text) {
+    const characters = [];
+    for (let start = 0; start < text.length;) {
+        const character = String.fromCodePoint(text.codePointAt(start));
+        characters.push({
+            character,
+            originalStart: start,
+            originalEnd: start + character.length,
+        });
+        start += character.length;
+    }
+    return characters;
+}
+
+function mappedVariant(characters) {
+    let candidateStart = 0;
+    return {
+        text: characters.map(({ character }) => character).join(""),
+        characters: characters.map((entry) => {
+            const mapped = {
+                ...entry,
+                candidateStart,
+                candidateEnd: candidateStart + entry.character.length,
+            };
+            candidateStart = mapped.candidateEnd;
+            return mapped;
+        }),
+    };
+}
+
+function collapseMappedRuns(characters, character, maximumRun) {
+    const collapsed = [];
     let run = 0;
-    for (const current of Array.from(text)) {
-        if (current === character) {
+    for (const current of characters) {
+        if (current.character === character) {
             run += 1;
             if (run <= maximumRun) {
-                collapsed += current;
+                collapsed.push(current);
             }
         } else {
             run = 0;
-            collapsed += current;
+            collapsed.push(current);
         }
     }
-    return collapsed;
+    return mappedVariant(collapsed);
 }
 
 function observedRunLengths(text, character) {
@@ -1397,23 +1725,27 @@ function observedRunLengths(text, character) {
 }
 
 function decorationVariants(text, markdown) {
-    const variants = new Set();
-    const characters = Array.from(text);
+    const variants = new Map();
+    const characters = indexedCharacters(text);
     const frequencies = new Map();
-    for (const character of characters) {
+    for (const { character } of characters) {
         if (isDecorationCharacter(character)) {
             frequencies.set(character, (frequencies.get(character) ?? 0) + 1);
         }
     }
+    const addVariant = (variant) => {
+        if (variant.text.length > 0 && variant.text !== text) {
+            variants.set(variant.text, variant);
+        }
+    };
     const absentDecorations = [...frequencies.keys()].filter(
         (character) => !markdown.includes(character),
     );
     if (absentDecorations.length > 0) {
         const absent = new Set(absentDecorations);
-        const candidate = characters.filter((character) => !absent.has(character)).join("");
-        if (candidate.length > 0 && candidate !== text) {
-            variants.add(candidate);
-        }
+        addVariant(mappedVariant(characters.filter(
+            ({ character }) => !absent.has(character),
+        )));
     }
     const likelyDecorations = [...frequencies.entries()]
         .sort((left, right) => (
@@ -1423,15 +1755,11 @@ function decorationVariants(text, markdown) {
         ))
         .slice(0, MAX_DECORATION_CANDIDATES);
     for (const [character] of likelyDecorations) {
-        const candidate = text.split(character).join("");
-        if (candidate.length > 0 && candidate !== text) {
-            variants.add(candidate);
-        }
+        addVariant(mappedVariant(characters.filter(
+            (entry) => entry.character !== character,
+        )));
         for (const runLength of observedRunLengths(markdown, character)) {
-            const collapsed = collapseRuns(text, character, runLength);
-            if (collapsed.length > 0 && collapsed !== text) {
-                variants.add(collapsed);
-            }
+            addVariant(collapseMappedRuns(characters, character, runLength));
         }
     }
     for (
@@ -1440,39 +1768,82 @@ function decorationVariants(text, markdown) {
         stride += 1
     ) {
         for (let offset = 0; offset < stride; offset += 1) {
-            const candidate = characters
-                .filter((_character, index) => index % stride === offset)
-                .join("");
-            if (candidate.length >= MIN_VERIFIED_EMBEDDED_SPAN) {
-                variants.add(candidate);
+            const candidate = mappedVariant(characters.filter(
+                (_character, index) => index % stride === offset,
+            ));
+            if (candidate.text.length >= MIN_VERIFIED_EMBEDDED_SPAN) {
+                addVariant(candidate);
             }
         }
     }
-    return variants;
+    return [...variants.values()];
+}
+
+function originalRangesForVariant(variant, textStart, textEnd) {
+    const ranges = [];
+    for (const character of variant.characters) {
+        if (
+            character.candidateEnd <= textStart
+            || character.candidateStart >= textEnd
+        ) {
+            continue;
+        }
+        const previous = ranges.at(-1);
+        if (
+            previous !== undefined
+            && previous.end === character.originalStart
+        ) {
+            previous.end = character.originalEnd;
+        } else {
+            ranges.push({
+                start: character.originalStart,
+                end: character.originalEnd,
+            });
+        }
+    }
+    return ranges;
 }
 
 function tokenizeDecoratedText(text) {
     const runs = [];
+    const runRanges = [];
     const decorations = [""];
     let mandatory = "";
-    for (const character of Array.from(text)) {
+    let mandatoryStart;
+    for (const {
+        character,
+        originalStart,
+        originalEnd,
+    } of indexedCharacters(text)) {
         if (isDecorationCharacter(character)) {
             if (mandatory) {
                 runs.push(mandatory);
+                runRanges.push({
+                    start: mandatoryStart,
+                    end: originalStart,
+                });
                 mandatory = "";
+                mandatoryStart = undefined;
                 decorations.push(character);
             } else {
                 decorations[decorations.length - 1] += character;
             }
         } else {
+            mandatoryStart ??= originalStart;
             mandatory += character;
         }
+        if (originalEnd === text.length && mandatory) {
+            runs.push(mandatory);
+            runRanges.push({
+                start: mandatoryStart,
+                end: originalEnd,
+            });
+            decorations.push("");
+            mandatory = "";
+            mandatoryStart = undefined;
+        }
     }
-    if (mandatory) {
-        runs.push(mandatory);
-        decorations.push("");
-    }
-    return { runs, decorations };
+    return { runs, runRanges, decorations };
 }
 
 function isDecorationSubsequence(needle, decorations) {
@@ -1487,7 +1858,7 @@ function isDecorationSubsequence(needle, decorations) {
 }
 
 function verifiedDecoratedSpans(markdown, text) {
-    const { runs, decorations } = tokenizeDecoratedText(text);
+    const { runs, runRanges, decorations } = tokenizeDecoratedText(text);
     if (
         runs.length === 0
         || decorations.every((value) => value.length === 0)
@@ -1704,7 +2075,11 @@ function verifiedDecoratedSpans(markdown, text) {
                 const span = markdown.slice(prefix.start, suffix.end);
                 matches.set(
                     `${prefix.runIndex}:${suffix.runIndex}:${span}`,
-                    span,
+                    {
+                        text: span,
+                        textStart: runRanges[prefix.runIndex].start,
+                        textEnd: runRanges[suffix.runIndex].end,
+                    },
                 );
             }
         }
@@ -1748,6 +2123,7 @@ function retentionManifest(
     { initialIntervals = [] } = {},
 ) {
     const requestsByText = new Map();
+    const primaryCoveredRanges = [];
     const normalizedInitialIntervals = normalizeInitialIntervals(
         markdown,
         initialIntervals,
@@ -1794,7 +2170,14 @@ function retentionManifest(
         }
         const positions = allOccurrences(markdown, text);
         if (positions.length > 0) {
-            return { wholeMatch: true, spans: [text] };
+            return {
+                wholeMatch: true,
+                spans: [{
+                    text,
+                    textStart: 0,
+                    textEnd: text.length,
+                }],
+            };
         }
         if (text.length < MIN_VERIFIED_EMBEDDED_SPAN) {
             return { wholeMatch: false, spans: [] };
@@ -1818,10 +2201,26 @@ function retentionManifest(
             );
         }
         const matchesBySpan = new Map();
-        const mergeMatches = (spans) => {
+        const mergeMatches = (spans, variant) => {
             const counts = new Map();
             for (const span of spans) {
-                counts.set(span, (counts.get(span) ?? 0) + 1);
+                counts.set(
+                    span.text,
+                    (counts.get(span.text) ?? 0) + 1,
+                );
+                const ranges = variant === undefined
+                    ? [{ start: span.textStart, end: span.textEnd }]
+                    : originalRangesForVariant(
+                        variant,
+                        span.textStart,
+                        span.textEnd,
+                    );
+                for (const range of ranges) {
+                    primaryCoveredRanges.push({
+                        path: entry.path,
+                        ...range,
+                    });
+                }
             }
             for (const [span, count] of counts) {
                 matchesBySpan.set(
@@ -1836,10 +2235,10 @@ function retentionManifest(
             const entryVariants = new Set([text]);
             let variantWholeMatch = false;
             for (const variant of decorationVariants(text, markdown)) {
-                if (!entryVariants.has(variant)) {
-                    entryVariants.add(variant);
-                    const variantMatch = collectVerifiedText(variant);
-                    mergeMatches(variantMatch.spans);
+                if (!entryVariants.has(variant.text)) {
+                    entryVariants.add(variant.text);
+                    const variantMatch = collectVerifiedText(variant.text);
+                    mergeMatches(variantMatch.spans, variant);
                     variantWholeMatch ||= variantMatch.wholeMatch;
                 }
             }
@@ -1855,33 +2254,67 @@ function retentionManifest(
         markdown,
         SHORT_FRAGMENT_SEED_LENGTH,
     );
-    const separatedIntervals = verifiedStructurallySeparatedFragments(
-        markdown,
+    const primaryDetectedByPath = detectedProseByPath(
         normalizedProse,
+        primaryCoveredRanges,
     );
-    const orderedReconstruction = verifiedOrderedReconstructionIntervals(
-        markdown,
-        normalizedProse,
-        windowIndex,
-        fragmentWindowIndex,
-    );
-    const allocatedIntervals = allocateVerifiedRequests(
-        markdown,
-        [...requestsByText.values()],
-        normalizedInitialIntervals,
-    );
-    const fragmentIntervals = verifiedFragmentUnion(
+    const fragmentRequests = verifiedFragmentRequests(
         markdown,
         shortFragmentCandidates(
             markdown,
             normalizedProse,
+            primaryDetectedByPath,
             fragmentWindowIndex,
         ),
     );
+    const fragmentDetectedByPath = detectedProseByPath(normalizedProse, [
+        ...primaryCoveredRanges,
+        ...fragmentRequests.coveredRanges,
+    ]);
+    const structuralRequests = verifiedStructurallySeparatedFragmentRequests(
+        markdown,
+        normalizedProse,
+        fragmentDetectedByPath,
+    );
+    const detectedByPath = detectedProseByPath(normalizedProse, [
+        ...primaryCoveredRanges,
+        ...structuralRequests.coveredRanges,
+        ...fragmentRequests.coveredRanges,
+    ]);
+    const orderedReconstruction = verifiedOrderedReconstructionIntervals(
+        markdown,
+        normalizedProse,
+        detectedByPath,
+        windowIndex,
+        fragmentWindowIndex,
+    );
+    for (const request of [
+        ...structuralRequests.requests,
+        ...fragmentRequests.requests,
+    ]) {
+        addRequest(request.text, request.count);
+    }
+    const detectorPreferredIntervals = [
+        ...structuralRequests.preferredIntervals,
+        ...fragmentRequests.preferredIntervals,
+    ];
+    const allocationInitialIntervals = mergeIntervals(markdown, [
+        ...normalizedInitialIntervals,
+        ...orderedReconstruction.intervals,
+    ]);
+    const allocatedIntervals = allocateVerifiedRequests(
+        markdown,
+        [...requestsByText.values()],
+        allocationInitialIntervals,
+        {
+            preferredIntervals: [
+                ...orderedReconstruction.intervals,
+                ...detectorPreferredIntervals,
+            ],
+        },
+    );
     const intervals = [
         ...allocatedIntervals,
-        ...fragmentIntervals,
-        ...separatedIntervals,
         ...orderedReconstruction.intervals,
     ];
     const merged = mergeIntervals(markdown, intervals);

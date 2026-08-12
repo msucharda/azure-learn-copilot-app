@@ -24,6 +24,7 @@ import {
     clone,
     handoffFor,
     makePublishedEvidence,
+    mixedDetectorBundle,
     rehash,
 } from "../.github/extensions/learn-references/test-support/fixtures.mjs";
 
@@ -328,6 +329,28 @@ test("publication rejects near-full pages split into short filled claims", async
     );
 });
 
+test("publication rejects mixed detector coverage on repetitive pages", async (t) => {
+    const { published } = await stores(t);
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const mixed = mixedDetectorBundle(fixture.bundle, markdown, {
+        wholeFieldTotal: 7_000,
+        fragmentTotalTarget: 8_000,
+    });
+    assert.equal(mixed.declaredTotal, 15_010);
+    await assert.rejects(
+        published.publish(mixed.bundle, [fixture.capture]),
+        (error) => error.code === "EXCERPT_BUDGET_EXCEEDED",
+    );
+    await assert.rejects(
+        published.get(RESEARCH_ID, 1),
+        expectStorageCode("PUBLISHED_NOT_FOUND"),
+    );
+});
+
 test("publication allows a bounded set of embedded short excerpts", async (t) => {
     const { root, published } = await stores(t);
     const markdown = learnStylePageWithLength(6_000);
@@ -626,6 +649,38 @@ test("durable retention prevents new page fragments across evidence versions", a
     assert.equal(
         (await published.publish(corrected.bundle, [corrected.capture])).version,
         2,
+    );
+});
+
+test("mixed detector coverage is cumulative across evidence versions", async (t) => {
+    const { published } = await stores(t);
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const first = makePublishedEvidence({
+        version: 1,
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const second = makePublishedEvidence({
+        version: 2,
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const whole = mixedDetectorBundle(first.bundle, markdown, {
+        wholeFieldTotal: 7_000,
+        fragmentTotalTarget: 0,
+    });
+    const fragments = mixedDetectorBundle(second.bundle, markdown, {
+        wholeFieldTotal: 0,
+        fragmentTotalTarget: 8_000,
+    });
+    await published.publish(whole.bundle, [first.capture]);
+    await assert.rejects(
+        published.publish(fragments.bundle, [second.capture]),
+        expectStorageCode("RETENTION_BUDGET_CONFLICT"),
+    );
+    await assert.rejects(
+        published.get(RESEARCH_ID, 2),
+        expectStorageCode("PUBLISHED_NOT_FOUND"),
     );
 });
 
@@ -955,6 +1010,43 @@ test("handoffs reject ordered short fragments with alphanumeric filler", async (
             expectStorageCode("HANDOFF_FULL_FETCH_CONTENT"),
         );
     }
+    await assert.rejects(
+        published.getHandoff(
+            fixture.bundle.parentSessionId,
+            fixture.bundle.researchId,
+            fixture.bundle.version,
+        ),
+        expectStorageCode("HANDOFF_NOT_FOUND"),
+    );
+});
+
+test("handoffs share mixed detector retention with published evidence", async (t) => {
+    const { published } = await stores(t);
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    await published.publish(fixture.bundle, [fixture.capture]);
+
+    const mixed = mixedDetectorBundle(fixture.bundle, markdown, {
+        wholeFieldTotal: 7_000,
+        fragmentTotalTarget: 8_000,
+    });
+    const fields = mixed.bundle.claims.flatMap((claim) => (
+        boundedTextChunks(claim.text, 990)
+    ));
+    assert.equal(fields.length <= 21, true);
+    const handoff = handoffFor(fixture.bundle);
+    handoff.executiveFindings[0].text = fields[0];
+    handoff.unresolvedRisks = fields.slice(1).map((text, index) => ({
+        id: `risk-mixed-detector-${index + 1}`,
+        text,
+    }));
+    await assert.rejects(
+        published.storeHandoff(handoff, [fixture.capture]),
+        expectStorageCode("HANDOFF_RETENTION_LIMIT"),
+    );
     await assert.rejects(
         published.getHandoff(
             fixture.bundle.parentSessionId,

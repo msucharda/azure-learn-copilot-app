@@ -16,6 +16,7 @@ import {
 import {
     clone,
     makePublishedEvidence,
+    mixedDetectorBundle,
     rehash,
 } from "../.github/extensions/learn-references/test-support/fixtures.mjs";
 
@@ -573,6 +574,209 @@ test("exact claims on repetitive pages do not reserve repeated copies", () => {
             true,
         );
     }
+});
+
+test("mixed detectors share one occurrence budget on repetitive pages", () => {
+    const repetitiveMarkdown = repeatedStaticWebAppsPage(60_000);
+    const repetitiveFixture = makePublishedEvidence({
+        markdown: repetitiveMarkdown,
+        exactExcerpt: repetitiveMarkdown.slice(0, 1),
+    });
+    const baseline = validateResearchBundleWithRetention(
+        repetitiveFixture.bundle,
+        [repetitiveFixture.capture],
+    ).retentionManifests[0].totalChars;
+    const fragmentTotalTarget = 4_995;
+    const fragmentOnly = mixedDetectorBundle(
+        repetitiveFixture.bundle,
+        repetitiveMarkdown,
+        {
+            wholeFieldTotal: 0,
+            fragmentTotalTarget,
+            fillerText: "QZJKX",
+        },
+    );
+    const fragmentCoverage = validateResearchBundleWithRetention(
+        fragmentOnly.bundle,
+        [repetitiveFixture.capture],
+    ).retentionManifests[0].totalChars - baseline;
+    const bundleAtTarget = (target) => {
+        const initialWhole = target - fragmentCoverage - baseline;
+        for (let wholeRegionStart = 0; wholeRegionStart < 32; wholeRegionStart += 1) {
+            for (
+                let wholeFieldTotal = initialWhole;
+                wholeFieldTotal <= initialWhole + 16;
+                wholeFieldTotal += 1
+            ) {
+                const mixed = mixedDetectorBundle(
+                    repetitiveFixture.bundle,
+                    repetitiveMarkdown,
+                    {
+                        wholeFieldTotal,
+                        fragmentTotalTarget,
+                        fillerText: "QZJKX",
+                        wholeRegionStart,
+                    },
+                );
+                if (
+                    mixed.normalizedWholeTotal + fragmentCoverage + baseline
+                    === target
+                ) {
+                    return mixed;
+                }
+            }
+        }
+        throw new Error(`could not construct ${target} retained characters`);
+    };
+    const totals = [];
+    for (const target of [11_999, 12_000]) {
+        const mixed = bundleAtTarget(target);
+        const result = validateResearchBundleWithRetention(
+            mixed.bundle,
+            [repetitiveFixture.capture],
+        );
+        totals.push(result.retentionManifests[0].totalChars);
+    }
+    assert.deepEqual(totals, [11_999, 12_000]);
+
+    const overBudget = bundleAtTarget(12_001);
+    expectCode(
+        () => validateResearchBundle(
+            overBudget.bundle,
+            [repetitiveFixture.capture],
+        ),
+        ContractValidationError,
+        "EXCERPT_BUDGET_EXCEEDED",
+    );
+
+    const reviewerScenario = mixedDetectorBundle(
+        repetitiveFixture.bundle,
+        repetitiveMarkdown,
+        {
+            wholeFieldTotal: 7_000,
+            fragmentTotalTarget: 8_000,
+        },
+    );
+    assert.equal(reviewerScenario.declaredTotal, 15_010);
+    expectCode(
+        () => validateResearchBundle(
+            reviewerScenario.bundle,
+            [repetitiveFixture.capture],
+        ),
+        ContractValidationError,
+        "EXCERPT_BUDGET_EXCEEDED",
+    );
+
+    const uniqueMarkdown = learnStylePageWithLength(60_000);
+    const uniqueFixture = makePublishedEvidence({
+        markdown: uniqueMarkdown,
+        exactExcerpt: uniqueMarkdown.slice(0, 1),
+    });
+    const uniqueControl = mixedDetectorBundle(
+        uniqueFixture.bundle,
+        uniqueMarkdown,
+        {
+            wholeFieldTotal: 7_000,
+            fragmentTotalTarget: 8_000,
+            fillerText: "QZJKX",
+        },
+    );
+    expectCode(
+        () => validateResearchBundle(
+            uniqueControl.bundle,
+            [uniqueFixture.capture],
+        ),
+        ContractValidationError,
+        "EXCERPT_BUDGET_EXCEEDED",
+    );
+});
+
+test("decorated, short, and structural spans join the global allocation", () => {
+    const markdown = repeatedStaticWebAppsPage(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const mixed = mixedDetectorBundle(fixture.bundle, markdown, {
+        wholeFieldTotal: 3_200,
+        fragmentTotalTarget: 3_200,
+        fragmentRegionStart: 10_000,
+        fillerText: "QZJKX",
+    });
+    const bundle = clone(mixed.bundle);
+    const decoratedText = markdown.slice(20_000, 23_200);
+    for (const [index, text] of [
+        decoratedText.slice(0, 1_600),
+        decoratedText.slice(1_600),
+    ].entries()) {
+        bundle.claims.push({
+            id: `claim-decorated-${index + 1}`,
+            text: Array.from(text).join("|"),
+            sourceIds: bundle.claims[0].sourceIds,
+            support: "supported",
+        });
+    }
+    for (const [index, text] of fragmentedFields(
+        markdown.slice(30_000, 33_200),
+        7,
+        2,
+        false,
+        ["Q"],
+    ).entries()) {
+        bundle.claims.push({
+            id: `claim-structural-${index + 1}`,
+            text,
+            sourceIds: bundle.claims[0].sourceIds,
+            support: "supported",
+        });
+    }
+    expectCode(
+        () => validateResearchBundle(rehash(bundle), [fixture.capture]),
+        ContractValidationError,
+        "EXCERPT_BUDGET_EXCEEDED",
+    );
+});
+
+test("ordered reconstruction shares exact coverage or fails closed", () => {
+    const markdown = learnStylePageWithLength(60_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 1),
+    });
+    const exact = mixedDetectorBundle(fixture.bundle, markdown, {
+        wholeFieldTotal: 7_000,
+        fragmentTotalTarget: 0,
+    });
+    const bundle = clone(exact.bundle);
+    const orderedSource = markdown.slice(30_000, 36_000);
+    const fillers = ["e", "the", "a", "domain"];
+    let orderedText = orderedSource.slice(0, 32);
+    for (let index = 32; index < orderedSource.length; index += 1) {
+        orderedText += fillers[index % fillers.length] + orderedSource[index];
+    }
+    for (
+        let index = 0, fieldIndex = 0;
+        index < orderedText.length;
+        index += 3_800, fieldIndex += 1
+    ) {
+        bundle.claims.push({
+            id: `claim-ordered-${fieldIndex + 1}`,
+            text: orderedText.slice(index, index + 3_800),
+            sourceIds: bundle.claims[0].sourceIds,
+            support: "supported",
+        });
+    }
+    assert.throws(
+        () => validateResearchBundle(rehash(bundle), [fixture.capture]),
+        (error) => {
+            assert.equal(error instanceof ContractValidationError, true);
+            assert.equal([
+                "EXCERPT_BUDGET_EXCEEDED",
+                "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+            ].includes(error.code), true);
+            return true;
+        },
+    );
 });
 
 test("split contiguous excerpts retain monotonically on periodic pages", () => {

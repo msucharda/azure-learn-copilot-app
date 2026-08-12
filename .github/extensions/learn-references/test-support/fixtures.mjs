@@ -107,6 +107,81 @@ export function makePublishedEvidence({
     return { bundle, capture, markdown };
 }
 
+export function mixedDetectorBundle(
+    bundleInput,
+    markdown,
+    {
+        wholeFieldTotal,
+        fragmentTotalTarget,
+        fragmentLength = 15,
+        fragmentRegionStart = 30_000,
+        fillerText = "qzjkx",
+        wholeRegionStart = 0,
+    },
+) {
+    const bundle = clone(bundleInput);
+    const claims = [];
+    let wholePosition = wholeRegionStart;
+    let wholeRemaining = wholeFieldTotal;
+    for (let index = 0; wholeRemaining > 0; index += 1) {
+        const take = Math.min(3_900, wholeRemaining);
+        claims.push({
+            id: `claim-whole-${index + 1}`,
+            text: markdown.slice(wholePosition, wholePosition + take),
+            sourceIds: bundle.claims[0].sourceIds,
+            support: "supported",
+        });
+        wholePosition += take;
+        wholeRemaining -= take;
+    }
+
+    const region = markdown.slice(
+        fragmentRegionStart,
+        fragmentRegionStart + fragmentTotalTarget + 4_000,
+    );
+    const fragments = [];
+    for (
+        let index = 0;
+        index + fragmentLength <= region.length;
+        index += fragmentLength
+    ) {
+        fragments.push(region.slice(index, index + fragmentLength));
+    }
+    const filler = fillerText.repeat(100);
+    let fragmentCharsUsed = 0;
+    let cursor = 0;
+    for (
+        let fieldIndex = 0;
+        fragmentCharsUsed < fragmentTotalTarget && cursor < fragments.length;
+        fieldIndex += 1
+    ) {
+        let fieldText = "";
+        while (
+            fieldText.length < 3_800
+            && cursor < fragments.length
+            && fragmentCharsUsed < fragmentTotalTarget
+        ) {
+            fieldText += fragments[cursor] + filler.slice(0, 5);
+            fragmentCharsUsed += fragments[cursor].length;
+            cursor += 1;
+        }
+        claims.push({
+            id: `claim-fragment-${fieldIndex + 1}`,
+            text: fieldText.slice(0, 4_000),
+            sourceIds: bundle.claims[0].sourceIds,
+            support: "supported",
+        });
+    }
+    bundle.claims = claims;
+    return {
+        bundle: rehash(bundle),
+        declaredTotal: wholeFieldTotal + fragmentCharsUsed,
+        normalizedWholeTotal: claims
+            .filter((claim) => claim.id.startsWith("claim-whole-"))
+            .reduce((total, claim) => total + claim.text.trim().length, 0),
+    };
+}
+
 export function handoffFor(bundle) {
     return {
         schemaVersion: 1,
