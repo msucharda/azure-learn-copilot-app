@@ -88,6 +88,39 @@ function recordInput(fixture) {
     };
 }
 
+function validatedDraftFor(bundleInput) {
+    const bundle = clone(bundleInput);
+    bundle.status = "validated";
+    bundle.lifecycle = {
+        createdAt: bundle.lifecycle.createdAt,
+        validatingAt: bundle.lifecycle.validatingAt,
+        validatedAt: bundle.lifecycle.validatedAt,
+        updatedAt: bundle.lifecycle.validatedAt,
+    };
+    return rehash(bundle);
+}
+
+async function persistValidated(context, bundleInput) {
+    return context.tool("persist_research_draft").handler({
+        bundle: validatedDraftFor(bundleInput),
+    });
+}
+
+async function assertNoPublicationOrHandoff(context, bundle) {
+    await assert.rejects(
+        context.publishedStore.get(bundle.researchId, bundle.version),
+        (error) => error.code === "PUBLISHED_NOT_FOUND",
+    );
+    await assert.rejects(
+        context.publishedStore.getHandoff(
+            bundle.parentSessionId,
+            bundle.researchId,
+            bundle.version,
+        ),
+        (error) => error.code === "HANDOFF_NOT_FOUND",
+    );
+}
+
 function assertStrictObjects(schema) {
     if (!schema || typeof schema !== "object") {
         return;
@@ -354,6 +387,7 @@ test("publish tool validates before writing and stores a separate handoff", asyn
     const context = await harness(t);
     const fixture = makePublishedEvidence();
     await context.tool("record_learn_evidence").handler(recordInput(fixture));
+    await persistValidated(context, fixture.bundle);
     const result = await context.tool("publish_research_bundle").handler({
         bundle: fixture.bundle,
         handoff: handoffFor(fixture.bundle),
@@ -363,10 +397,64 @@ test("publish tool validates before writing and stores a separate handoff", asyn
     assert.equal((await context.publishedStore.get(RESEARCH_ID, 1)).contentHash, fixture.bundle.contentHash);
 });
 
+test("never-persisted valid publication rejects without payload or handoff side effects", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    await context.draftStore.recordCapture(fixture.capture);
+    await assert.rejects(
+        context.tool("publish_research_bundle").handler({
+            bundle: fixture.bundle,
+            handoff: handoffFor(fixture.bundle),
+        }),
+        (error) => error.code === "DRAFT_NOT_FOUND",
+    );
+    await assertNoPublicationOrHandoff(context, fixture.bundle);
+});
+
+test("stale publication rejects after a newer same-version draft is persisted", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    await context.draftStore.recordCapture(fixture.capture);
+    const newer = clone(fixture.bundle);
+    newer.question.normalized = "Use the newest persisted same-version draft.";
+    const newerPublished = rehash(newer);
+    await persistValidated(context, newerPublished);
+    await assert.rejects(
+        context.tool("publish_research_bundle").handler({
+            bundle: fixture.bundle,
+            handoff: handoffFor(fixture.bundle),
+        }),
+        (error) => error.code === "AUTHORITATIVE_DRAFT_MISMATCH",
+    );
+    await assertNoPublicationOrHandoff(context, fixture.bundle);
+});
+
+test("non-validated persisted draft rejects publication atomically", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    await context.draftStore.recordCapture(fixture.capture);
+    const draft = clone(fixture.bundle);
+    draft.status = "draft";
+    draft.lifecycle = {
+        createdAt: draft.lifecycle.createdAt,
+        updatedAt: draft.lifecycle.createdAt,
+    };
+    await context.tool("persist_research_draft").handler({ bundle: rehash(draft) });
+    await assert.rejects(
+        context.tool("publish_research_bundle").handler({
+            bundle: fixture.bundle,
+            handoff: handoffFor(fixture.bundle),
+        }),
+        (error) => error.code === "AUTHORITATIVE_DRAFT_NOT_VALIDATED",
+    );
+    await assertNoPublicationOrHandoff(context, fixture.bundle);
+});
+
 test("invalid publication does not create a published record", async (t) => {
     const context = await harness(t);
     const fixture = makePublishedEvidence();
     await context.draftStore.recordCapture(fixture.capture);
+    await persistValidated(context, fixture.bundle);
     const invalid = clone(fixture.bundle);
     invalid.sources[0].retrievalMethod = "docs-search";
     await assert.rejects(
@@ -388,6 +476,7 @@ test("invalid handoff content fails before publishing evidence", async (t) => {
         exactExcerpt: "abc",
     });
     await context.draftStore.recordCapture(fixture.capture);
+    await persistValidated(context, fixture.bundle);
     const handoff = handoffFor(fixture.bundle);
     handoff.executiveFindings[0].text = fixture.markdown;
     await assert.rejects(
@@ -428,6 +517,7 @@ test("published handoff acknowledgement is verified, idempotent, and no-regressi
     });
     for (const fixture of [first, second]) {
         await context.draftStore.recordCapture(fixture.capture);
+        await persistValidated(context, fixture.bundle);
         await context.tool("publish_research_bundle").handler({
             bundle: fixture.bundle,
             handoff: handoffFor(fixture.bundle),
@@ -461,6 +551,7 @@ test("conflicting or misbound deliveries fail without making the handoff unretry
     const fixture = makePublishedEvidence();
     const handoff = handoffFor(fixture.bundle);
     await context.draftStore.recordCapture(fixture.capture);
+    await persistValidated(context, fixture.bundle);
     await context.tool("publish_research_bundle").handler({
         bundle: fixture.bundle,
         handoff,
@@ -525,6 +616,7 @@ test("publish read-back and handoff remain bounded and exclude fetched pages", a
     const handoff = handoffFor(fixture.bundle);
     await context.draftStore.recordCapture(fixture.capture);
     await context.tool("validate_research_bundle").handler({ bundle: fixture.bundle });
+    await persistValidated(context, fixture.bundle);
     await context.tool("publish_research_bundle").handler({
         bundle: fixture.bundle,
         handoff,

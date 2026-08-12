@@ -159,6 +159,8 @@ test("publish workflow validates, publishes, and verifies only on explicit reque
     assert.match(publish, /user explicitly says \*\*publish\*\*/i);
     assert.match(publish, /persisted bounded schema-version-1 bundle is authoritative/);
     assert.match(publish, /`validate_research_bundle`/);
+    assert.match(publish, /`persist_research_draft`/);
+    assert.match(publish, /persisted revision is authoritative/);
     assert.match(publish, /`publish_research_bundle`/);
     assert.match(publish, /`get_research_bundle`/);
     assert.match(publish, /There is no canvas button, iframe publish control, or session-send bridge/);

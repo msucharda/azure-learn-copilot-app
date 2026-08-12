@@ -5,7 +5,11 @@ import {
 } from "./canonical-json.mjs";
 import {
     assertEvidenceContentHash,
+    immutableEvidenceContent,
 } from "./content-hash.mjs";
+import {
+    assertEvidenceBundleTransition,
+} from "./evidence-bundle.mjs";
 import {
     normalizeEvidenceCapture,
     validateResearchBundle,
@@ -279,13 +283,45 @@ export function createLearnReferenceTools({
             parameters: PUBLISH_RESEARCH_BUNDLE_SCHEMA,
             handler: async (input) => {
                 const object = requireObject(input, "$", ["bundle", "handoff"], ["bundle"]);
+                const persisted = assertEvidenceContentHash(
+                    await draftStore.readBundle(
+                        object.bundle?.researchId,
+                        object.bundle?.version,
+                    ),
+                );
+                if (persisted.status !== "validated") {
+                    fail(
+                        "AUTHORITATIVE_DRAFT_NOT_VALIDATED",
+                        "$.bundle.status",
+                        "persisted draft must have validated status before publication",
+                    );
+                }
                 const captures = await draftStore.listCaptures(object.bundle?.researchId);
                 const {
-                    bundle: validated,
+                    bundle: requestedPublication,
                 } = validateResearchBundleWithRetention(object.bundle, captures);
-                assertEvidenceContentHash(validated);
+                assertEvidenceContentHash(requestedPublication);
+                assertEvidenceBundleTransition(persisted, requestedPublication);
+                if (
+                    persisted.contentHash !== requestedPublication.contentHash
+                    || canonicalJson(immutableEvidenceContent(persisted))
+                        !== canonicalJson(immutableEvidenceContent(requestedPublication))
+                ) {
+                    fail(
+                        "AUTHORITATIVE_DRAFT_MISMATCH",
+                        "$.bundle",
+                        "publication content must exactly match the persisted validated draft",
+                    );
+                }
+                const authoritativePublication = assertEvidenceContentHash({
+                    ...immutableEvidenceContent(persisted),
+                    status: requestedPublication.status,
+                    lifecycle: requestedPublication.lifecycle,
+                    contentHash: persisted.contentHash,
+                });
+                assertEvidenceBundleTransition(persisted, authoritativePublication);
                 const bundle = await publishedStore.publish(
-                    validated,
+                    authoritativePublication,
                     captures,
                     object.handoff,
                 );
