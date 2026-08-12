@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
     DraftEvidenceStore,
+    LearnMcpAdapter,
     LearnMcpHttpTransport,
     PublishedEvidenceStore,
     adaptLearnMcpResult,
@@ -65,6 +66,39 @@ function toolMap(tools) {
     return new Map(tools.map((tool) => [tool.name, tool]));
 }
 
+function opaqueToolDefinitions() {
+    return [
+        {
+            name: "opaque-fetch",
+            description: "Fetch a documentation page",
+            inputSchema: {
+                type: "object",
+                properties: { address: { type: "string", format: "uri" } },
+                required: ["address"],
+            },
+        },
+        {
+            name: "opaque-search",
+            description: "Search documentation",
+            inputSchema: {
+                type: "object",
+                properties: { prompt: { type: "string", description: "Search query" } },
+            },
+        },
+        {
+            name: "opaque-code",
+            description: "Search code samples",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    prompt: { type: "string", description: "Search query" },
+                    language: { type: "string", description: "Programming language" },
+                },
+            },
+        },
+    ];
+}
+
 function validated(bundleInput) {
     const bundle = clone(bundleInput);
     bundle.status = "validated";
@@ -88,10 +122,16 @@ async function createHarness(root) {
     const publishedStore = await PublishedEvidenceStore.create({
         root: join(root, "published"),
     });
-    let adapted;
-    const learnAdapter = {
-        execute: async () => adapted,
-    };
+    let rawResult;
+    const routedCalls = [];
+    const learnAdapter = new LearnMcpAdapter({
+        listTools: async () => ({ tools: opaqueToolDefinitions() }),
+        callTool: async (name, args) => {
+            routedCalls.push({ name, args });
+            return rawResult;
+        },
+    });
+    const operations = await learnAdapter.connect();
     let currentTime = "2026-08-12T09:01:00Z";
     const tools = toolMap(createLearnReferenceTools({
         draftStore,
@@ -104,12 +144,49 @@ async function createHarness(root) {
         draftStore,
         publishedStore,
         tools,
-        setAdapted(value) {
-            adapted = value;
+        setRawResult(value) {
+            rawResult = value;
         },
+        operations,
+        routedCalls,
         setNow(value) {
             currentTime = value;
         },
+    };
+}
+
+async function runDynamicRoutingGate(corpus) {
+    const calls = [];
+    const adapter = new LearnMcpAdapter({
+        listTools: async () => ({ tools: opaqueToolDefinitions() }),
+        callTool: async (name, args) => {
+            calls.push({ name, args });
+            return "A bounded routed fetch result.";
+        },
+    });
+    const operations = await adapter.connect();
+    assert.deepEqual(Object.keys(operations).sort(), [
+        "code-sample-search",
+        "docs-fetch",
+        "docs-search",
+    ]);
+    assert.deepEqual(
+        Object.values(operations).map((entry) => entry.runtimeName).sort(),
+        ["opaque-code", "opaque-fetch", "opaque-search"],
+    );
+    const result = await adapter.execute("docs-fetch", {
+        address: corpus.safeLinks[0],
+    });
+    assert.equal(result.runtimeToolName, "opaque-fetch");
+    assert.equal(result.canonicalUrl, corpus.safeLinks[0]);
+    assert.deepEqual(calls, [{
+        name: "opaque-fetch",
+        args: { address: corpus.safeLinks[0] },
+    }]);
+    return {
+        operations: Object.keys(operations).length,
+        routedTool: result.runtimeToolName,
+        routedFetch: true,
     };
 }
 
@@ -168,11 +245,7 @@ async function runTransportGates(corpus) {
 async function runEndToEnd(root) {
     const context = await createHarness(root);
     const first = makePublishedEvidence({ version: 1 });
-    const adapted = adaptLearnMcpResult("docs-fetch", first.markdown, {
-        canonicalUrl: first.capture.canonicalUrl,
-        retrievalUrl: first.capture.retrievalUrl,
-    });
-    context.setAdapted({ ...adapted, runtimeToolName: "offline-fetch" });
+    context.setRawResult(first.markdown);
     const prepare = await context.tools.get("prepare_learn_research").handler({
         choice: "open-deep-research-session",
         researchId: first.bundle.researchId,
@@ -190,9 +263,40 @@ async function runEndToEnd(root) {
         logicalOperation: "docs-fetch",
         argumentsJson: JSON.stringify({ address: first.capture.retrievalUrl }),
     });
+    assert.equal(Object.keys(context.operations).length, 3);
+    assert.equal(context.routedCalls[0]?.name, "opaque-fetch");
     const persisted = validated(first.bundle);
     await context.tools.get("validate_research_bundle").handler({ bundle: persisted });
     await context.tools.get("persist_research_draft").handler({ bundle: persisted });
+    class CanvasError extends Error {
+        constructor(code, message) {
+            super(message);
+            this.code = code;
+        }
+    }
+    const canvasDefinition = createLearnReferencesCanvas({
+        draftStore: context.draftStore,
+        publishedStore: context.publishedStore,
+        createCanvas: (definition) => definition,
+        CanvasError,
+        heartbeatMs: 60_000,
+    });
+    const draftOpened = await canvasDefinition.canvas.open({
+        instanceId: "release-evaluation-draft",
+        input: {
+            researchId: first.bundle.researchId,
+            version: 1,
+            view: "draft",
+        },
+    });
+    const draftProjection = await (
+        await fetch(new URL("/state", draftOpened.url))
+    ).json();
+    assert.equal(draftProjection.view, "draft");
+    assert.equal(draftProjection.status, "validated");
+    assert.equal(draftProjection.sources[0].exactExcerpt, first.bundle.sources[0].exactExcerpt);
+    assert.equal(JSON.stringify(draftProjection).includes(first.markdown), false);
+    await canvasDefinition.closeAll();
     await assert.rejects(
         context.publishedStore.get(first.bundle.researchId, 1),
         (error) => error.code === "PUBLISHED_NOT_FOUND",
@@ -215,21 +319,8 @@ async function runEndToEnd(root) {
     });
     assert.equal(acknowledged.structuredContent.outcome, "acknowledged");
 
-    class CanvasError extends Error {
-        constructor(code, message) {
-            super(message);
-            this.code = code;
-        }
-    }
-    const canvasDefinition = createLearnReferencesCanvas({
-        draftStore: context.draftStore,
-        publishedStore: context.publishedStore,
-        createCanvas: (definition) => definition,
-        CanvasError,
-        heartbeatMs: 60_000,
-    });
     const opened = await canvasDefinition.canvas.open({
-        instanceId: "release-evaluation",
+        instanceId: "release-evaluation-published",
         input: {
             researchId: first.bundle.researchId,
             version: 1,
@@ -262,6 +353,11 @@ async function runEndToEnd(root) {
     const superseded = await context.publishedStore.get(first.bundle.researchId, 1);
     return {
         prepare: "deep",
+        dynamicRouting: {
+            mappings: Object.keys(context.operations).length,
+            routedTool: context.routedCalls[0]?.name,
+        },
+        draftCanvas: draftProjection.status,
         publishedVersions: [1, 2],
         acknowledgement: acknowledged.structuredContent.outcome,
         canvas: projection.status,
@@ -294,6 +390,9 @@ export async function runReleaseEvaluation({
         }
     };
     try {
+        await gate("dynamic-production-routing", ["dynamic-production-routing"], () => (
+            runDynamicRoutingGate(corpus)
+        ));
         await gate("search-shapes", ["concepts", "sdk-methods", "tutorials", "zero-results"], () => {
             const counts = {};
             for (const entry of corpus.searchCases) {
@@ -514,7 +613,7 @@ export async function runReleaseEvaluation({
                 authoritative,
             };
         });
-        await gate("end-to-end-release", ["end-to-end"], () => (
+        await gate("end-to-end-release", ["end-to-end", "draft-canvas-lifecycle"], () => (
             runEndToEnd(join(root, "end-to-end"))
         ));
     } finally {

@@ -1,12 +1,15 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import {
     lstat,
     mkdir,
     open,
+    readdir,
     realpath,
     rename,
     rm,
+    rmdir,
+    unlink,
 } from "node:fs/promises";
 import {
     basename,
@@ -18,6 +21,10 @@ import {
 export const TELEMETRY_MAX_FILE_BYTES = 256 * 1024;
 export const TELEMETRY_MAX_FILES = 4;
 const TELEMETRY_FILENAME = "telemetry.ndjson";
+const TELEMETRY_LOCK_DIRECTORY = ".telemetry-lock";
+const TELEMETRY_LOCK_OWNER = "owner.json";
+const TELEMETRY_LOCK_TIMEOUT_MS = 10_000;
+const TELEMETRY_LOCK_RETRY_MS = 5;
 const OPERATIONS = new Set([
     "prepare_learn_research",
     "record_learn_evidence",
@@ -210,11 +217,142 @@ async function rotate(root, maxFiles, maxFileBytes) {
     }
 }
 
+function delay(milliseconds) {
+    return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
+}
+
+    async function assertRootSafe(root) {
+        const metadata = await lstat(root);
+        if (metadata.isSymbolicLink() || !metadata.isDirectory()) {
+            telemetryFail("UNSAFE_PATH", "Telemetry root must remain a real directory");
+        }
+        if (await realpath(root) !== root) {
+            telemetryFail("UNSAFE_PATH", "Telemetry root cannot traverse symbolic links");
+        }
+    }
+
+    async function readLockOwner(ownerPath) {
+        const handle = await open(ownerPath, constants.O_RDONLY | constants.O_NOFOLLOW);
+        try {
+            const metadata = await handle.stat();
+            if (!metadata.isFile() || metadata.size > 1_024) {
+                telemetryFail("UNSAFE_PATH", "Telemetry lock owner must be a bounded regular file");
+            }
+            const value = JSON.parse(await handle.readFile("utf8"));
+            if (
+                !value
+                || typeof value !== "object"
+                || typeof value.token !== "string"
+                || !/^[0-9a-f-]{36}$/.test(value.token)
+            ) {
+                telemetryFail("INVALID_TELEMETRY_LOCK", "Telemetry lock owner is invalid");
+            }
+            return value;
+        } finally {
+            await handle.close();
+        }
+    }
+
+    async function releaseTelemetryLock(lockPath, token) {
+        const metadata = await lstat(lockPath);
+        if (metadata.isSymbolicLink() || !metadata.isDirectory()) {
+            telemetryFail("UNSAFE_PATH", "Telemetry lock must remain a real directory");
+        }
+        const ownerPath = join(lockPath, TELEMETRY_LOCK_OWNER);
+        const owner = await readLockOwner(ownerPath);
+        if (owner.token !== token) {
+            telemetryFail("TELEMETRY_LOCK_OWNERSHIP_LOST", "Telemetry lock ownership changed");
+        }
+        const entries = await readdir(lockPath);
+        if (entries.length !== 1 || entries[0] !== TELEMETRY_LOCK_OWNER) {
+            telemetryFail("UNSAFE_PATH", "Telemetry lock contains unexpected entries");
+        }
+        await unlink(ownerPath);
+        await rmdir(lockPath);
+    }
+
+    async function acquireTelemetryLock(root, timeoutMs, retryMs) {
+        await assertRootSafe(root);
+        const lockPath = join(root, TELEMETRY_LOCK_DIRECTORY);
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < timeoutMs) {
+            try {
+                await mkdir(lockPath, { mode: 0o700 });
+            } catch (error) {
+                if (error?.code !== "EEXIST") {
+                    throw error;
+                }
+                let metadata;
+                try {
+                    metadata = await lstat(lockPath);
+                } catch (inspectionError) {
+                    if (inspectionError?.code === "ENOENT") {
+                        continue;
+                    }
+                    throw inspectionError;
+                }
+                if (metadata.isSymbolicLink() || !metadata.isDirectory()) {
+                    telemetryFail("UNSAFE_PATH", "Telemetry lock must be a real directory");
+                }
+                await delay(retryMs);
+                continue;
+            }
+            const token = randomUUID();
+            const ownerPath = join(lockPath, TELEMETRY_LOCK_OWNER);
+            let ownerCreated = false;
+            try {
+                const handle = await open(
+                    ownerPath,
+                    constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY
+                        | constants.O_NOFOLLOW,
+                    0o600,
+                );
+                ownerCreated = true;
+                try {
+                    await handle.writeFile(JSON.stringify({ pid: process.pid, token }), "utf8");
+                    await handle.sync();
+                } finally {
+                    await handle.close();
+                }
+            } catch (error) {
+                try {
+                    if (ownerCreated) {
+                        await unlink(ownerPath);
+                    }
+                    await rmdir(lockPath);
+                } catch (cleanupError) {
+                    telemetryFail(
+                        "TELEMETRY_LOCK_CLEANUP_FAILED",
+                        "Failed to clean up an incomplete telemetry lock",
+                        { cause: cleanupError },
+                    );
+                }
+                throw error;
+            }
+            return () => releaseTelemetryLock(lockPath, token);
+        }
+        telemetryFail(
+            "TELEMETRY_LOCK_TIMEOUT",
+            "Timed out waiting for the bounded telemetry lock",
+        );
+    }
+
+async function withTelemetryLock(root, timeoutMs, retryMs, operation) {
+    const release = await acquireTelemetryLock(root, timeoutMs, retryMs);
+    try {
+        return await operation();
+    } finally {
+        await release();
+    }
+}
+
 export class LocalStructuredTelemetry {
     #root;
     #maxFileBytes;
     #maxFiles;
     #now;
+    #lockTimeoutMs;
+    #lockRetryMs;
     #pending = Promise.resolve();
 
     static async create({
@@ -222,25 +360,36 @@ export class LocalStructuredTelemetry {
         maxFileBytes = TELEMETRY_MAX_FILE_BYTES,
         maxFiles = TELEMETRY_MAX_FILES,
         now = () => new Date().toISOString(),
+        lockTimeoutMs = TELEMETRY_LOCK_TIMEOUT_MS,
+        lockRetryMs = TELEMETRY_LOCK_RETRY_MS,
     }) {
         boundedInteger(maxFileBytes, "maxFileBytes", 8_000_000);
         boundedInteger(maxFiles, "maxFiles", 10);
         if (maxFileBytes < 512 || maxFiles < 1) {
             telemetryFail("INVALID_LIMIT", "Telemetry limits are below their safe minimum");
         }
+        boundedInteger(lockTimeoutMs, "lockTimeoutMs", 30_000);
+        boundedInteger(lockRetryMs, "lockRetryMs", 1_000);
+        if (lockTimeoutMs < 10 || lockRetryMs < 1 || lockRetryMs > lockTimeoutMs) {
+            telemetryFail("INVALID_LIMIT", "Telemetry lock limits are outside safe bounds");
+        }
         return new LocalStructuredTelemetry(
             await prepareRoot(root),
             maxFileBytes,
             maxFiles,
             now,
+            lockTimeoutMs,
+            lockRetryMs,
         );
     }
 
-    constructor(root, maxFileBytes, maxFiles, now) {
+    constructor(root, maxFileBytes, maxFiles, now, lockTimeoutMs, lockRetryMs) {
         this.#root = root;
         this.#maxFileBytes = maxFileBytes;
         this.#maxFiles = maxFiles;
         this.#now = now;
+        this.#lockTimeoutMs = lockTimeoutMs;
+        this.#lockRetryMs = lockRetryMs;
     }
 
     record(input) {
@@ -250,31 +399,45 @@ export class LocalStructuredTelemetry {
             if (bytes > this.#maxFileBytes) {
                 telemetryFail("EVENT_TOO_LARGE", "Telemetry event exceeds the file bound");
             }
-            const current = filePath(this.#root);
-            const metadata = await inspectFile(current, this.#maxFileBytes);
-            if (metadata && metadata.size + bytes > this.#maxFileBytes) {
-                await rotate(this.#root, this.#maxFiles, this.#maxFileBytes);
-            }
-            const handle = await open(
-                current,
-                constants.O_CREAT | constants.O_APPEND | constants.O_WRONLY
-                    | constants.O_NOFOLLOW,
-                0o600,
-            ).catch((error) => {
-                if (error?.code === "ELOOP") {
-                    telemetryFail("UNSAFE_PATH", "Telemetry files cannot be symbolic links");
+            await withTelemetryLock(
+                this.#root,
+                this.#lockTimeoutMs,
+                this.#lockRetryMs,
+                async () => {
+                const current = filePath(this.#root);
+                const metadata = await inspectFile(current, this.#maxFileBytes);
+                if (metadata && metadata.size + bytes > this.#maxFileBytes) {
+                    await rotate(this.#root, this.#maxFiles, this.#maxFileBytes);
                 }
-                throw error;
+                const handle = await open(
+                    current,
+                    constants.O_CREAT | constants.O_APPEND | constants.O_WRONLY
+                        | constants.O_NOFOLLOW,
+                    0o600,
+                ).catch((error) => {
+                    if (error?.code === "ELOOP") {
+                        telemetryFail("UNSAFE_PATH", "Telemetry files cannot be symbolic links");
+                    }
+                    throw error;
+                    },
+                );
+                try {
+                    const metadataAfterOpen = await handle.stat();
+                    if (!metadataAfterOpen.isFile()) {
+                        telemetryFail("UNSAFE_PATH", "Telemetry entry is not a regular file");
+                    }
+                    if (metadataAfterOpen.size + bytes > this.#maxFileBytes) {
+                        telemetryFail(
+                            "FILE_TOO_LARGE",
+                            "Telemetry file changed beyond its bound while locked",
+                        );
+                    }
+                    await handle.writeFile(text, "utf8");
+                    await handle.sync();
+                } finally {
+                    await handle.close();
+                }
             });
-            try {
-                const metadataAfterOpen = await handle.stat();
-                if (!metadataAfterOpen.isFile()) {
-                    telemetryFail("UNSAFE_PATH", "Telemetry entry is not a regular file");
-                }
-                await handle.writeFile(text, "utf8");
-            } finally {
-                await handle.close();
-            }
         };
         const result = this.#pending.then(operation, operation);
         this.#pending = result.catch(() => {});

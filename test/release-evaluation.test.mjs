@@ -36,6 +36,12 @@ test("offline release corpus passes every deterministic production gate", async 
     assert.equal(first.passed, true);
     assert.equal(first.totals.failed, 0);
     assert.equal(first.coverage.missing.length, 0);
+    const routing = first.gates.find((gate) => gate.id === "dynamic-production-routing");
+    assert.equal(routing.observed.routedFetch, true);
+    assert.equal(routing.observed.operations, 3);
+    const lifecycle = first.gates.find((gate) => gate.id === "end-to-end-release");
+    assert.equal(lifecycle.observed.draftCanvas, "validated");
+    assert.equal(lifecycle.observed.canvas, "published");
     assert.deepEqual(first, second);
     assert.deepEqual(await readdir(root), []);
     assert.equal(

@@ -254,6 +254,34 @@ function backoffDelay(attempt, policy, random) {
     return Math.max(0, Math.min(policy.maxDelayMs, Math.round(exponential + jitter)));
 }
 
+function assertSafeResponse(response, endpoint) {
+    if (
+        response.redirected
+        || (response.status >= 300 && response.status <= 399)
+    ) {
+        transportFail(
+            "UNSAFE_PROTOCOL_REDIRECT",
+            "Microsoft Learn MCP responses cannot be redirected",
+            { status: response.status },
+        );
+    }
+    if (response.url) {
+        const responseUrl = new URL(response.url);
+        const endpointUrl = new URL(endpoint);
+        if (
+            responseUrl.protocol !== endpointUrl.protocol
+            || responseUrl.hostname !== endpointUrl.hostname
+            || responseUrl.port !== endpointUrl.port
+        ) {
+            transportFail(
+                "UNSAFE_PROTOCOL_REDIRECT",
+                "Microsoft Learn MCP response resolved outside the configured origin",
+                { status: response.status },
+            );
+        }
+    }
+}
+
 export class LearnMcpHttpTransport {
     constructor({
         endpoint = DEFAULT_ENDPOINT,
@@ -324,11 +352,15 @@ export class LearnMcpHttpTransport {
                     method: "POST",
                     headers: this.headers(),
                     body,
-                    redirect: "error",
+                    redirect: "manual",
                     signal: AbortSignal.timeout(this.timeoutMs),
                 });
+                assertSafeResponse(response, this.endpoint);
                 lastFailure = undefined;
             } catch (cause) {
+                if (cause instanceof LearnMcpTransportError) {
+                    throw cause;
+                }
                 lastFailure = cause;
                 response = undefined;
             }
@@ -341,7 +373,10 @@ export class LearnMcpHttpTransport {
             const advised = response
                 ? retryAfterMs(response, this.clock, this.retryPolicy.maxRetryAfterMs)
                 : undefined;
-            const delayMs = advised ?? backoffDelay(attempt, this.retryPolicy, this.random);
+            const delayMs = Math.min(
+                this.retryPolicy.maxDelayMs,
+                advised ?? backoffDelay(attempt, this.retryPolicy, this.random),
+            );
             if (totalDelayMs + delayMs > this.retryPolicy.maxTotalDelayMs) {
                 break;
             }
@@ -362,28 +397,6 @@ export class LearnMcpHttpTransport {
                     totalDelayMs,
                 },
             });
-        }
-        if (response.redirected) {
-            transportFail(
-                "UNSAFE_PROTOCOL_REDIRECT",
-                "Microsoft Learn MCP responses cannot be redirected",
-                { status: response.status },
-            );
-        }
-        if (response.url) {
-            const responseUrl = new URL(response.url);
-            const endpointUrl = new URL(this.endpoint);
-            if (
-                responseUrl.protocol !== endpointUrl.protocol
-                || responseUrl.hostname !== endpointUrl.hostname
-                || responseUrl.port !== endpointUrl.port
-            ) {
-                transportFail(
-                    "UNSAFE_PROTOCOL_REDIRECT",
-                    "Microsoft Learn MCP response resolved outside the configured origin",
-                    { status: response.status },
-                );
-            }
         }
         const sessionId = response.headers.get("mcp-session-id");
         if (sessionId) {

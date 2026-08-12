@@ -22,7 +22,9 @@ configured draft, published, or telemetry root.
 
 When enabled, telemetry stores allowlisted NDJSON operation events in at most four 256 KiB files
 (1 MiB maximum retained payload before filesystem metadata). Files use owner-only permissions,
-rotation is serialized, and roots/files may not be symbolic links. Events contain only timestamp,
+rotation and append are serialized across instances/processes by a bounded per-root lock, and
+roots/files/locks may not be symbolic links. Lock contention fails explicitly rather than dropping
+records or writing past a cap. Events contain only timestamp,
 operation/outcome, bounded duration/counts, coarse error kind, optional retry/cache state, and an
 opaque research-ID hash. They never contain prompts, questions, URLs, excerpts, pages, argument
 JSON, session messages, secrets, raw errors, or absolute paths.
@@ -62,7 +64,8 @@ Tool handlers throw structured contract, adapter, or storage errors. Failed adap
 The HTTP transport defaults to three attempts, 100 ms exponential base delay, 1,000 ms per-delay
 cap, 2,000 ms total-delay cap, 2,000 ms bounded `Retry-After`, and 25% jitter. Configuration and
 hard safety caps are listed in `docs/setup.md`. Only 429, transient 5xx, timeout, and network
-failures retry. Rate limits and outages remain explicit failures.
+failures retry. Every chosen delay, including `Retry-After`, is clamped by the 1,000 ms default
+per-delay cap and then by the total-delay cap. Rate limits and outages remain explicit failures.
 
 ## Reference canvas operation
 
@@ -145,6 +148,11 @@ Run the deterministic offline benchmark:
 ```sh
 node scripts/run-release-evaluation.mjs
 ```
+
+The current corpus requires 9 production-backed gates and 25 coverage labels, including opaque
+runtime tool discovery/routing and distinct validated-draft then acknowledged-published canvas
+stages. The temporary-root lifecycle probe closes the draft panel before publication and opens a
+separate published panel only after parent acknowledgement.
 
 For an explicit bounded live check, use the runner's live option only from an environment where
 network access is approved. It must cap requests and timeouts, validate every returned citation as

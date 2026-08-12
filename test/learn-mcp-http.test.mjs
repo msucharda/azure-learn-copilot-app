@@ -228,14 +228,21 @@ test("HTTP transport rejects repeated pagination cursors", async () => {
 
 test("HTTP transport disables and rejects redirects", async () => {
     let redirectMode;
+    let calls = 0;
+    const delays = [];
     const fetchImplementation = async (_url, options) => {
+        calls += 1;
         redirectMode = options.redirect;
         return {
-            redirected: true,
-            status: 307,
+            redirected: false,
+            status: 302,
+            headers: new Headers({ location: "https://learn.microsoft.com/redirected" }),
         };
     };
-    const transport = new LearnMcpHttpTransport({ fetchImplementation });
+    const transport = new LearnMcpHttpTransport({
+        fetchImplementation,
+        sleep: async (delay) => delays.push(delay),
+    });
     await assert.rejects(
         transport.connect(),
         (error) => (
@@ -243,7 +250,9 @@ test("HTTP transport disables and rejects redirects", async () => {
             && error.code === "UNSAFE_PROTOCOL_REDIRECT"
         ),
     );
-    assert.equal(redirectMode, "error");
+    assert.equal(redirectMode, "manual");
+    assert.equal(calls, 1);
+    assert.deepEqual(delays, []);
 });
 
 test("HTTP transport rejects non-Learn endpoints", () => {
@@ -265,6 +274,42 @@ test("HTTP transport retries bounded 429 and honors bounded Retry-After", async 
                 return response({ error: "slow down" }, {
                     status: 429,
                     headers: { "retry-after": "0.2" },
+                });
+
+                test("HTTP transport clamps Retry-After to the common per-delay cap", async () => {
+                    const delays = [];
+                    let calls = 0;
+                    const transport = new LearnMcpHttpTransport({
+                        fetchImplementation: async (_url, options) => {
+                            calls += 1;
+                            const payload = JSON.parse(options.body);
+                            if (calls === 1) {
+                                return response("rate limited", {
+                                    status: 429,
+                                    headers: { "retry-after": "8" },
+                                });
+                            }
+                            return response({
+                                jsonrpc: "2.0",
+                                id: payload.id,
+                                result: {
+                                    protocolVersion: "2025-06-18",
+                                    capabilities: {},
+                                },
+                            });
+                        },
+                        retryPolicy: {
+                            maxAttempts: 2,
+                            baseDelayMs: 100,
+                            maxDelayMs: 1_000,
+                            maxTotalDelayMs: 2_000,
+                            maxRetryAfterMs: 10_000,
+                            jitterRatio: 0,
+                        },
+                        sleep: async (delay) => delays.push(delay),
+                    });
+                    await transport.connect();
+                    assert.deepEqual(delays, [1_000]);
                 });
             }
             return response({

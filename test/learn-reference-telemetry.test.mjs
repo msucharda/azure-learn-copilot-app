@@ -11,13 +11,43 @@ import {
     writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
+import { spawn } from "node:child_process";
 import test from "node:test";
 import {
     LocalStructuredTelemetry,
     createLearnReferenceTools,
     createLocalTelemetryFromEnv,
+    opaqueTelemetryHash,
 } from "../.github/extensions/learn-references/lib/index.mjs";
+
+function runTelemetryChild(args) {
+    return new Promise((resolve, reject) => {
+        const child = spawn(process.execPath, [
+            fileURLToPath(new URL(
+                "../.github/extensions/learn-references/test-support/telemetry-writer.mjs",
+                import.meta.url,
+            )),
+            ...args,
+        ], {
+            stdio: ["ignore", "ignore", "pipe"],
+        });
+        let stderr = "";
+        child.stderr.setEncoding("utf8");
+        child.stderr.on("data", (chunk) => {
+            stderr += chunk;
+        });
+        child.once("error", reject);
+        child.once("exit", (code) => {
+            if (code === 0) {
+                resolve();
+            } else {
+                reject(new Error(`telemetry child exited ${code}: ${stderr}`));
+            }
+        });
+    });
+}
 
 async function testRoot(t) {
     const root = await mkdtemp(join(
@@ -89,6 +119,7 @@ test("rotation and retention keep every telemetry file within hard bounds", asyn
         maxFileBytes,
         maxFiles: 3,
     });
+
     await Promise.all(Array.from({ length: 80 }, () => telemetry.record({
         operation: "prepare_learn_research",
         outcome: "success",
@@ -101,6 +132,63 @@ test("rotation and retention keep every telemetry file within hard bounds", asyn
         assert.match(entry, /^telemetry(?:\.[12])?\.ndjson$/);
         assert.ok((await stat(join(root, entry))).size <= maxFileBytes);
     }
+});
+
+test("multiple instances and a child process rotate under one bounded root lock", async (t) => {
+    const root = await testRoot(t);
+    const maxFileBytes = 700;
+    const maxFiles = 3;
+    const sentinel = "PRIVATE_PROMPT_URL_PAGE_BODY_SENTINEL";
+    const [first, second] = await Promise.all([
+        LocalStructuredTelemetry.create({ root, maxFileBytes, maxFiles }),
+        LocalStructuredTelemetry.create({ root, maxFileBytes, maxFiles }),
+    ]);
+    const event = {
+        operation: "prepare_learn_research",
+        outcome: "success",
+        durationMs: 2,
+        researchIdHash: opaqueTelemetryHash(sentinel),
+    };
+    await Promise.all([
+        ...Array.from({ length: 40 }, () => first.record(event)),
+        ...Array.from({ length: 40 }, () => second.record(event)),
+        runTelemetryChild([
+            root,
+            "40",
+            String(maxFileBytes),
+            String(maxFiles),
+            sentinel,
+        ]),
+    ]);
+    const entries = await readdir(root);
+    assert.equal(entries.includes(".telemetry-lock"), false);
+    assert.ok(entries.length <= maxFiles);
+    let retained = "";
+    for (const entry of entries) {
+        assert.match(entry, /^telemetry(?:\.[12])?\.ndjson$/);
+        assert.ok((await stat(join(root, entry))).size <= maxFileBytes);
+        retained += await readFile(join(root, entry), "utf8");
+    }
+    assert.equal(retained.includes(sentinel), false);
+});
+
+test("telemetry lock contention fails explicitly within its configured bound", async (t) => {
+    const root = await testRoot(t);
+    await mkdir(join(root, ".telemetry-lock"));
+    const telemetry = await LocalStructuredTelemetry.create({
+        root,
+        lockTimeoutMs: 20,
+        lockRetryMs: 1,
+    });
+    await assert.rejects(
+        telemetry.record({
+            operation: "prepare_learn_research",
+            outcome: "success",
+            durationMs: 1,
+        }),
+        (error) => error.code === "TELEMETRY_LOCK_TIMEOUT",
+    );
+    assert.deepEqual(await readdir(join(root, ".telemetry-lock")), []);
 });
 
 test("telemetry refuses a pre-existing file beyond its configured bound", async (t) => {
