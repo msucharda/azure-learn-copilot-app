@@ -43,6 +43,31 @@ A read requires payload, lifecycle, and commit files and recomputes the immutabl
 
 Tool handlers throw structured contract, adapter, or storage errors. Failed adapter/validation calls do not create success-shaped evidence records.
 
+## Reference canvas operation
+
+The `learn-references` canvas accepts:
+
+```json
+{
+  "researchId": "12345678-1234-4234-8234-123456789abc",
+  "version": 1,
+  "view": "published"
+}
+```
+
+`version` is optional and resolves to the latest complete record in the selected store. Inputs reject additional properties, malformed/non-lowercase UUIDs, non-positive or unsafe versions, and any view other than `draft` or `published`. Storage validation remains authoritative, so traversal, symlink, incomplete publication, malformed record, and content-hash failures are surfaced as unavailable errors without filesystem details.
+
+Every open panel owns an unpredictable loopback port on `127.0.0.1`; no port is configured or externally bound. Reopening or rehydrating the same instance reuses its server. Closing the panel releases its SSE clients, heartbeat, sockets, and port. At most eight SSE clients attach to one instance, heartbeat comments are sent every 25 seconds, repaint messages contain only a revision number, request bodies are limited to 256 bytes, and projected state is limited to 4,000,000 bytes.
+
+Agent-facing actions are read-only:
+
+| Action | Input | Effect |
+| --- | --- | --- |
+| `refresh` | `{}` | Revalidates the selected record and emits one SSE repaint event |
+| `set_support_filter` | `{ "support": "all\|supported\|partially-supported\|unsupported\|conflicting" }` | Changes the claim matrix filter for this panel |
+
+The embedded refresh button calls the same loopback-only refresh path. There is no publish endpoint, `session.send` bridge, remote script/style, or fetched-page route. If publishing is required, return to chat and invoke the `publish-research-draft` project skill explicitly.
+
 ## Bounds and retention
 
 - Fetch Markdown is limited to 262,144 characters and stays only in draft capture storage.

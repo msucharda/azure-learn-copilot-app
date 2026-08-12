@@ -1,13 +1,13 @@
 # Learn research architecture
 
-Status: schema version 1 contracts, deterministic evidence validation, the production extension tools, and atomic reference storage are implemented. The production canvas, nested-session orchestration, and rate-limit behavior are deferred.
+Status: schema version 1 contracts, deterministic evidence validation, the production extension tools, atomic reference storage, and the production read-only reference canvas are implemented. Nested-session orchestration and rate-limit behavior are deferred.
 
 ## Repository boundaries
 
 | Path | Responsibility |
 | --- | --- |
-| `.github/extensions/learn-references/extension.mjs` | Production tool registration and configured store startup |
-| `.github/extensions/learn-references/lib/` | Dependency-free contracts, hashing, Learn adapter, tool handlers, and storage |
+| `.github/extensions/learn-references/extension.mjs` | Production tool/canvas registration and configured store startup |
+| `.github/extensions/learn-references/lib/` | Dependency-free contracts, hashing, Learn adapter, tool handlers, storage, canvas provider, and renderer assets |
 | `.github/extensions/learn-references/fixtures/` | Bounded valid and invalid schema version 1 examples |
 | `.github/extensions/learn-references/test-support/` | Bounded generated test inputs; no fetched Learn pages |
 | `.github/extensions/learn-capability-spikes/` | Retained PR 0 diagnostics; not the production reference store |
@@ -15,6 +15,18 @@ Status: schema version 1 contracts, deterministic evidence validation, the produ
 | `docs/spikes/000-capability-spikes.md` | Validated runtime observations that constrain production design |
 
 The retained spike fallback tool is renamed `record_learn_spike_evidence`; the production extension owns `record_learn_evidence`.
+
+## Production reference canvas
+
+The production extension declares one project canvas type, `learn-references`. Its strict input is `{ researchId, version?, view }`; `researchId` is the stable evidence identity, `version` is a positive safe integer when present, and `view` is exactly `draft` or `published`. The caller-supplied canvas `instanceId` identifies only one panel and its ephemeral support filter. Two panels for the same evidence key independently serve the same persisted record.
+
+The provider reads through `DraftEvidenceStore` or `PublishedEvidenceStore` only. An omitted version resolves through the corresponding validated latest-read API. Draft reads recompute the evidence content hash; published reads also require the complete payload, lifecycle, retention, and commit set already enforced by the published store. Missing, incomplete, malformed, unsafe, or hash-mismatched data produces an explicit unavailable error before a server is exposed.
+
+Each open instance receives its own standard-library HTTP server on an OS-selected port bound to `127.0.0.1`. Rehydrating the same instance reuses its server. `onClose` clears the heartbeat, ends bounded SSE clients, destroys remaining sockets, and releases the port. The `refresh` action and same-origin refresh endpoint validate the current store read before emitting a small SSE repaint event; `set_support_filter` changes per-panel presentation only. Neither action mutates evidence.
+
+The renderer receives a bounded projection containing the question/claim summary, scope, official-skill provenance, claim/source relationships, exact excerpts, verification and retrieval metadata, unresolved/conflicting items, lifecycle, version, and content hash. It never receives capture records or fetched Markdown. Static HTML contains no evidence values. Browser code creates elements and assigns untrusted strings with `textContent`; it never uses untrusted `innerHTML`.
+
+Only exact HTTPS `learn.microsoft.com` URLs without credentials or custom ports become links, and links use `noopener noreferrer`. The server applies a deny-by-default CSP with same-origin scripts, styles, and connections only; there are no remote assets, wildcard bindings, iframe-to-agent bridges, or publish controls. Publication remains an explicit agent turn through the retained project skill.
 
 ## Evidence bundle schema version 1
 
