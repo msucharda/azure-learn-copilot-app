@@ -7,28 +7,27 @@ description: Validate and publish the current Microsoft Learn research Markdown 
 
 Use this skill only after the user explicitly says **publish** or clearly requests a parent handoff.
 
-1. When a nested-session Markdown draft exists, keep it in that file and open it in the editor canvas while it is reviewed. If the read-only researcher has no draft file, accept its complete bounded current schema-version-1 evidence bundle and draft state from the active context; do not create a file solely to publish.
+1. Keep review in the child session and its `learn-references` draft canvas. If a nested-session Markdown draft also exists, it may remain in that file, but the persisted bounded schema-version-1 bundle is authoritative. Do not create a file solely to publish.
 2. Read the complete bounded draft state and evidence bundle before publishing. Reject the request if required evidence, source captures, production decisions, or validation results are missing.
-3. Call `validate_research_bundle` with the complete bundle. Deterministic validation failures remain explicit and stop publication.
-4. Call `publish_research_bundle` only after validation succeeds, then call `get_research_bundle` for the same `researchId` and version to confirm the immutable published record.
+3. Build the complete bounded schema-version-1 handoff envelope from the bundle. Call `validate_research_bundle` with the complete bundle. Deterministic validation failures remain explicit and stop publication and handoff.
+4. Call `publish_research_bundle` with the validated bundle and handoff only after validation succeeds, then call `get_research_bundle` for the same `researchId` and version. Verify identity, version, status, content hash, parent binding, child binding when present, researcher agent, and `publishedAt` before sending anything.
 5. Do not publish full Microsoft Learn pages, secrets, local absolute paths, runtime session IDs in repository content, or unbounded tool output.
-6. Build a concise handoff containing:
-   - PASS/PARTIAL/FAIL matrix
-   - production decisions and fallbacks
-   - changed files
-   - validation results
-   - commit SHA and PR URL when available
-   - blockers that affect later work
-7. If a coordinator session ID is present in the active task context, send the handoff with the app-native session messaging tool using immediate delivery. Never copy that live ID into the draft.
-8. If app-native messaging is unavailable or no coordinator is in context, return this manual envelope in chat:
+6. If the coordinator parent session ID is present in active runtime context, call app-native `send_session_message` with `delivery_mode: "immediate"` and message content equal to the schema-version-1 handoff envelope JSON only. Send exactly once after successful read-back. Never send a draft, extra prose, a fetched page, or a live ID outside the envelope's schema field.
+7. If app-native messaging is unavailable, return the same complete bounded schema-version-1 handoff envelope as copyable JSON in chat. Do not invent a success-shaped substitute:
 
-```text
-[RESEARCH_DRAFT_PUBLISH]
-status: ready
-source: <repository-relative Markdown path>
-summary: <bounded summary>
-decisions: <bounded production decisions>
-validation: <bounded validation results>
+```json
+{
+  "schemaVersion": 1,
+  "researchId": "<uuid-v4>",
+  "version": 1,
+  "status": "published",
+  "parentSessionId": "<uuid-v4>",
+  "researcherAgent": "learn-researcher",
+  "executiveFindings": [{"claimId":"claim-example","text":"<bounded finding>"}],
+  "unresolvedRisks": [],
+  "contentHash": "<sha256>",
+  "publishedAt": "<timestamp>"
+}
 ```
 
-The user's publish message is confirmation to validate, publish, verify, and hand off the current file; it is not permission to bypass missing evidence or validation. There is no iframe publish control.
+The user's publish message is confirmation to validate, publish, verify, and hand off the current bundle; it is not permission to bypass missing evidence or validation. Publishing is an agent turn. There is no canvas button, iframe publish control, or session-send bridge.

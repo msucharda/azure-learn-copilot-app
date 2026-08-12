@@ -7,6 +7,8 @@ const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
 const PUBLISH_PATH = ".github/skills/publish-research-draft/SKILL.md";
+const START_PATH = ".github/skills/start-learn-research/SKILL.md";
+const CONSUME_PATH = ".github/skills/consume-research-handoff/SKILL.md";
 
 function frontmatter(markdown) {
     const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
@@ -96,7 +98,7 @@ test("router exclusions and uncovered products remain unresolved", async () => {
 test("researcher allows only routing, bounded reading, and production evidence tools", async () => {
     const researcher = await readFile(RESEARCHER_PATH, "utf8");
     const header = frontmatter(researcher);
-    assert.match(header, /tools: \["skill", "read", "record_learn_evidence", "read_learn_evidence_capture", "validate_research_bundle", "publish_research_bundle", "get_research_bundle"\]/);
+    assert.match(header, /tools: \["skill", "read", "open_canvas", "send_session_message", "record_learn_evidence", "read_learn_evidence_capture", "persist_research_draft", "validate_research_bundle", "publish_research_bundle", "get_research_bundle"\]/);
     assert.doesNotMatch(header, /\b(?:edit|bash|shell|write)\b/);
     assert.match(researcher, /invoke exactly one `primary_skill` by exact name/i);
     assert.match(researcher, /more than three calendar months old/i);
@@ -155,9 +157,31 @@ test("publish workflow validates, publishes, and verifies only on explicit reque
     assert.match(researcher, /Never perform the validation, publication, immutable read-back, or handoff sequence directly outside the publish skill/);
     assert.doesNotMatch(researcher, /On explicit publication, use `publish_research_bundle`/);
     assert.match(publish, /user explicitly says \*\*publish\*\*/i);
-    assert.match(publish, /If the read-only researcher has no draft file, accept its complete bounded current schema-version-1 evidence bundle and draft state/);
+    assert.match(publish, /persisted bounded schema-version-1 bundle is authoritative/);
     assert.match(publish, /`validate_research_bundle`/);
     assert.match(publish, /`publish_research_bundle`/);
     assert.match(publish, /`get_research_bundle`/);
-    assert.match(publish, /There is no iframe publish control/);
+    assert.match(publish, /There is no canvas button, iframe publish control, or session-send bridge/);
+});
+
+test("two-speed start and published-only consumption use app-native session boundaries", async () => {
+    const [start, consume, publish] = await Promise.all([
+        readFile(START_PATH, "utf8"),
+        readFile(CONSUME_PATH, "utf8"),
+        readFile(PUBLISH_PATH, "utf8"),
+    ]);
+    assert.match(start, /\*\*Refine here\*\* and \*\*Open deep research session\*\*/);
+    assert.match(start, /no programmatic Quick Chat creation API/);
+    assert.match(start, /`coordinate_with_creator: true`/);
+    assert.match(start, /`notify_on_idle: "once"`/);
+    assert.match(start, /"mode": "interactive"/);
+    assert.match(start, /"agent": "learn-researcher"/);
+    assert.match(start, /Reuse the returned UUID-v4/);
+    assert.match(start, /parent does not read, retrieve, summarize, or synthesize child draft evidence/);
+    assert.match(consume, /Call `get_research_bundle`/);
+    assert.match(consume, /Call `acknowledge_research_handoff`/);
+    assert.match(consume, /"view":"published"/);
+    assert.match(consume, /Never open the child's draft view/);
+    assert.match(publish, /message content equal to the schema-version-1 handoff envelope JSON only/);
+    assert.match(publish, /`delivery_mode: "immediate"`/);
 });

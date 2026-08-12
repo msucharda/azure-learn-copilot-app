@@ -1,6 +1,6 @@
 # Learn research architecture
 
-Status: schema version 1 contracts, deterministic evidence validation, production extension tools, compact official-skill routing, production researcher/critic agents, atomic reference storage, and the production read-only reference canvas are implemented. Nested-session orchestration and rate-limit behavior are deferred.
+Status: schema version 1 contracts, deterministic evidence validation, production extension tools, compact official-skill routing, production researcher/critic agents, atomic reference storage, the read-only reference canvas, and nested-session publish-back are implemented. Rate-limit behavior remains deferred.
 
 ## Repository boundaries
 
@@ -11,6 +11,8 @@ Status: schema version 1 contracts, deterministic evidence validation, productio
 | `.github/extensions/learn-references/fixtures/` | Bounded valid and invalid schema version 1 examples |
 | `.github/extensions/learn-references/test-support/` | Bounded generated test inputs; no fetched Learn pages |
 | `.github/skills/project-azure-learn-skill-router/SKILL.md` | Generated bounded allow-list that selects one exact external official skill |
+| `.github/skills/start-learn-research/SKILL.md` | Two-speed quick refinement and app-native coordinated child-session promotion |
+| `.github/skills/consume-research-handoff/SKILL.md` | Stored publication verification, acknowledgement, and published-canvas consumption |
 | `.github/agents/learn-researcher.agent.md` | Read-only production researcher with evidence-tool write access only |
 | `.github/agents/citation-critic.agent.md` | Read-only support classifier over supplied bounded evidence |
 | `.github/extensions/learn-capability-spikes/` | Retained PR 0 diagnostics; not the production reference store |
@@ -34,6 +36,18 @@ Each open instance receives its own standard-library HTTP server on an OS-select
 The renderer receives a bounded projection containing the question/claim summary, scope, official-skill provenance, claim/source relationships, exact excerpts, verification and retrieval metadata, unresolved/conflicting items, lifecycle, version, and content hash. It never receives capture records or fetched Markdown. Static HTML contains no evidence values. Browser code creates elements and assigns untrusted strings with `textContent`; it never uses untrusted `innerHTML`.
 
 Only exact HTTPS `learn.microsoft.com` URLs without credentials or custom ports become links, and links use `noopener noreferrer`. The server applies a deny-by-default CSP with same-origin scripts, styles, and connections only; there are no remote assets, wildcard bindings, iframe-to-agent bridges, or publish controls. Publication remains an explicit agent turn through the retained project skill.
+
+## Nested research and publish-back
+
+The parent starts with exactly two workflow choices. **Refine here** keeps the bounded state in the current chat. **Open deep research session** uses `prepare_learn_research` to create or retain one UUID-v4 `researchId` and a standalone kickoff containing the original question, normalized scope, constraints, bounded evidence seed, unresolved questions, and parent binding. The parent creates a coordinated interactive child with the `learn-researcher` agent and idle notification. Side Chat is a separate user-initiated UI path; no programmatic Quick Chat creation API is available.
+
+Promotion retains the domain state but not evidence authority. The child re-fetches and records every source needed for validation, persists non-published bundles with `persist_research_draft`, and opens `learn-references` in draft view using a stable panel instance ID unrelated to `researchId`. Refinement stays in the child. The parent never reads or synthesizes draft evidence.
+
+Publication begins only on an explicit user turn in the child. `publish-research-draft` validates, atomically publishes the bundle and bounded schema-v1 handoff, reads the immutable version back, and sends only that envelope to the coordinator using immediate app-native session messaging. If messaging is unavailable, the exact same envelope is copyable manually. There is no canvas publish button or iframe/session-send bridge.
+
+The parent calls `get_research_bundle`, verifies identity, version, content hash, parent/child binding, agent, and publication time, then calls `acknowledge_research_handoff`. The acknowledgement tool independently compares the delivered envelope with the stored handoff and immutable bundle. Identical duplicate delivery is idempotent; a conflicting duplicate fails; delivery older than the newest consumed version returns `stale` and creates no older acknowledgement. Failures write no acknowledgement, so delivery remains retryable. Only successful acknowledgement permits a published-view canvas open.
+
+A later active published version can append supersession metadata to an older version. The superseding version must be the latest active publication and greater than the target. Supersession never rewrites the older payload, commit, initial lifecycle, or retention records and cannot regress latest-version or acknowledgement state.
 
 ## Evidence bundle schema version 1
 

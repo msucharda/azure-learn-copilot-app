@@ -1,6 +1,6 @@
 # azure-learn-copilot-app
 
-Foundation for a sourced Microsoft Learn research-agent system. PR 0 validated runtime capabilities, PR 1 defined schema version 1 contracts, and the production evidence pipeline implements deterministic validation, bounded Learn-result adaptation, atomic published storage, compact official-skill routing, production researcher agents, and a read-only reference canvas.
+Foundation for a sourced Microsoft Learn research-agent system. The production pipeline implements deterministic validation, bounded Learn-result adaptation, atomic published storage, compact official-skill routing, isolated nested research, verified publish-back, and a read-only reference canvas.
 
 ## Retained spike scaffold
 
@@ -14,7 +14,7 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 
 ## Production evidence pipeline
 
-- `.github/extensions/learn-references/extension.mjs` registers `record_learn_evidence`, bounded `read_learn_evidence_capture`, `validate_research_bundle`, `publish_research_bundle`, and `get_research_bundle`.
+- `.github/extensions/learn-references/extension.mjs` registers bounded research preparation, evidence capture, draft persistence, validation, publication, immutable read-back, acknowledgement, and supersession tools.
 - The same extension registers the `learn-references` project canvas. Open it with `{ researchId, version?, view }`, where `view` is `draft` or `published`; omit `version` to read the latest complete version.
 - `.github/extensions/learn-references/lib/` contains dependency-free contract, hashing, MCP adapter, tool-handler, storage, canvas-provider, and DOM-renderer modules.
 - `.github/extensions/learn-references/fixtures/` contains bounded schema version 1 examples and rejection cases.
@@ -27,6 +27,8 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-functions` and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
 
 The reference canvas renders only bounded evidence fields already accepted by the draft or published stores. It never serves retained fetched Markdown, does not expose publishing controls, and does not bridge iframe input into an agent turn. Publishing remains the explicit `publish-research-draft` chat skill.
+
+`start-learn-research` provides the two-speed **Refine here** or coordinated interactive child-session flow. `consume-research-handoff` verifies stored publication identity and parent binding, records an idempotent no-regression acknowledgement, and only then opens the published reference canvas. Side Chat remains a user-created UI option because the host has no programmatic Quick Chat creation API.
 
 ## Validate
 

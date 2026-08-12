@@ -206,6 +206,10 @@ export const VALIDATE_RESEARCH_BUNDLE_SCHEMA = strictObject({
     bundle: EVIDENCE_BUNDLE_SCHEMA,
 });
 
+export const PERSIST_RESEARCH_DRAFT_SCHEMA = strictObject({
+    bundle: EVIDENCE_BUNDLE_SCHEMA,
+});
+
 export const PUBLISH_RESEARCH_BUNDLE_SCHEMA = strictObject({
     bundle: EVIDENCE_BUNDLE_SCHEMA,
     handoff: HANDOFF_ENVELOPE_SCHEMA,
@@ -215,3 +219,65 @@ export const GET_RESEARCH_BUNDLE_SCHEMA = strictObject({
     researchId: stringSchema(36, { pattern: UUID_V4 }),
     version: { type: "integer", minimum: 1 },
 }, ["researchId"]);
+
+const evidenceSeedSchema = strictObject({
+    summary: stringSchema(1_000),
+    sourceUrls: {
+        type: "array",
+        maxItems: 5,
+        items: stringSchema(2_048, { format: "uri" }),
+    },
+});
+
+export const PREPARE_LEARN_RESEARCH_SCHEMA = strictObject({
+    choice: {
+        type: "string",
+        enum: ["refine-here", "open-deep-research-session"],
+    },
+    researchId: stringSchema(36, { pattern: UUID_V4 }),
+    question: stringSchema(4_000),
+    normalizedQuestion: stringSchema(2_000),
+    scope: strictObject({
+        product: stringSchema(200),
+        version: stringSchema(120),
+        platform: stringSchema(120),
+        taskIntent: stringSchema(500),
+    }),
+    constraints: {
+        type: "array",
+        maxItems: 20,
+        items: stringSchema(500),
+    },
+    parentSessionId: stringSchema(36, { pattern: UUID_V4 }),
+    evidenceSeed: {
+        type: "array",
+        maxItems: 20,
+        items: evidenceSeedSchema,
+    },
+    unresolvedQuestions: {
+        type: "array",
+        maxItems: 20,
+        items: stringSchema(1_000),
+    },
+}, [
+    "choice",
+    "question",
+    "normalizedQuestion",
+    "scope",
+    "constraints",
+    "parentSessionId",
+    "evidenceSeed",
+    "unresolvedQuestions",
+]);
+
+export const ACKNOWLEDGE_RESEARCH_HANDOFF_SCHEMA = strictObject({
+    parentSessionId: stringSchema(36, { pattern: UUID_V4 }),
+    handoff: HANDOFF_ENVELOPE_SCHEMA,
+});
+
+export const SUPERSEDE_RESEARCH_BUNDLE_SCHEMA = strictObject({
+    researchId: stringSchema(36, { pattern: UUID_V4 }),
+    version: { type: "integer", minimum: 1 },
+    supersedingVersion: { type: "integer", minimum: 1 },
+    supersededAt: stringSchema(24, { pattern: TIMESTAMP }),
+});

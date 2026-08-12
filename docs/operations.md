@@ -38,9 +38,11 @@ A read requires payload, lifecycle, and commit files and recomputes the immutabl
 1. Discover Learn MCP tool definitions and map them to `docs-search`, `docs-fetch`, and `code-sample-search` with `LearnMcpAdapter`. Runtime names remain opaque.
 2. Call `record_learn_evidence` with a `researchId`, logical operation, and bounded JSON-encoded tool arguments. The extension invokes the discovered Learn tool through its trusted transport. Result bodies, digests, counts, runtime names, and source URLs are adapter output and cannot be supplied by the caller.
 3. For a fetch capture, call `read_learn_evidence_capture` with its `researchId`, `captureId`, and a bounded offset/length. It returns at most 4,096 exact Markdown characters and rejects non-fetch, cross-research, out-of-range, and complete-body reads.
-4. Use the returned `observedAt` as the source `retrievedAt`, then call `validate_research_bundle`. Every declared source must be a verified `docs-fetch` source backed by the same canonical/retrieval URL, content digest, timestamp, and exact excerpt.
-5. Call `publish_research_bundle`, optionally with a bounded handoff. Publication repeats validation and preflights the evidence key, all fetched-content budgets, and the handoff under one cross-process store lock before writing records. A dead-owner lock fails closed with `ABANDONED_STORAGE_LOCK`; remove that exact lock directory only after confirming no writer is active.
-6. Call `get_research_bundle` with a version or omit it for `latest`. Every read verifies the content digest.
+4. Use the returned `observedAt` as the source `retrievedAt`. Call `persist_research_draft` to validate and store a non-published bundle for the draft canvas; invalid bundles are not written.
+5. Call `validate_research_bundle`, then `publish_research_bundle` with the complete bounded handoff. Publication repeats validation and preflights the evidence key, all fetched-content budgets, and the handoff under one cross-process store lock before writing records. A dead-owner lock fails closed with `ABANDONED_STORAGE_LOCK`; remove that exact lock directory only after confirming no writer is active.
+6. Call `get_research_bundle` with the exact version to verify immutable read-back before handoff delivery.
+7. In the parent, call `get_research_bundle` and then `acknowledge_research_handoff` with the delivered envelope and current parent session ID. The tool accepts only the stored matching handoff/bundle, returns `duplicate` idempotently, and returns `stale` without regression for an older delivery.
+8. After publishing a valid later version, call `supersede_research_bundle` only when lifecycle metadata for an older version should become superseded.
 
 Tool handlers throw structured contract, adapter, or storage errors. Failed adapter/validation calls do not create success-shaped evidence records.
 
@@ -67,7 +69,13 @@ Agent-facing actions are read-only:
 | `refresh` | `{}` | Revalidates the selected record and emits one SSE repaint event |
 | `set_support_filter` | `{ "support": "all\|supported\|partially-supported\|unsupported\|conflicting" }` | Changes the claim matrix filter for this panel |
 
-The embedded refresh button calls the same loopback-only refresh path. There is no publish endpoint, `session.send` bridge, remote script/style, or fetched-page route. If publishing is required, return to chat and invoke the `publish-research-draft` project skill explicitly.
+The embedded refresh button calls the same loopback-only refresh path. There is no publish endpoint, `session.send` bridge, remote script/style, or fetched-page route. Publishing is an explicit child-agent turn through `publish-research-draft`.
+
+## Nested session operation
+
+Invoke `start-learn-research` in the parent. The deep path calls `prepare_learn_research`, then creates a coordinated interactive project child with the returned kickoff, `learn-researcher`, and an idle notification. The child uses `learn-draft-panel` (or another stable non-research ID) for the draft canvas. The parent uses a separate stable panel ID such as `learn-published-panel` only after verified acknowledgement.
+
+The end-to-end live publish probe is intentionally manual because production publication writes durable shared evidence. To test without pollution, start the extension with fresh temporary `COPILOT_LEARN_DRAFT_ROOT` and `COPILOT_LEARN_PUBLISHED_ROOT`, run quick preparation, promote the returned `researchId` into a coordinated child, record one bounded fetch, persist and open the draft, explicitly publish, verify immediate schema-v1 delivery in the parent, acknowledge it, and open `{ "researchId": "<same-id>", "version": 1, "view": "published" }`. Confirm a duplicate returns `duplicate`, then remove only those exact temporary roots.
 
 ## Bounds and retention
 
@@ -94,7 +102,7 @@ It contains two exact external entries, `azure-functions` and `microsoft-foundry
 
 Skill files cannot prove context reduction if the host injects the complete installed-skill catalog. Do not add telemetry or claim savings. For an out-of-band observation, run equivalent bounded prompts in fresh sessions: one with plugin-wide discovery and one with compact-router selection to the exact skill. Compare only host-visible input-token totals and skill/tool loading events, record host/model/plugin versions and prompt hashes, and report the observation without generalizing beyond that runtime.
 
-Project agent and skill changes may require a fresh turn or session before the runtime picker sees them. Reload extensions separately, inspect diagnostics, and use a fresh session for the bounded router-to-skill-to-fetch/record probe. Nested-session orchestration is not implemented here.
+Project agent and skill changes may require a fresh turn or session before the runtime picker sees them. Reload extensions separately, inspect diagnostics, and use a fresh session for the bounded router-to-skill-to-fetch/record probe.
 
 ## Validation
 

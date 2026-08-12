@@ -7,14 +7,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+    ACKNOWLEDGE_RESEARCH_HANDOFF_SCHEMA,
     DraftEvidenceStore,
     LearnMcpAdapterError,
+    PERSIST_RESEARCH_DRAFT_SCHEMA,
+    PREPARE_LEARN_RESEARCH_SCHEMA,
     PublishedEvidenceStore,
     READ_LEARN_EVIDENCE_CAPTURE_SCHEMA,
     RECORD_LEARN_EVIDENCE_SCHEMA,
+    SUPERSEDE_RESEARCH_BUNDLE_SCHEMA,
     createLearnReferenceTools,
 } from "../.github/extensions/learn-references/lib/index.mjs";
 import {
+    PARENT_SESSION_ID,
     RESEARCH_ID,
     clone,
     handoffFor,
@@ -30,6 +35,7 @@ async function harness(t) {
         root: join(root, "published"),
     });
     let execute = async () => trustedFetchResult(makePublishedEvidence());
+    let currentTime = "2026-08-12T09:01:00Z";
     const learnAdapter = {
         execute: (operation, args) => execute(operation, args),
     };
@@ -37,7 +43,7 @@ async function harness(t) {
         draftStore,
         publishedStore,
         learnAdapter,
-        now: () => "2026-08-12T09:01:00Z",
+        now: () => currentTime,
         uuid: () => "90000000-0000-4000-8000-000000000001",
     });
     return {
@@ -46,6 +52,9 @@ async function harness(t) {
         publishedStore,
         setExecute(callback) {
             execute = callback;
+        },
+        setNow(value) {
+            currentTime = value;
         },
         tool(name) {
             return tools.find((entry) => entry.name === name);
@@ -102,11 +111,15 @@ test("production extension exposes exactly the required strict tools", async (t)
     assert.deepEqual(
         tools.map((tool) => tool.name),
         [
+            "prepare_learn_research",
             "record_learn_evidence",
             "read_learn_evidence_capture",
+            "persist_research_draft",
             "validate_research_bundle",
             "publish_research_bundle",
             "get_research_bundle",
+            "acknowledge_research_handoff",
+            "supersede_research_bundle",
         ],
     );
     for (const tool of tools) {
@@ -114,6 +127,54 @@ test("production extension exposes exactly the required strict tools", async (t)
     }
     assert.equal(RECORD_LEARN_EVIDENCE_SCHEMA.properties.argumentsJson.maxLength, 20_000);
     assert.equal(READ_LEARN_EVIDENCE_CAPTURE_SCHEMA.properties.length.maximum, 4_096);
+    for (const schema of [
+        PREPARE_LEARN_RESEARCH_SCHEMA,
+        PERSIST_RESEARCH_DRAFT_SCHEMA,
+        ACKNOWLEDGE_RESEARCH_HANDOFF_SCHEMA,
+        SUPERSEDE_RESEARCH_BUNDLE_SCHEMA,
+    ]) {
+        assertStrictObjects(schema);
+    }
+});
+
+function researchStartInput(choice, researchId) {
+    return {
+        choice,
+        ...(researchId === undefined ? {} : { researchId }),
+        question: "How should nested research work?",
+        normalizedQuestion: "Verify nested Microsoft Learn research.",
+        scope: {
+            product: "Microsoft Foundry",
+            version: "current",
+            platform: "Copilot CLI",
+            taskIntent: "Produce bounded verified evidence.",
+        },
+        constraints: ["Use one official skill."],
+        parentSessionId: PARENT_SESSION_ID,
+        evidenceSeed: [{
+            summary: "A prior quick pass identified the relevant overview.",
+            sourceUrls: ["https://learn.microsoft.com/azure/ai-foundry/"],
+        }],
+        unresolvedQuestions: ["Which current API contract is authoritative?"],
+    };
+}
+
+test("quick refinement promotes to a standalone deep kickoff with one stable researchId", async (t) => {
+    const context = await harness(t);
+    const quick = await context.tool("prepare_learn_research").handler(
+        researchStartInput("refine-here"),
+    );
+    assert.equal(quick.structuredContent.kickoff, undefined);
+    const researchId = quick.structuredContent.state.researchId;
+    const deep = await context.tool("prepare_learn_research").handler(
+        researchStartInput("open-deep-research-session", researchId),
+    );
+    assert.equal(deep.structuredContent.state.researchId, researchId);
+    assert.match(deep.structuredContent.kickoff, new RegExp(researchId));
+    assert.match(deep.structuredContent.kickoff, /re-fetch and record every source/i);
+    assert.match(deep.structuredContent.kickoff, /instanceId "learn-draft-panel"/);
+    assert.match(deep.structuredContent.kickoff, /Publish only after an explicit user publish turn/i);
+    assert.equal(deep.structuredContent.kickoff.includes("fetchedMarkdown"), false);
 });
 
 test("record tool stores normalized fetch evidence and no full body in its result", async (t) => {
@@ -259,6 +320,36 @@ test("validate tool persists only a bundle whose quote occurs in fetched Markdow
     );
 });
 
+test("persist draft validates before making it available to the draft canvas store", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    await context.tool("record_learn_evidence").handler(recordInput(fixture));
+    const draft = clone(fixture.bundle);
+    draft.status = "draft";
+    draft.lifecycle = {
+        createdAt: draft.lifecycle.createdAt,
+        updatedAt: draft.lifecycle.createdAt,
+    };
+    const bundle = rehash(draft);
+    const result = await context.tool("persist_research_draft").handler({ bundle });
+    assert.equal(result.structuredContent.persisted, true);
+    assert.equal(
+        (await context.draftStore.readBundle(RESEARCH_ID, 1)).contentHash,
+        bundle.contentHash,
+    );
+
+    const invalid = clone(bundle);
+    invalid.sources[0].exactExcerpt = "Absent excerpt.";
+    await assert.rejects(
+        context.tool("persist_research_draft").handler({ bundle: rehash(invalid) }),
+        (error) => error.code === "EXACT_EXCERPT_MISMATCH",
+    );
+    assert.equal(
+        (await context.draftStore.readBundle(RESEARCH_ID, 1)).contentHash,
+        bundle.contentHash,
+    );
+});
+
 test("publish tool validates before writing and stores a separate handoff", async (t) => {
     const context = await harness(t);
     const fixture = makePublishedEvidence();
@@ -326,4 +417,123 @@ test("get tool reads explicit and latest versions through hash verification", as
     });
     assert.equal(explicit.structuredContent.bundle.contentHash, fixture.bundle.contentHash);
     assert.equal(latest.structuredContent.bundle.version, 1);
+});
+
+test("published handoff acknowledgement is verified, idempotent, and no-regression", async (t) => {
+    const context = await harness(t);
+    const first = makePublishedEvidence({ version: 1 });
+    const second = makePublishedEvidence({
+        version: 2,
+        question: "What changed in version two?",
+    });
+    for (const fixture of [first, second]) {
+        await context.draftStore.recordCapture(fixture.capture);
+        await context.tool("publish_research_bundle").handler({
+            bundle: fixture.bundle,
+            handoff: handoffFor(fixture.bundle),
+        });
+    }
+    context.setNow("2026-08-12T09:05:00Z");
+    const acknowledged = await context.tool("acknowledge_research_handoff").handler({
+        parentSessionId: PARENT_SESSION_ID,
+        handoff: handoffFor(second.bundle),
+    });
+    assert.equal(acknowledged.structuredContent.outcome, "acknowledged");
+    const duplicate = await context.tool("acknowledge_research_handoff").handler({
+        parentSessionId: PARENT_SESSION_ID,
+        handoff: handoffFor(second.bundle),
+    });
+    assert.equal(duplicate.structuredContent.outcome, "duplicate");
+    const stale = await context.tool("acknowledge_research_handoff").handler({
+        parentSessionId: PARENT_SESSION_ID,
+        handoff: handoffFor(first.bundle),
+    });
+    assert.equal(stale.structuredContent.outcome, "stale");
+    assert.equal(stale.structuredContent.acknowledgement.version, 2);
+    await assert.rejects(
+        context.publishedStore.getAcknowledgement(PARENT_SESSION_ID, RESEARCH_ID, 1),
+        (error) => error.code === "ACKNOWLEDGEMENT_NOT_FOUND",
+    );
+});
+
+test("conflicting or misbound deliveries fail without making the handoff unretryable", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    const handoff = handoffFor(fixture.bundle);
+    await context.draftStore.recordCapture(fixture.capture);
+    await context.tool("publish_research_bundle").handler({
+        bundle: fixture.bundle,
+        handoff,
+    });
+    const conflicting = clone(handoff);
+    conflicting.executiveFindings[0].text = "Different delivery prose.";
+    await assert.rejects(
+        context.tool("acknowledge_research_handoff").handler({
+            parentSessionId: PARENT_SESSION_ID,
+            handoff: conflicting,
+        }),
+        (error) => error.code === "HANDOFF_DELIVERY_CONFLICT",
+    );
+    const wrongHash = clone(handoff);
+    wrongHash.contentHash = "f".repeat(64);
+    await assert.rejects(
+        context.tool("acknowledge_research_handoff").handler({
+            parentSessionId: PARENT_SESSION_ID,
+            handoff: wrongHash,
+        }),
+        (error) => error.code === "HANDOFF_DELIVERY_CONFLICT",
+    );
+    await assert.rejects(
+        context.tool("acknowledge_research_handoff").handler({
+            parentSessionId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            handoff,
+        }),
+        (error) => error.code === "HANDOFF_PARENT_MISMATCH",
+    );
+    context.setNow("2026-08-12T09:05:00Z");
+    const retried = await context.tool("acknowledge_research_handoff").handler({
+        parentSessionId: PARENT_SESSION_ID,
+        handoff,
+    });
+    assert.equal(retried.structuredContent.outcome, "acknowledged");
+});
+
+test("later publication can supersede v1 without changing its immutable payload", async (t) => {
+    const context = await harness(t);
+    const first = makePublishedEvidence({ version: 1 });
+    const second = makePublishedEvidence({
+        version: 2,
+        question: "What changed in version two?",
+    });
+    await context.publishedStore.publish(first.bundle, [first.capture]);
+    await context.publishedStore.publish(second.bundle, [second.capture]);
+    const originalHash = (await context.publishedStore.get(RESEARCH_ID, 1)).contentHash;
+    const result = await context.tool("supersede_research_bundle").handler({
+        researchId: RESEARCH_ID,
+        version: 1,
+        supersedingVersion: 2,
+        supersededAt: "2026-08-12T09:10:00Z",
+    });
+    assert.equal(result.structuredContent.status, "superseded");
+    assert.equal((await context.publishedStore.get(RESEARCH_ID, 1)).contentHash, originalHash);
+    assert.equal((await context.publishedStore.getLatest(RESEARCH_ID)).version, 2);
+});
+
+test("publish read-back and handoff remain bounded and exclude fetched pages", async (t) => {
+    const context = await harness(t);
+    const fixture = makePublishedEvidence();
+    const handoff = handoffFor(fixture.bundle);
+    await context.draftStore.recordCapture(fixture.capture);
+    await context.tool("validate_research_bundle").handler({ bundle: fixture.bundle });
+    await context.tool("publish_research_bundle").handler({
+        bundle: fixture.bundle,
+        handoff,
+    });
+    const readBack = await context.tool("get_research_bundle").handler({
+        researchId: RESEARCH_ID,
+        version: 1,
+    });
+    assert.equal(readBack.structuredContent.bundle.contentHash, handoff.contentHash);
+    assert.equal(JSON.stringify(handoff).includes(fixture.markdown), false);
+    assert.equal(JSON.stringify(handoff).includes("fetchedMarkdown"), false);
 });

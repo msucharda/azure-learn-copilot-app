@@ -12,15 +12,24 @@ import {
     validateResearchBundleWithRetention,
 } from "./evidence-validation.mjs";
 import {
+    ACKNOWLEDGE_RESEARCH_HANDOFF_SCHEMA,
     GET_RESEARCH_BUNDLE_SCHEMA,
+    PERSIST_RESEARCH_DRAFT_SCHEMA,
+    PREPARE_LEARN_RESEARCH_SCHEMA,
     PUBLISH_RESEARCH_BUNDLE_SCHEMA,
     READ_LEARN_EVIDENCE_CAPTURE_SCHEMA,
     RECORD_LEARN_EVIDENCE_SCHEMA,
+    SUPERSEDE_RESEARCH_BUNDLE_SCHEMA,
     VALIDATE_RESEARCH_BUNDLE_SCHEMA,
 } from "./tool-schemas.mjs";
 import {
+    deepResearchKickoff,
+    normalizeResearchStart,
+} from "./nested-research.mjs";
+import {
     fail,
     normalizeResearchId,
+    normalizeSessionId,
     requireObject,
 } from "./validation.mjs";
 
@@ -127,6 +136,20 @@ export function createLearnReferenceTools({
     }
     return [
         {
+            name: "prepare_learn_research",
+            description: "Prepare bounded quick or nested Microsoft Learn research state",
+            parameters: PREPARE_LEARN_RESEARCH_SCHEMA,
+            handler: async (input) => {
+                const state = normalizeResearchStart(input, uuid);
+                return successResult({
+                    state,
+                    ...(state.choice === "open-deep-research-session"
+                        ? { kickoff: deepResearchKickoff(state) }
+                        : {}),
+                });
+            },
+        },
+        {
             name: "record_learn_evidence",
             description: "Record bounded Microsoft Learn result evidence in this workspace",
             parameters: RECORD_LEARN_EVIDENCE_SCHEMA,
@@ -207,6 +230,31 @@ export function createLearnReferenceTools({
             },
         },
         {
+            name: "persist_research_draft",
+            description: "Validate and persist a bounded non-published research draft for its canvas",
+            parameters: PERSIST_RESEARCH_DRAFT_SCHEMA,
+            handler: async (input) => {
+                const object = requireObject(input, "$", ["bundle"]);
+                const captures = await draftStore.listCaptures(object.bundle?.researchId);
+                const bundle = validateResearchBundle(object.bundle, captures);
+                if (!["draft", "validating", "validated"].includes(bundle.status)) {
+                    fail(
+                        "INVALID_DRAFT_STATUS",
+                        "$.bundle.status",
+                        "must be draft, validating, or validated",
+                    );
+                }
+                const stored = await draftStore.writeBundle(bundle);
+                return successResult({
+                    persisted: true,
+                    researchId: stored.researchId,
+                    version: stored.version,
+                    status: stored.status,
+                    contentHash: stored.contentHash,
+                });
+            },
+        },
+        {
             name: "validate_research_bundle",
             description: "Validate a research bundle, its digest, and exact fetched Learn excerpts",
             parameters: VALIDATE_RESEARCH_BUNDLE_SCHEMA,
@@ -264,6 +312,73 @@ export function createLearnReferenceTools({
                     ? await publishedStore.getLatest(researchId)
                     : await publishedStore.get(researchId, object.version);
                 return successResult({ bundle });
+            },
+        },
+        {
+            name: "acknowledge_research_handoff",
+            description: "Verify and idempotently acknowledge one stored published research handoff",
+            parameters: ACKNOWLEDGE_RESEARCH_HANDOFF_SCHEMA,
+            handler: async (input) => {
+                const object = requireObject(input, "$", [
+                    "parentSessionId",
+                    "handoff",
+                ]);
+                const result = await publishedStore.acknowledgeHandoff(
+                    object.handoff,
+                    normalizeSessionId(object.parentSessionId, "$.parentSessionId"),
+                    now(),
+                );
+                return successResult(result);
+            },
+        },
+        {
+            name: "supersede_research_bundle",
+            description: "Append supersession metadata after a newer published version exists",
+            parameters: SUPERSEDE_RESEARCH_BUNDLE_SCHEMA,
+            handler: async (input) => {
+                const object = requireObject(input, "$", [
+                    "researchId",
+                    "version",
+                    "supersedingVersion",
+                    "supersededAt",
+                ]);
+                const researchId = normalizeResearchId(object.researchId);
+                if (
+                    !Number.isSafeInteger(object.version)
+                    || !Number.isSafeInteger(object.supersedingVersion)
+                    || object.version < 1
+                    || object.supersedingVersion <= object.version
+                ) {
+                    fail(
+                        "INVALID_SUPERSESSION_VERSION",
+                        "$.supersedingVersion",
+                        "must be a safe integer greater than version",
+                    );
+                }
+                const latest = await publishedStore.getLatest(researchId);
+                if (
+                    latest.version !== object.supersedingVersion
+                    || latest.status !== "published"
+                ) {
+                    fail(
+                        "SUPERSESSION_NOT_LATEST",
+                        "$.supersedingVersion",
+                        "must identify the latest active published version",
+                    );
+                }
+                const superseded = await publishedStore.supersede(
+                    researchId,
+                    object.version,
+                    object.supersededAt,
+                );
+                return successResult({
+                    superseded: true,
+                    researchId: superseded.researchId,
+                    version: superseded.version,
+                    status: superseded.status,
+                    contentHash: superseded.contentHash,
+                    supersedingVersion: latest.version,
+                });
             },
         },
     ];

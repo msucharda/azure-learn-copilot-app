@@ -2182,6 +2182,129 @@ export class PublishedEvidenceStore {
         });
     }
 
+    async latestAcknowledgement(parentSessionIdInput, researchIdInput) {
+        const parentSessionId = normalizeSessionId(
+            parentSessionIdInput,
+            "$.parentSessionId",
+        );
+        const researchId = normalizeResearchId(researchIdInput);
+        const inspected = await inspectDirectory(
+            this.root,
+            ["acknowledgements", parentSessionId, researchId],
+        );
+        if (!inspected.exists) {
+            return undefined;
+        }
+        const entries = await readdir(inspected.path, { withFileTypes: true });
+        let latest;
+        for (const entry of entries) {
+            if (entry.isFile() && isTemporaryFilename(entry.name)) {
+                continue;
+            }
+            const match = /^([1-9]\d*)\.json$/.exec(entry.name);
+            if (!entry.isFile() || entry.isSymbolicLink() || !match) {
+                storageFail(
+                    "UNSAFE_STORAGE_ENTRY",
+                    "Acknowledgement directories may contain only positive-version JSON files",
+                    { path: join(inspected.path, entry.name) },
+                );
+            }
+            const acknowledgement = await this.getAcknowledgement(
+                parentSessionId,
+                researchId,
+                Number.parseInt(match[1], 10),
+            );
+            if (latest === undefined || acknowledgement.version > latest.version) {
+                latest = acknowledgement;
+            }
+        }
+        return latest;
+    }
+
+    async acknowledgeHandoff(
+        envelopeInput,
+        parentSessionIdInput,
+        acknowledgedAtInput,
+    ) {
+        const envelope = normalizeHandoffEnvelope(envelopeInput);
+        const parentSessionId = normalizeSessionId(
+            parentSessionIdInput,
+            "$.parentSessionId",
+        );
+        const acknowledgedAt = normalizeTimestamp(
+            acknowledgedAtInput,
+            "$.acknowledgedAt",
+        );
+        if (envelope.parentSessionId !== parentSessionId) {
+            storageFail(
+                "HANDOFF_PARENT_MISMATCH",
+                "Delivered handoff is not bound to the consuming parent session",
+            );
+        }
+        return withStorageLock(this.root, async () => {
+            const storedHandoff = await this.getHandoff(
+                parentSessionId,
+                envelope.researchId,
+                envelope.version,
+            );
+            if (canonicalJson(storedHandoff) !== canonicalJson(envelope)) {
+                storageFail(
+                    "HANDOFF_DELIVERY_CONFLICT",
+                    "Delivered handoff differs from the verified stored handoff",
+                );
+            }
+            const latest = await this.latestAcknowledgement(
+                parentSessionId,
+                envelope.researchId,
+            );
+            if (latest !== undefined && latest.version > envelope.version) {
+                return {
+                    outcome: "stale",
+                    acknowledgement: latest,
+                };
+            }
+            if (latest !== undefined && latest.version === envelope.version) {
+                if (latest.contentHash !== envelope.contentHash) {
+                    storageFail(
+                        "ACKNOWLEDGEMENT_CONFLICT",
+                        "Acknowledged version has a different immutable content hash",
+                    );
+                }
+                return {
+                    outcome: "duplicate",
+                    acknowledgement: latest,
+                };
+            }
+            const acknowledgement = normalizeAcknowledgement({
+                schemaVersion: 1,
+                parentSessionId,
+                researchId: envelope.researchId,
+                version: envelope.version,
+                status: "acknowledged",
+                contentHash: envelope.contentHash,
+                acknowledgedAt,
+            });
+            const path = await safeFilePath(
+                this.root,
+                [
+                    "acknowledgements",
+                    acknowledgement.parentSessionId,
+                    acknowledgement.researchId,
+                ],
+                `${acknowledgement.version}.json`,
+            );
+            const stored = await createOrCompare(path, acknowledgement, {
+                normalize: normalizeAcknowledgement,
+                conflictCode: "ACKNOWLEDGEMENT_CONFLICT",
+                conflictMessage: "Acknowledgement key already exists with different data",
+            });
+            return {
+                outcome: "acknowledged",
+                acknowledgement: stored,
+            };
+        });
+    }
+
     async getAcknowledgement(parentSessionIdInput, researchIdInput, versionInput) {
         const parentSessionId = normalizeSessionId(
             parentSessionIdInput,

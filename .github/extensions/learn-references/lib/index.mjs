@@ -59,15 +59,23 @@ export {
     resolveLearnReferenceStorageRoots,
 } from "./storage.mjs";
 export {
+    ACKNOWLEDGE_RESEARCH_HANDOFF_SCHEMA,
     EVIDENCE_BUNDLE_SCHEMA,
     GET_RESEARCH_BUNDLE_SCHEMA,
     HANDOFF_ENVELOPE_SCHEMA,
+    PERSIST_RESEARCH_DRAFT_SCHEMA,
+    PREPARE_LEARN_RESEARCH_SCHEMA,
     PUBLISH_RESEARCH_BUNDLE_SCHEMA,
     READ_LEARN_EVIDENCE_CAPTURE_SCHEMA,
     RECORD_LEARN_EVIDENCE_SCHEMA,
+    SUPERSEDE_RESEARCH_BUNDLE_SCHEMA,
     VALIDATE_RESEARCH_BUNDLE_SCHEMA,
 } from "./tool-schemas.mjs";
 export { createLearnReferenceTools } from "./tools.mjs";
+export {
+    deepResearchKickoff,
+    normalizeResearchStart,
+} from "./nested-research.mjs";
 export {
     LEARN_REFERENCES_CANVAS_ID,
     LEARN_REFERENCES_INPUT_SCHEMA,
