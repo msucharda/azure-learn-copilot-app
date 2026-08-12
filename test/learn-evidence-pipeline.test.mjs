@@ -48,6 +48,22 @@ function learnStylePageWithLength(length) {
     return paragraphs.join("").slice(0, length);
 }
 
+function repeatedReferencePage(length) {
+    const paragraphs = [];
+    let total = 0;
+    for (let index = 0; total < length; index += 1) {
+        const paragraph = (
+            `Section ${index}: This reference entry explains the parameter name, accepted values, `
+            + "default behavior, deployment scope, permissions, regional availability, request "
+            + "semantics, response properties, validation rules, troubleshooting guidance, "
+            + "compatibility notes, and examples for configuring a production Azure resource. "
+        );
+        paragraphs.push(paragraph);
+        total += paragraph.length;
+    }
+    return paragraphs.join("").slice(0, length);
+}
+
 function unrelatedEnglishWithLength(length) {
     const paragraphs = [];
     for (let index = 0; paragraphs.join("").length < length; index += 1) {
@@ -465,6 +481,92 @@ test("sub-anchor fragments independently enforce the absolute excerpt budget", (
             assert.equal(error.code, "EXCERPT_BUDGET_EXCEEDED");
             return true;
         },
+    );
+});
+
+test("ordered reconstruction anchors exact claims on repetitive pages", () => {
+    const markdown = repeatedReferencePage(60_000);
+    for (const offset of [5_000, 8_000, 20_000]) {
+        const fixture = makePublishedEvidence({
+            markdown,
+            exactExcerpt: markdown.slice(offset, offset + 80),
+        });
+        const baseline = validateResearchBundleWithRetention(
+            fixture.bundle,
+            [fixture.capture],
+        ).retentionManifests[0].totalChars;
+        const quoted = clone(fixture.bundle);
+        quoted.claims[0].text = markdown.slice(offset, offset + 3_000);
+        const result = validateResearchBundleWithRetention(
+            rehash(quoted),
+            [fixture.capture],
+        );
+        assert.equal(result.retentionManifests[0].totalChars >= 3_000, true);
+        assert.equal(
+            result.retentionManifests[0].totalChars <= 3_000 + baseline,
+            true,
+        );
+    }
+});
+
+test("repetitive pages still reject true fragmented reconstruction", () => {
+    const markdown = repeatedReferencePage(60_000);
+    const copied = markdown.slice(0, 20_000);
+    for (const attack of [
+        { fragmentLength: 7, reverse: false },
+        { fragmentLength: 31, reverse: true },
+    ]) {
+        const fixture = makePublishedEvidence({
+            markdown,
+            exactExcerpt: markdown.slice(0, 80),
+        });
+        assert.throws(
+            () => validateResearchBundle(
+                withFragmentedClaims(
+                    fixture.bundle,
+                    copied,
+                    attack.fragmentLength,
+                    13,
+                    attack.reverse,
+                ),
+                [fixture.capture],
+            ),
+            (error) => {
+                assert.equal(error instanceof ContractValidationError, true);
+                assert.equal(
+                    [
+                        "EXCERPT_BUDGET_EXCEEDED",
+                        "FULL_FETCH_CONTENT",
+                        "SHORT_FRAGMENT_AMBIGUOUS",
+                    ].includes(error.code),
+                    true,
+                );
+                return true;
+            },
+        );
+    }
+});
+
+test("highly periodic reconstruction fails closed when anchors are ambiguous", () => {
+    const markdown = "0123456789".repeat(6_000);
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(0, 80),
+    });
+    expectCode(
+        () => validateResearchBundle(
+            withFragmentedClaims(
+                fixture.bundle,
+                markdown.slice(0, 54_000),
+                31,
+                17,
+                false,
+                ["0"],
+            ),
+            [fixture.capture],
+        ),
+        ContractValidationError,
+        "ORDERED_RECONSTRUCTION_AMBIGUOUS",
     );
 });
 

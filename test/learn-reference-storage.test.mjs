@@ -59,6 +59,22 @@ function learnStylePageWithLength(length) {
     return paragraphs.join("").slice(0, length);
 }
 
+function repeatedReferencePage(length) {
+    const paragraphs = [];
+    let total = 0;
+    for (let index = 0; total < length; index += 1) {
+        const paragraph = (
+            `Section ${index}: This reference entry explains the parameter name, accepted values, `
+            + "default behavior, deployment scope, permissions, regional availability, request "
+            + "semantics, response properties, validation rules, troubleshooting guidance, "
+            + "compatibility notes, and examples for configuring a production Azure resource. "
+        );
+        paragraphs.push(paragraph);
+        total += paragraph.length;
+    }
+    return paragraphs.join("").slice(0, length);
+}
+
 function fragmentedFields(
     markdown,
     fragmentLength,
@@ -280,6 +296,32 @@ test("publication allows a bounded set of embedded short excerpts", async (t) =>
         "budget.json",
     ), "utf8"));
     assert.equal(retention.totalChars, excerpt.length);
+});
+
+test("publication anchors exact claims on repetitive pages", async (t) => {
+    const { root, published } = await stores(t);
+    const markdown = repeatedReferencePage(60_000);
+    const offset = 8_000;
+    const fixture = makePublishedEvidence({
+        markdown,
+        exactExcerpt: markdown.slice(offset, offset + 80),
+    });
+    const quoted = clone(fixture.bundle);
+    quoted.claims[0].text = markdown.slice(offset, offset + 3_000);
+    const bundle = rehash(quoted);
+    assert.equal(
+        (await published.publish(bundle, [fixture.capture])).contentHash,
+        bundle.contentHash,
+    );
+    const retention = JSON.parse(await readFile(join(
+        root,
+        "published",
+        "retention",
+        fixture.capture.resultSha256,
+        "budget.json",
+    ), "utf8"));
+    assert.equal(retention.totalChars >= 3_000, true);
+    assert.equal(retention.totalChars <= 3_100, true);
 });
 
 test("publication retains every fetch capture hash, including zero-overlap captures", async (t) => {

@@ -369,6 +369,22 @@ function markCovered(covered, intervals) {
     }
 }
 
+function byteCoverageIntervals(covered) {
+    const intervals = [];
+    for (let index = 0; index < covered.length;) {
+        if (covered[index] === 0) {
+            index += 1;
+            continue;
+        }
+        const start = index;
+        while (index < covered.length && covered[index] !== 0) {
+            index += 1;
+        }
+        intervals.push({ start, end: index });
+    }
+    return intervals;
+}
+
 function greedyVerifiedRequests(markdown, requests, initialIntervals, ordered) {
     const covered = new Uint8Array(markdown.length);
     markCovered(covered, initialIntervals);
@@ -612,11 +628,18 @@ function longestVerifiedExactSpan(
             return;
         }
         fragmentBudget.steps += 1;
-        if (fragmentBudget.steps > MAX_SHORT_FRAGMENT_VERIFICATION_STEPS) {
+        if (
+            fragmentBudget.steps
+            > (
+                fragmentBudget.limit
+                ?? MAX_SHORT_FRAGMENT_VERIFICATION_STEPS
+            )
+        ) {
             fail(
-                "SHORT_FRAGMENT_AMBIGUOUS",
+                fragmentBudget.code ?? "SHORT_FRAGMENT_AMBIGUOUS",
                 "$",
-                "short exact fragments exceed the bounded equality-verification limit",
+                fragmentBudget.message
+                    ?? "short exact fragments exceed the bounded equality-verification limit",
             );
         }
     };
@@ -931,87 +954,321 @@ function verifiedStructurallySeparatedFragments(markdown, prose) {
         : [];
 }
 
-function orderedWindowCoverage(markdown, prose, budget) {
-    let proseIndex = 0;
-    const intervals = [];
+function consumeOrderedStep(budget) {
+    budget.steps += 1;
+    if (budget.steps > MAX_ORDERED_RECONSTRUCTION_STEPS) {
+        fail(
+            "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+            "$",
+            "ordered short fragments exceed the bounded alignment limit",
+        );
+    }
+}
+
+function longestOrderedAnchorForIndex(
+    markdown,
+    prose,
+    windowIndex,
+    seedLength,
+    budget,
+    ambiguousText,
+    ambiguousSource,
+    ambiguousWindows,
+) {
+    let best;
     for (
-        let sourceStart = 0;
-        sourceStart < markdown.length;
-        sourceStart += ORDERED_RECONSTRUCTION_WINDOW
+        let proseStart = 0;
+        proseStart <= prose.length - seedLength;
+        proseStart += 1
     ) {
+        const window = prose.slice(
+            proseStart,
+            proseStart + seedLength,
+        );
+        const positions = windowIndex.get(window);
+        if (positions === undefined) {
+            continue;
+        }
+        if (positions.length > MAX_SHORT_FRAGMENT_SEED_OCCURRENCES) {
+            ambiguousText.fill(1, proseStart, proseStart + seedLength);
+            const ambiguousKey = `${seedLength}:${window}`;
+            if (!ambiguousWindows.has(ambiguousKey)) {
+                ambiguousWindows.add(ambiguousKey);
+                for (const sourceStart of positions) {
+                    ambiguousSource.fill(
+                        1,
+                        sourceStart,
+                        sourceStart + seedLength,
+                    );
+                }
+            }
+            continue;
+        }
+        budget.steps += positions.length;
+        if (budget.steps > MAX_SHORT_FRAGMENT_VERIFICATION_STEPS) {
+            fail(
+                "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+                "$",
+                "ordered anchors have too many source placements to verify safely",
+            );
+        }
+        const span = longestVerifiedExactSpan(
+            markdown,
+            prose,
+            proseStart,
+            positions,
+            seedLength,
+            budget,
+        );
+        if (
+            span !== undefined
+            && (
+                best === undefined
+                || span.length > best.length
+                || (
+                    span.length === best.length
+                    && span.textStart < best.textStart
+                )
+            )
+        ) {
+            best = span;
+        }
+        if (span !== undefined) {
+            proseStart = span.textEnd - 1;
+        }
+    }
+    return best;
+}
+
+function longestOrderedAnchor(
+    markdown,
+    prose,
+    longWindowIndex,
+    fragmentWindowIndex,
+    budget,
+    ambiguousText,
+    ambiguousSource,
+    ambiguousWindows,
+) {
+    return (
+        longestOrderedAnchorForIndex(
+            markdown,
+            prose,
+            longWindowIndex,
+            MIN_VERIFIED_EMBEDDED_SPAN,
+            budget,
+            ambiguousText,
+            ambiguousSource,
+            ambiguousWindows,
+        )
+        ?? longestOrderedAnchorForIndex(
+            markdown,
+            prose,
+            fragmentWindowIndex,
+            SHORT_FRAGMENT_SEED_LENGTH,
+            budget,
+            ambiguousText,
+            ambiguousSource,
+            ambiguousWindows,
+        )
+    );
+}
+
+function matchOrderedForwardWindow(
+    markdown,
+    prose,
+    sourceStart,
+    sourceEnd,
+    proseStart,
+    budget,
+) {
+    const searchLimit = Math.min(
+        prose.length,
+        proseStart
+            + (sourceEnd - sourceStart) * ORDERED_RECONSTRUCTION_FILLER_RATIO,
+    );
+    let proseIndex = proseStart;
+    for (
+        let sourceIndex = sourceStart;
+        sourceIndex < sourceEnd;
+        sourceIndex += 1
+    ) {
+        while (
+            proseIndex < searchLimit
+            && prose[proseIndex] !== markdown[sourceIndex]
+        ) {
+            proseIndex += 1;
+            consumeOrderedStep(budget);
+        }
+        consumeOrderedStep(budget);
+        if (proseIndex >= searchLimit) {
+            return undefined;
+        }
+        proseIndex += 1;
+    }
+    return proseIndex;
+}
+
+function matchOrderedBackwardWindow(
+    markdown,
+    prose,
+    sourceStart,
+    sourceEnd,
+    proseEnd,
+    budget,
+) {
+    const searchLimit = Math.max(
+        0,
+        proseEnd
+            - (sourceEnd - sourceStart) * ORDERED_RECONSTRUCTION_FILLER_RATIO,
+    );
+    let proseIndex = proseEnd - 1;
+    for (
+        let sourceIndex = sourceEnd - 1;
+        sourceIndex >= sourceStart;
+        sourceIndex -= 1
+    ) {
+        while (
+            proseIndex >= searchLimit
+            && prose[proseIndex] !== markdown[sourceIndex]
+        ) {
+            proseIndex -= 1;
+            consumeOrderedStep(budget);
+        }
+        consumeOrderedStep(budget);
+        if (proseIndex < searchLimit) {
+            return undefined;
+        }
+        proseIndex -= 1;
+    }
+    return proseIndex + 1;
+}
+
+function orderedAnchoredCoverage(
+    markdown,
+    prose,
+    longWindowIndex,
+    fragmentWindowIndex,
+    anchorBudget,
+    alignmentBudget,
+) {
+    const ambiguousText = new Uint8Array(prose.length);
+    const ambiguousSource = new Uint8Array(markdown.length);
+    const ambiguousWindows = new Set();
+    const anchor = longestOrderedAnchor(
+        markdown,
+        prose,
+        longWindowIndex,
+        fragmentWindowIndex,
+        anchorBudget,
+        ambiguousText,
+        ambiguousSource,
+        ambiguousWindows,
+    );
+    const ambiguity = () => ({
+        chars: ambiguousText.reduce(
+            (total, value) => total + value,
+            0,
+        ),
+        intervals: byteCoverageIntervals(ambiguousSource),
+    });
+    if (anchor === undefined) {
+        return {
+            intervals: [],
+            ambiguity: ambiguity(),
+        };
+    }
+    ambiguousText.fill(0, anchor.textStart, anchor.textEnd);
+    const intervals = [{
+        start: anchor.sourceStart,
+        end: anchor.sourceEnd,
+    }];
+    let sourceStart = anchor.sourceEnd;
+    let proseStart = anchor.textEnd;
+    while (sourceStart < markdown.length && proseStart < prose.length) {
         const sourceEnd = Math.min(
             markdown.length,
             sourceStart + ORDERED_RECONSTRUCTION_WINDOW,
         );
-        const searchLimit = Math.min(
-            prose.length,
-            proseIndex
-                + (sourceEnd - sourceStart) * ORDERED_RECONSTRUCTION_FILLER_RATIO,
+        const nextProseStart = matchOrderedForwardWindow(
+            markdown,
+            prose,
+            sourceStart,
+            sourceEnd,
+            proseStart,
+            alignmentBudget,
         );
-        let candidateIndex = proseIndex;
-        let matched = true;
-        for (
-            let sourceIndex = sourceStart;
-            sourceIndex < sourceEnd;
-            sourceIndex += 1
-        ) {
-            while (
-                candidateIndex < searchLimit
-                && prose[candidateIndex] !== markdown[sourceIndex]
-            ) {
-                candidateIndex += 1;
-                budget.steps += 1;
-            }
-            budget.steps += 1;
-            if (budget.steps > MAX_ORDERED_RECONSTRUCTION_STEPS) {
-                const remaining = markdown.length - sourceStart;
-                const covered = intervals.reduce(
-                    (total, interval) => total + interval.end - interval.start,
-                    0,
-                );
-                if (
-                    covered + remaining > MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH
-                    || (
-                        (covered + remaining) * NEAR_FULL_CONTENT_DENOMINATOR
-                        >= markdown.length * NEAR_FULL_CONTENT_NUMERATOR
-                    )
-                ) {
-                    fail(
-                        "ORDERED_RECONSTRUCTION_AMBIGUOUS",
-                        "$",
-                        "ordered short fragments exceed the bounded alignment limit",
-                    );
-                }
-                return intervals;
-            }
-            if (candidateIndex >= searchLimit) {
-                matched = false;
-                break;
-            }
-            candidateIndex += 1;
+        if (nextProseStart === undefined) {
+            break;
         }
-        if (matched) {
-            intervals.push({ start: sourceStart, end: sourceEnd });
-            proseIndex = candidateIndex;
-        }
+        intervals.push({ start: sourceStart, end: sourceEnd });
+        sourceStart = sourceEnd;
+        proseStart = nextProseStart;
     }
-    return intervals;
+    let sourceEnd = anchor.sourceStart;
+    let proseEnd = anchor.textStart;
+    while (sourceEnd > 0 && proseEnd > 0) {
+        const previousSourceStart = Math.max(
+            0,
+            sourceEnd - ORDERED_RECONSTRUCTION_WINDOW,
+        );
+        const previousProseEnd = matchOrderedBackwardWindow(
+            markdown,
+            prose,
+            previousSourceStart,
+            sourceEnd,
+            proseEnd,
+            alignmentBudget,
+        );
+        if (previousProseEnd === undefined) {
+            break;
+        }
+        intervals.push({
+            start: previousSourceStart,
+            end: sourceEnd,
+        });
+        sourceEnd = previousSourceStart;
+        proseEnd = previousProseEnd;
+    }
+    return {
+        intervals,
+        ambiguity: ambiguity(),
+    };
 }
 
-function verifiedOrderedReconstructionIntervals(markdown, prose) {
+function verifiedOrderedReconstructionIntervals(
+    markdown,
+    prose,
+    longWindowIndex,
+    fragmentWindowIndex,
+) {
     const minimumCoverage = minimumShortFragmentCoverage(markdown.length);
-    const budget = { steps: 0 };
+    const anchorBudget = {
+        steps: 0,
+        code: "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+        message: "ordered anchors exceed the bounded equality-verification limit",
+    };
+    const alignmentBudget = { steps: 0 };
     let best = [];
     let bestCoverage = 0;
+    let greatestAmbiguity = { chars: 0, intervals: [] };
     for (const stream of orderedProseStreams(prose)) {
         if (stream.length < minimumCoverage) {
             continue;
         }
-        const intervals = orderedWindowCoverage(markdown, stream, budget);
-        const covered = intervals.reduce(
-            (total, interval) => total + interval.end - interval.start,
-            0,
+        const orderedCoverage = orderedAnchoredCoverage(
+            markdown,
+            stream,
+            longWindowIndex,
+            fragmentWindowIndex,
+            anchorBudget,
+            alignmentBudget,
         );
+        const { intervals, ambiguity } = orderedCoverage;
+        if (ambiguity.chars > greatestAmbiguity.chars) {
+            greatestAmbiguity = ambiguity;
+        }
+        const covered = intervalCoverage(markdown, intervals);
         if (
             covered * NEAR_FULL_CONTENT_DENOMINATOR
             >= markdown.length * NEAR_FULL_CONTENT_NUMERATOR
@@ -1027,7 +1284,10 @@ function verifiedOrderedReconstructionIntervals(markdown, prose) {
             bestCoverage = covered;
         }
     }
-    return bestCoverage >= minimumCoverage ? best : [];
+    return {
+        intervals: bestCoverage >= minimumCoverage ? best : [],
+        ambiguity: greatestAmbiguity,
+    };
 }
 
 function isDecorationCharacter(character) {
@@ -1519,22 +1779,24 @@ function retentionManifest(
             addRequest(span, count);
         }
     }
+    const fragmentWindowIndex = buildVerifiedWindowIndex(
+        markdown,
+        SHORT_FRAGMENT_SEED_LENGTH,
+    );
     const separatedIntervals = verifiedStructurallySeparatedFragments(
         markdown,
         normalizedProse,
     );
-    const orderedIntervals = verifiedOrderedReconstructionIntervals(
+    const orderedReconstruction = verifiedOrderedReconstructionIntervals(
         markdown,
         normalizedProse,
+        windowIndex,
+        fragmentWindowIndex,
     );
     const allocatedIntervals = allocateVerifiedRequests(
         markdown,
         [...requestsByText.values()],
         normalizedInitialIntervals,
-    );
-    const fragmentWindowIndex = buildVerifiedWindowIndex(
-        markdown,
-        SHORT_FRAGMENT_SEED_LENGTH,
     );
     const fragmentIntervals = verifiedFragmentUnion(
         markdown,
@@ -1548,7 +1810,7 @@ function retentionManifest(
         ...allocatedIntervals,
         ...fragmentIntervals,
         ...separatedIntervals,
-        ...orderedIntervals,
+        ...orderedReconstruction.intervals,
     ];
     const merged = mergeIntervals(markdown, intervals);
     const cumulative = mergeIntervals(markdown, [
@@ -1581,6 +1843,30 @@ function retentionManifest(
             "EXCERPT_BUDGET_EXCEEDED",
             "$",
             `persisted text from one fetched page cannot exceed ${MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH} characters`,
+        );
+    }
+    const safeCoverageLimit = Math.min(
+        markdown.length - 1,
+        MAX_PUBLISHED_EXCERPT_CHARS_PER_FETCH,
+        Math.ceil(
+            markdown.length
+            * NEAR_FULL_CONTENT_NUMERATOR
+            / NEAR_FULL_CONTENT_DENOMINATOR,
+        ) - 1,
+    );
+    const ambiguityUnionChars = intervalCoverage(markdown, [
+        ...cumulative,
+        ...orderedReconstruction.ambiguity.intervals,
+    ]);
+    const maximumAmbiguousCoverage = cumulativeChars + Math.min(
+        orderedReconstruction.ambiguity.chars,
+        ambiguityUnionChars - cumulativeChars,
+    );
+    if (maximumAmbiguousCoverage > safeCoverageLimit) {
+        fail(
+            "ORDERED_RECONSTRUCTION_AMBIGUOUS",
+            "$",
+            "highly repeated verified fragments cannot be proven under the retention limit",
         );
     }
     return {
