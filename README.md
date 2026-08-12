@@ -36,3 +36,54 @@ Check every production extension module with:
 ```sh
 find .github/extensions -name '*.mjs' -print0 | xargs -0 -n1 node --check
 ```
+
+## Repository-specific Copilot skills
+
+This repository provides two repository-scoped [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills). No router service or separate policy configuration is required.
+
+- `repository-skill-generator` inspects a repository and the available skill catalog, then creates the smallest useful set of project skills.
+- `session-skill-improver` uses repository-scoped Copilot session evidence to improve generated project skills.
+
+## Install and use
+
+Copy both directories under `.github/skills/` into the target repository at the same path. Copilot discovers each `SKILL.md` automatically.
+
+Ask Copilot to **run `repository-skill-generator`** when initially setting up project skills or after material repository changes. Generated skills are written to `.github/skills/<skill-name>/SKILL.md`.
+
+Ask Copilot to **run `session-skill-improver`** after the repository has accumulated repeated workflows, failures, retries, or user corrections in Copilot sessions. The skill queries the available session-history interface, scopes evidence to the current repository, and updates only generated skills.
+
+## Generated artifacts
+
+Generated skills contain this metadata:
+
+```yaml
+metadata:
+  managed-by: repository-skill-generator
+  generated: "true"
+  format-version: "1"
+  kind: "project-skill"
+  provenance: "project-repository-context"
+```
+
+Compact official-skill routers use `kind: "official-skill-router"` instead. This marks project-owned routing context only: it does not represent official-skill provenance or an evidence source. Regeneration may replace or prune only skills carrying the ownership metadata. Hand-authored skills, including the two meta-skills, remain untouched. Repository analysis excludes skill bodies so generated output and the meta-skills do not become recursive input.
+
+Generated names must start with `project-` and must not match any non-generated catalog name supplied in the generation plan. A plan may contain at most 8 generated skills. Each file is at most 16 KiB; a compact router is at most 12 KiB and may route to at most 8 official skills, with at most 8 aliases and 4 exclusions per route. A resolved router emits:
+
+```json
+{"status":"resolved","primary_skill":"exact-skill-name","fallback_skill":null,"matched_alias":"matched phrase"}
+```
+
+An unresolved route uses `null` for the skill and alias fields. The router lazily invokes one exact official skill and at most one explicit fallback. It never copies official skill bodies, categories, Learn excerpts, or curated URLs.
+
+## Context measurement limitation
+
+A compact project router reduces decision material only if the Copilot host can avoid injecting the complete installed skill inventory. Skills alone cannot guarantee that behavior. Before claiming context savings, manually compare equivalent sessions for plugin-wide discovery versus compact-router-to-exact-skill invocation, using host-visible input-token and skill/tool-loading events. If the host always injects global descriptions, have the parent context preselect the exact official skill and, where the product supports it, start a restricted researcher context. This repository adds no telemetry or runtime routing component.
+
+The generator's standard-library helper supports deterministic scanning, application, and validation:
+
+```bash
+python .github/skills/repository-skill-generator/scripts/manage_project_skills.py scan --repo .
+python .github/skills/repository-skill-generator/scripts/manage_project_skills.py apply --repo . --plan /path/to/plan.json --prune
+python .github/skills/repository-skill-generator/scripts/manage_project_skills.py validate --repo . --require-meta
+python -m unittest discover -s .github/skills/repository-skill-generator/tests -v
+```
