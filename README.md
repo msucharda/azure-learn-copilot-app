@@ -46,9 +46,11 @@ and observed tool friction, changes only the agent contract when evidence suppor
 the contract before starting the next iteration. The loop deliberately compares direct Learn
 discovery against earlier skill-assisted runs rather than assuming a broad injected catalog saves
 context. The core answer is bounded to 1,500 words so source breadth does not displace decision
-quality. The coverage preflight treats every named service, constraint, comparison, and enumerated
-subtopic as an atomic item. Every decision uses explicit fetched-facts, recommendation, and
-assumptions-or-unresolved-constraints labels, and neither cap permits an item to disappear.
+quality, with a 2,000-word ceiling only when more than 30 atomic items require coverage. The coverage
+preflight treats every named service, constraint, comparison, and enumerated subtopic as an atomic
+item. Every decision uses explicit fetched-facts, recommendation, and
+assumptions-or-unresolved-constraints labels, where unsupported items are named rather than hidden
+behind an aggregate gap; neither cap permits an item to disappear.
 
 ## Validate
 

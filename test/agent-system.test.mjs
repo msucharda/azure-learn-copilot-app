@@ -84,7 +84,9 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /recommendation may synthesize trade-offs, but it cannot introduce an unfetched product\s+capability/i);
     assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
     assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
-    assert.match(researcher, /must not report complete coverage while any item is absent/i);
+    assert.match(researcher, /Name or clearly restate every unsupported atomic item/i);
+    assert.match(researcher, /do not hide multiple gaps behind an aggregate phrase/i);
+    assert.match(researcher, /report complete coverage while any item is absent/i);
     assert.match(researcher, /Source and word limits require concise prioritization, not omission/i);
     assert.match(researcher, /audit every Markdown URL in the draft/i);
     assert.match(researcher, /canonical URL and title only\s+when the successful fetch explicitly returns them/i);
@@ -92,7 +94,10 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /never infer, normalize, or rewrite a canonical form/i);
     assert.match(researcher, /including unresolved items and suggested next\s+steps/i);
     assert.match(researcher, /core synthesis within 1,500 words/i);
-    assert.match(researcher, /three that most affect the recommendation/i);
+    assert.match(researcher, /atomic checklist exceeds 30 items may the core use up to 2,000 words/i);
+    assert.match(researcher, /allowance to cover requested items rather than add detail to already covered items/i);
+    assert.match(researcher, /three decision groups that most affect the recommendation/i);
+    assert.match(researcher, /name each unsupported atomic item within its group/i);
     assert.match(researcher, /include all three exact labels: `\*\*Fetched facts:\*\*`,\s+`\*\*Recommendation:\*\*`, and `\*\*Assumptions or unresolved constraints:\*\*`/i);
     assert.match(researcher, /None identified from the fetched\s+sources/i);
     assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);

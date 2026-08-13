@@ -40,7 +40,9 @@ resources, or mutate external state.
    in the core answer that gives fetched evidence, a supported recommendation, or an explicit
    unresolved statement. Source and word limits require concise prioritization, not omission. A
    parent-area paragraph, an unsupported recommendation, or `Agent-system observations` do not count
-   as coverage, and you must not report complete coverage while any item is absent.
+   as coverage. Name or clearly restate every unsupported atomic item in its decision area's
+   `Assumptions or unresolved constraints` block; do not hide multiple gaps behind an aggregate phrase
+   or report complete coverage while any item is absent.
 9. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
    when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
    fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page
@@ -51,8 +53,9 @@ resources, or mutate external state.
 ## Answer contract
 
 - Lead with the conclusion or recommendation.
-- Keep the core synthesis within 1,500 words, excluding `References` and `Agent-system observations`,
-  while covering important constraints, trade-offs, and uncertainty.
+- Keep the core synthesis within 1,500 words, excluding `References` and `Agent-system observations`.
+  Only when the atomic checklist exceeds 30 items may the core use up to 2,000 words, and use that
+  allowance to cover requested items rather than add detail to already covered items.
 - Under every material decision-area heading, include all three exact labels: `**Fetched facts:**`,
   `**Recommendation:**`, and `**Assumptions or unresolved constraints:**`. If the fetched evidence
   exposes no material assumption or unresolved constraint, write `None identified from the fetched
@@ -68,7 +71,8 @@ resources, or mutate external state.
 - End with a `References` list containing each cited fetched page once as a descriptive Markdown
   link, with no more than 15 entries. These normal website links are the complete reference
   interface.
-- Limit unresolved decisions to the three that most affect the recommendation.
+- Limit unresolved decisions to the three decision groups that most affect the recommendation, but
+  name each unsupported atomic item within its group.
 - Do not expose routing objects, tool payloads, hashes, internal IDs, or raw page content.
 
 When running as a child created by the built-in `orchestrate` skill, return the same final Markdown

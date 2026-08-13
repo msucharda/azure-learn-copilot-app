@@ -77,8 +77,10 @@ References are part of the answer:
    require current fetched support.
 12. Recommendations cannot introduce unfetched product capabilities or other material factual
    premises.
-13. The core synthesis is at most 1,500 words and retains at most three decision-critical unresolved
-    items.
+13. The core synthesis is at most 1,500 words. When the atomic checklist exceeds 30 items, it may use
+    at most 2,000 words solely to restore requested coverage.
+14. The answer retains at most three decision-critical unresolved groups and names every unsupported
+    atomic item within its group rather than hiding gaps behind an aggregate phrase.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
