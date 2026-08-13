@@ -32,7 +32,18 @@
   item in the last label rather than hiding gaps behind an aggregate phrase.
 - For checklists over 30 items, require a compact pre-reference `Coverage audit` table that assigns
   one row and one status to every atomic item: `Covered`, `Partially covered`, or `Unresolved`. The
-  table row count must equal the checklist count.
+  table row count must equal the checklist count. An item named in an assumptions block cannot be
+  `Covered`.
+- Require dedicated fetched evidence for every named capability, generation, SKU, region, or
+  compatibility relationship on which the lead recommendation depends. Surface conflicts between
+  fetched pages instead of choosing silently.
+- Do not emit numeric word-count estimates unless a tool computed them deterministically.
 - Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
   `References` list. Never fabricate or rewrite a source URL.
-- Use `citation-critic` only when the user requests an evidence review.
+- Use `citation-critic` only when the user requests an evidence review. For an iterative improvement
+  review, run it in a separate coordinated child with a different model family and pass the exact
+  original task, complete answer, and same fetched evidence context. It reviews the existing answer;
+  it does not produce another architecture.
+- At the end of every requested improvement round, append a session-artifact log entry containing what
+  worked, what failed, the complementary review, model disagreements, and system changes with their
+  rationale. Do not add a runtime persistence layer or commit the log to the repository.

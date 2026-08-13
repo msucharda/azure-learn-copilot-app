@@ -91,6 +91,21 @@ References are part of the answer:
 17. The answer gives detailed discussion to at most three decision-critical unresolved groups and
     names every other unsupported atomic item tersely rather than hiding gaps behind an aggregate
     phrase.
+18. Any item named or clearly restated in an assumptions block is `Partially covered` or `Unresolved`,
+    never `Covered`.
+19. Every named capability, generation, SKU, region, or compatibility relationship on which the lead
+    recommendation depends has dedicated fetched evidence. Conflicting fetched sources remain
+    explicit.
+20. Numeric word-count estimates appear only when an available tool computed them deterministically.
+
+## Formal review contract
+
+When the user requests iterative evidence review, a different model family receives the exact
+original task, complete answer, and same fetched evidence context. It reviews task compliance,
+claim-to-evidence support, contradictions, coverage status, and runtime defects without producing a
+competing architecture or broadening the source set. The coordinator records what worked, failures,
+the complementary analysis, model disagreements, and resulting system changes in a session artifact,
+not a repository or runtime persistence layer.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).

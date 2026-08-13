@@ -70,11 +70,15 @@ test("researcher uses native discovery and returns website references", async ()
     const researcher = await text(RESEARCHER_PATH);
     assert.match(researcher, /documentation search directly/i);
     assert.match(researcher, /every explicitly\s+requested decision and subtopic into an atomic coverage checklist/i);
+    assert.match(researcher, /generation, edition, tier, or deployment model as an explicit choice/i);
+    assert.match(researcher, /do not silently select a\s+variant/i);
     assert.match(researcher, /comma-separated requests into individual items/i);
-    assert.match(researcher, /parent decision area does not cover its children/i);
+    assert.match(researcher, /parent decision area does not cover its\s+children/i);
     assert.match(researcher, /search chunks as discovery only/i);
     assert.match(researcher, /Select at most 15 authoritative pages/i);
     assert.match(researcher, /Fetch every selected page/i);
+    assert.match(researcher, /dedicated page for every named capability, variant, or compatibility relationship/i);
+    assert.match(researcher, /overview or limits page alone does not establish/i);
     assert.match(researcher, /not successfully fetched cannot appear in a\s+claim link/i);
     assert.match(researcher, /code-sample\s+search/i);
     assert.match(researcher, /spools output to a local file/i);
@@ -85,10 +89,12 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /compare every recommendation against all fetched constraints and every explicit\s+scenario requirement/i);
     assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment\s+options, or support states/i);
     assert.match(researcher, /do not bypass a required control for convenience/i);
+    assert.match(researcher, /Recheck the\s+lead recommendation against every fetched `not supported`, `only`, incompatibility, generation,\s+SKU, and regional constraint/i);
+    assert.match(researcher, /surface conflicting sources instead of choosing silently/i);
     assert.match(researcher, /Perform a core-length preflight against the applicable word ceiling/i);
     assert.match(researcher, /remove\s+repeated facts, catalog-style feature detail, and secondary examples/i);
     assert.match(researcher, /recommendations should apply fetched facts rather than\s+restate them/i);
-    assert.match(researcher, /Do not report word-bound compliance without this check/i);
+    assert.match(researcher, /Do not emit a numeric word-count estimate unless an available tool computed it\s+deterministically/i);
     assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
     assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
     assert.match(researcher, /Name or clearly restate every unsupported atomic item/i);
@@ -107,6 +113,7 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /table with `Decision area`, `Atomic item`, and `Status` columns/i);
     assert.match(researcher, /Every atomic\s+checklist item must have exactly one row/i);
     assert.match(researcher, /row count must equal the checklist count/i);
+    assert.match(researcher, /item named or clearly restated in an\s+assumptions block must be `Partially covered` or `Unresolved`/i);
     assert.match(researcher, /Use exactly one status: `Covered`/i);
     assert.match(researcher, /`Partially\s+covered` when a material dimension remains unsupported/i);
     assert.match(researcher, /`Unresolved` when the item lacks adequate\s+treatment/i);
@@ -134,6 +141,9 @@ test("project instructions use native orchestration", async () => {
     assert.match(instructions, /do not load a product-skill catalog/i);
     assert.match(instructions, /native Microsoft Learn tools/i);
     assert.match(instructions, /`References` list/i);
+    assert.match(instructions, /different model family/i);
+    assert.match(instructions, /exact\s+original task, complete answer, and same fetched evidence context/i);
+    assert.match(instructions, /session-artifact log entry/i);
     assert.doesNotMatch(instructions, /create_session|send_session_message/);
 });
 
@@ -148,6 +158,10 @@ test("critic cannot fetch or broaden evidence", async () => {
         assert.match(critic, new RegExp(`\\\`${status}\\\``));
     }
     assert.match(critic, /Do not\s+open new sources, broaden the source set, rewrite the answer/i);
+    assert.match(critic, /formal reviewer, not a second solution author/i);
+    assert.match(critic, /exact original\s+task, the answer produced for that task/i);
+    assert.match(critic, /Do not propose a competing architecture/i);
+    assert.match(critic, /Record disagreements with the answer model explicitly/i);
 });
 
 test("documentation links are safe websites", async () => {

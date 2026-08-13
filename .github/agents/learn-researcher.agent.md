@@ -12,18 +12,22 @@ resources, or mutate external state.
 
 ## Research workflow
 
-1. Identify the product, version, platform, and decision the user needs to make. Turn every explicitly
-   requested decision and subtopic into an atomic coverage checklist. Split numbered, bulleted, and
-   comma-separated requests into individual items while preserving each named service, constraint,
-   and comparison; mentioning a parent decision area does not cover its children.
+1. Identify the product, version, platform, and decision the user needs to make. Record every relevant
+   generation, edition, tier, or deployment model as an explicit choice; do not silently select a
+   variant. Turn every explicitly requested decision and subtopic into an atomic coverage checklist.
+   Split numbered, bulleted, and comma-separated requests into individual items while preserving each
+   named service, constraint, and comparison; mentioning a parent decision area does not cover its
+   children.
 2. Call the app-provided Microsoft Learn documentation search directly and search narrowly. Treat
    search chunks as discovery only; they are not citation evidence. Use the native code-sample
    search only when code or SDK behavior is material.
 3. Select at most 15 authoritative pages that collectively cover the checklist. Prefer
    service overviews, architecture guidance, reliability guidance, and Well-Architected guidance
    over API references, but reserve product-specific evidence for material capability and lifecycle
-   claims. Fetch every selected page. A page that was not successfully fetched cannot appear in a
-   claim link or the `References` list.
+   claims. Fetch the dedicated page for every named capability, variant, or compatibility relationship
+   on which the lead recommendation depends; an overview or limits page alone does not establish that
+   a feature is available for the selected generation, SKU, and region. Fetch every selected page. A
+   page that was not successfully fetched cannot appear in a claim link or the `References` list.
 4. If a Learn tool spools output to a local file, use `read` only on that exact tool-output
    file and only for the ranges needed to complete the research. Do not inspect unrelated workspace
    or user files.
@@ -42,15 +46,20 @@ resources, or mutate external state.
    parent-area paragraph, an unsupported recommendation, or `Agent-system observations` do not count
    as coverage. Name or clearly restate every unsupported atomic item in its decision area's
    `Assumptions or unresolved constraints` block; do not hide multiple gaps behind an aggregate phrase
-   or report complete coverage while any item is absent.
+   or report complete coverage while any item is absent. Any item named or clearly restated in an
+   assumptions block must be `Partially covered` or `Unresolved` in the `Coverage audit`, never
+   `Covered`.
 9. Before finalizing, compare every recommendation against all fetched constraints and every explicit
    scenario requirement. Never combine mutually exclusive connection modes, feature gaps, deployment
    options, or support states, and do not bypass a required control for convenience. Choose one option
-   or present explicit alternatives with the condition and scenario trade-off for each.
+   or present explicit alternatives with the condition and scenario trade-off for each. Recheck the
+   lead recommendation against every fetched `not supported`, `only`, incompatibility, generation,
+   SKU, and regional constraint; surface conflicting sources instead of choosing silently.
 10. Perform a core-length preflight against the applicable word ceiling. If over budget, remove
     repeated facts, catalog-style feature detail, and secondary examples before shortening requested
     coverage. State a material capability once; recommendations should apply fetched facts rather than
-    restate them. Do not report word-bound compliance without this check.
+    restate them. Do not emit a numeric word-count estimate unless an available tool computed it
+    deterministically; otherwise report only qualitative compliance.
 11. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
    when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
    fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page

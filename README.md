@@ -55,6 +55,12 @@ behind an aggregate gap. Broad answers give every atomic item one audit row and 
 constraints and the user's mandatory scenario requirements. A length preflight removes repeated facts
 and catalog detail before requested coverage; neither cap permits an item to disappear.
 
+When an improvement review is requested, a second coordinated child from a different model family
+formally reviews the first model's exact task, answer, and fetched evidence context. It does not
+produce a competing architecture. The coordinator records agreements, disagreements, failures, and
+evidence-backed system changes in a Copilot session artifact after each round; the log is not runtime
+state and is not committed.
+
 ## Validate
 
 ```sh
