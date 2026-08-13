@@ -50,9 +50,9 @@ quality, with a 2,000-word ceiling only when more than 30 atomic items require c
 preflight treats every named service, constraint, comparison, and enumerated subtopic as an atomic
 item. Every decision uses explicit fetched-facts, recommendation, and
 assumptions-or-unresolved-constraints labels, where unsupported items are named rather than hidden
-behind an aggregate gap. Broad answers add a compact unresolved-item coverage audit, and a
-contradiction preflight prevents mutually exclusive options from being combined; neither cap permits
-an item to disappear.
+behind an aggregate gap. Broad answers assign every atomic item exactly once to `Covered` or
+`Unresolved` in a compact audit. A contradiction preflight checks both product constraints and the
+user's mandatory scenario requirements; neither cap permits an item to disappear.
 
 ## Validate
 

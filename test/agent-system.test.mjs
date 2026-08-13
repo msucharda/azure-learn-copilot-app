@@ -82,8 +82,9 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
     assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
     assert.match(researcher, /recommendation may synthesize trade-offs, but it cannot introduce an unfetched product\s+capability/i);
-    assert.match(researcher, /compare every recommendation against all fetched constraints/i);
-    assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment options, or support\s+states/i);
+    assert.match(researcher, /compare every recommendation against all fetched constraints and every explicit\s+scenario requirement/i);
+    assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment\s+options, or support states/i);
+    assert.match(researcher, /do not bypass a required control for convenience/i);
     assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
     assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
     assert.match(researcher, /Name or clearly restate every unsupported atomic item/i);
@@ -99,8 +100,10 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /atomic checklist exceeds 30 items may the core use up to\s+2,000 words/i);
     assert.match(researcher, /allowance to cover requested items rather than add detail to already\s+covered items/i);
     assert.match(researcher, /compact `Coverage audit` immediately before\s+`References`/i);
-    assert.match(researcher, /list the exact checklist items that still lack fetched\s+evidence or a supported recommendation/i);
-    assert.match(researcher, /Do not repeat\s+supported items or use the audit as a substitute for the core answer/i);
+    assert.match(researcher, /table with `Decision area`, `Covered`, and `Unresolved` columns/i);
+    assert.match(researcher, /Every atomic\s+checklist item must appear exactly once/i);
+    assert.match(researcher, /Mark an item `Covered` only when the core answer explicitly addresses it/i);
+    assert.match(researcher, /audit does not substitute for the\s+core answer/i);
     assert.match(researcher, /detailed discussion to at most the three unresolved decision groups/i);
     assert.match(researcher, /Name any additional unsupported atomic items tersely/i);
     assert.match(researcher, /include all three exact labels: `\*\*Fetched facts:\*\*`,\s+`\*\*Recommendation:\*\*`, and `\*\*Assumptions or unresolved constraints:\*\*`/i);

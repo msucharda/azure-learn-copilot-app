@@ -43,9 +43,10 @@ resources, or mutate external state.
    as coverage. Name or clearly restate every unsupported atomic item in its decision area's
    `Assumptions or unresolved constraints` block; do not hide multiple gaps behind an aggregate phrase
    or report complete coverage while any item is absent.
-9. Before finalizing, compare every recommendation against all fetched constraints in the answer.
-   Never combine mutually exclusive connection modes, feature gaps, deployment options, or support
-   states; choose one or present explicit alternatives with the condition for each.
+9. Before finalizing, compare every recommendation against all fetched constraints and every explicit
+   scenario requirement. Never combine mutually exclusive connection modes, feature gaps, deployment
+   options, or support states, and do not bypass a required control for convenience. Choose one option
+   or present explicit alternatives with the condition and scenario trade-off for each.
 10. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
    when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
    fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page
@@ -73,9 +74,11 @@ resources, or mutate external state.
 - Cite only URLs returned by the native tools whose scheme is `https` and whose host is exactly
   `learn.microsoft.com`.
 - When the atomic checklist exceeds 30 items, add a compact `Coverage audit` immediately before
-  `References`. For each decision area, list the exact checklist items that still lack fetched
-  evidence or a supported recommendation; write `None` for an area with no gap. Do not repeat
-  supported items or use the audit as a substitute for the core answer.
+  `References` as a table with `Decision area`, `Covered`, and `Unresolved` columns. Every atomic
+  checklist item must appear exactly once, using its exact name or an unambiguous shortened form.
+  Mark an item `Covered` only when the core answer explicitly addresses it with fetched evidence or a
+  supported recommendation; otherwise mark it `Unresolved`. The audit does not substitute for the
+  core answer.
 - End with a `References` list containing each cited fetched page once as a descriptive Markdown
   link, with no more than 15 entries. These normal website links are the complete reference
   interface.

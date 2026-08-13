@@ -79,10 +79,12 @@ References are part of the answer:
    premises.
 13. The core synthesis is at most 1,500 words. When the atomic checklist exceeds 30 items, it may use
     at most 2,000 words solely to restore requested coverage.
-14. Recommendations are checked against all fetched constraints; mutually exclusive options are
-    selected between or presented as explicit conditional alternatives.
-15. A request with more than 30 atomic items includes a compact pre-reference coverage audit listing
-    only unsupported exact items per decision area.
+14. Recommendations are checked against all fetched constraints and explicit scenario requirements;
+    mutually exclusive options are selected between or presented as explicit conditional
+    alternatives, and mandatory controls are not bypassed for convenience.
+15. A request with more than 30 atomic items includes a compact pre-reference coverage table that
+    assigns every item exactly once to `Covered` or `Unresolved`. `Covered` requires explicit treatment
+    in the core answer with fetched evidence or a supported recommendation.
 16. The answer gives detailed discussion to at most three decision-critical unresolved groups and
     names every other unsupported atomic item tersely rather than hiding gaps behind an aggregate
     phrase.
