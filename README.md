@@ -29,7 +29,7 @@ The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoin
 
 The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-container-apps`, `azure-functions`, and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
 
-The reference canvas renders only bounded evidence fields already accepted by the draft or published stores. It never serves retained fetched Markdown, does not expose publishing controls, and does not bridge iframe input into an agent turn. Publishing remains the explicit `publish-research-draft` chat skill.
+The researcher returns its complete synthesis in chat with claim-adjacent links from successful Learn fetches. The reference canvas renders only source titles, section headings, exact excerpts, and canonical Learn URLs already accepted by the draft or published stores. It never serves retained fetched Markdown, does not expose publishing controls, and does not bridge iframe input into an agent turn. Publishing remains the explicit `publish-research-draft` chat skill.
 
 `start-learn-research` provides the two-speed **Refine here** or coordinated interactive child-session flow. `consume-research-handoff` verifies stored publication identity and parent binding, records an idempotent no-regression acknowledgement, and only then opens the published reference canvas. Side Chat remains a user-created UI option because the host has no programmatic Quick Chat creation API.
 

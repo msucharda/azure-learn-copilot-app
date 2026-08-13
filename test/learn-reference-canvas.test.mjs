@@ -15,7 +15,6 @@ import {
     LEARN_REFERENCES_INPUT_SCHEMA,
     PublishedEvidenceStore,
     REFRESH_ACTION_SCHEMA,
-    SUPPORT_FILTER_ACTION_SCHEMA,
     createLearnReferencesCanvas,
 } from "../.github/extensions/learn-references/lib/index.mjs";
 import {
@@ -117,11 +116,7 @@ test("reference canvas declares strict bounded input and action schemas", async 
     assert.deepEqual(LEARN_REFERENCES_INPUT_SCHEMA.required, ["researchId", "view"]);
     assert.deepEqual(LEARN_REFERENCES_INPUT_SCHEMA.properties.view.enum, ["draft", "published"]);
     assert.equal(REFRESH_ACTION_SCHEMA.additionalProperties, false);
-    assert.equal(SUPPORT_FILTER_ACTION_SCHEMA.additionalProperties, false);
-    assert.deepEqual(canvas.actions.map((entry) => entry.name), [
-        "refresh",
-        "set_support_filter",
-    ]);
+    assert.deepEqual(canvas.actions.map((entry) => entry.name), ["refresh"]);
 });
 
 test("draft view reads explicit and latest validated versions", async (t) => {
@@ -260,7 +255,7 @@ test("concurrent same-instance opens share one server and close releases its por
     await assert.rejects(fetch(second.url));
 });
 
-test("two instances share persisted evidence but keep independent UI state", async (t) => {
+test("two instances share the same bounded reference projection", async (t) => {
     const context = await harness(t);
     const fixture = draftFixture();
     await context.draftStore.writeBundle(fixture.bundle);
@@ -268,14 +263,7 @@ test("two instances share persisted evidence but keep independent UI state", asy
     const first = await context.canvas.open(openContext("first-instance", input));
     const second = await context.canvas.open(openContext("second-instance", input));
     assert.notEqual(first.url, second.url);
-    assert.equal((await state(first.url)).body.contentHash, (await state(second.url)).body.contentHash);
-
-    await action(context.canvas, "set_support_filter").handler({
-        instanceId: "first-instance",
-        input: { support: "unsupported" },
-    });
-    assert.equal((await state(first.url)).body.supportFilter, "unsupported");
-    assert.equal((await state(second.url)).body.supportFilter, "all");
+    assert.deepEqual((await state(first.url)).body, (await state(second.url)).body);
 });
 
 test("refresh action validates input and pushes a bounded SSE repaint event", async (t) => {
@@ -398,8 +386,7 @@ test("close releases SSE clients and the unpredictable loopback port", async (t)
 test("renderer uses text-only DOM APIs, safe Learn links, and strict CSP", async (t) => {
     const context = await harness(t);
     const fixture = draftFixture();
-    fixture.bundle.question.original = "<img src=x onerror=alert(1)>";
-    fixture.bundle.claims[0].text = "<script>alert(1)</script>";
+    fixture.bundle.sources[0].title = "<img src=x onerror=alert(1)>";
     fixture.bundle = rehash(fixture.bundle);
     await context.draftStore.writeBundle(fixture.bundle);
     const opened = await context.canvas.open(openContext("security-instance", {
@@ -416,8 +403,20 @@ test("renderer uses text-only DOM APIs, safe Learn links, and strict CSP", async
     assert.equal(script.includes("innerHTML"), false);
     assert.match(script, /textContent/);
     assert.match(script, /noopener noreferrer/);
-    assert.equal(canvasState.body.question.original, fixture.bundle.question.original);
+    assert.equal(canvasState.body.sources[0].title, fixture.bundle.sources[0].title);
     assert.equal(canvasState.body.sources[0].canonicalUrl, "https://learn.microsoft.com/azure/example");
+    for (const excluded of [
+        "claims",
+        "contentHash",
+        "lifecycle",
+        "officialSkill",
+        "question",
+        "scope",
+        "summary",
+        "unresolvedItems",
+    ]) {
+        assert.equal(Object.hasOwn(canvasState.body, excluded), false);
+    }
     assert.equal(JSON.stringify(canvasState.body).includes(fixture.markdown), false);
 });
 
@@ -451,18 +450,19 @@ test("source cards expose bounded evidence fields and never fetched page content
         view: "draft",
     }));
     const canvasState = (await state(opened.url)).body;
+    assert.deepEqual(Object.keys(canvasState).sort(), [
+        "researchId",
+        "sources",
+        "status",
+        "version",
+        "view",
+    ]);
     assert.deepEqual(Object.keys(canvasState.sources[0]).sort(), [
         "canonicalUrl",
-        "contentHash",
         "exactExcerpt",
         "id",
-        "retrievalMethod",
-        "retrievalUrl",
-        "retrievedAt",
         "sectionHeading",
         "title",
-        "verificationState",
-        "whyItMatters",
     ]);
     assert.equal(JSON.stringify(canvasState).includes("FULL_PAGE_SENTINEL"), false);
 });

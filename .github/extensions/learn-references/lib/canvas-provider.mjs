@@ -7,13 +7,6 @@ import {
 } from "./canvas-renderer.mjs";
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-const SUPPORT_STATES = [
-    "all",
-    "supported",
-    "partially-supported",
-    "unsupported",
-    "conflicting",
-];
 const MAX_STATE_BYTES = 4_000_000;
 const MAX_SSE_CLIENTS = 8;
 const HEARTBEAT_MS = 25_000;
@@ -48,18 +41,6 @@ export const REFRESH_ACTION_SCHEMA = {
     type: "object",
     additionalProperties: false,
     properties: {},
-};
-
-export const SUPPORT_FILTER_ACTION_SCHEMA = {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-        support: {
-            type: "string",
-            enum: SUPPORT_STATES,
-        },
-    },
-    required: ["support"],
 };
 
 function fail(CanvasError, code, message) {
@@ -107,44 +88,20 @@ function safeLearnUrl(value) {
     return parsed.href;
 }
 
-function projectBundle(bundle, view, supportFilter) {
+function projectBundle(bundle, view) {
     const sources = bundle.sources.map((source) => ({
         id: source.id,
         title: source.title,
         canonicalUrl: safeLearnUrl(source.canonicalUrl),
-        retrievalUrl: safeLearnUrl(source.retrievalUrl ?? source.canonicalUrl),
         sectionHeading: source.sectionHeading,
         exactExcerpt: source.exactExcerpt,
-        whyItMatters: source.whyItMatters,
-        retrievalMethod: source.retrievalMethod,
-        retrievedAt: source.retrievedAt,
-        contentHash: source.contentHash,
-        verificationState: source.verificationState,
     }));
     const projected = {
         researchId: bundle.researchId,
         version: bundle.version,
         view,
         status: bundle.status,
-        summary: bundle.claims.slice(0, 5).map((claim) => claim.text).join(" "),
-        question: bundle.question,
-        scope: bundle.scope,
-        officialSkill: bundle.officialSkill,
-        researcherAgent: bundle.researcherAgent,
-        claims: bundle.claims.map((claim) => ({
-            id: claim.id,
-            text: claim.text,
-            sourceIds: claim.sourceIds,
-            support: claim.support,
-        })),
         sources,
-        unresolvedItems: bundle.unresolvedItems.map((item) => ({
-            id: item.id,
-            text: item.text,
-        })),
-        lifecycle: bundle.lifecycle,
-        contentHash: bundle.contentHash,
-        supportFilter,
     };
     if (Buffer.byteLength(JSON.stringify(projected)) > MAX_STATE_BYTES) {
         throw new Error("Canvas evidence exceeds the bounded display size.");
@@ -202,19 +159,6 @@ async function readSmallJson(req) {
         return {};
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-}
-
-function validateFilterInput(input) {
-    if (
-        !input
-        || typeof input !== "object"
-        || Array.isArray(input)
-        || Object.keys(input).length !== 1
-        || !SUPPORT_STATES.includes(input.support)
-    ) {
-        throw new Error("Invalid support filter.");
-    }
-    return input.support;
 }
 
 function validateRefreshInput(input) {
@@ -292,7 +236,7 @@ export function createLearnReferencesCanvas({
                 throw new Error("Only committed evidence can be served as published.");
             }
         }
-        return projectBundle(bundle, view, entry.supportFilter);
+        return projectBundle(bundle, view);
     }
 
     function broadcast(entry) {
@@ -313,7 +257,6 @@ export function createLearnReferencesCanvas({
             selector,
             server: undefined,
             sockets,
-            supportFilter: "all",
             url: undefined,
         };
         const csp = [
@@ -374,15 +317,6 @@ export function createLearnReferencesCanvas({
                     sendJson(res, 200, { refreshed: true, revision: entry.revision });
                     return;
                 }
-                if (req.method === "POST" && url.pathname === "/filter") {
-                    entry.supportFilter = validateFilterInput(await readSmallJson(req));
-                    broadcast(entry);
-                    sendJson(res, 200, {
-                        supportFilter: entry.supportFilter,
-                        revision: entry.revision,
-                    });
-                    return;
-                }
                 sendJson(res, 404, { error: { code: "NOT_FOUND", message: "Canvas route not found." } });
             } catch (error) {
                 sendJson(res, 422, { error: publicError(error) });
@@ -432,7 +366,7 @@ export function createLearnReferencesCanvas({
     const canvas = createCanvas({
         id: LEARN_REFERENCES_CANVAS_ID,
         displayName: "Microsoft Learn references",
-        description: "Inspect bounded, validated draft or published Microsoft Learn evidence.",
+        description: "Inspect bounded Microsoft Learn source excerpts for a research answer.",
         inputSchema: LEARN_REFERENCES_INPUT_SCHEMA,
         actions: [
             {
@@ -464,27 +398,6 @@ export function createLearnReferencesCanvas({
                     }
                 },
             },
-            {
-                name: "set_support_filter",
-                description: "Filter the open claim matrix by one strict support state",
-                inputSchema: SUPPORT_FILTER_ACTION_SCHEMA,
-                handler: async (ctx) => {
-                    const entry = instances.get(ctx.instanceId);
-                    if (!entry) {
-                        fail(CanvasError, "reference_instance_not_open", "The reference canvas instance is not open.");
-                    }
-                    try {
-                        entry.supportFilter = validateFilterInput(ctx.input);
-                        broadcast(entry);
-                        return {
-                            supportFilter: entry.supportFilter,
-                            revision: entry.revision,
-                        };
-                    } catch {
-                        fail(CanvasError, "invalid_support_filter", "A valid support filter is required.");
-                    }
-                },
-            },
         ],
         open: async (ctx) => withInstanceLock(ctx.instanceId, async () => {
             const selector = validateSelector(ctx.input, CanvasError);
@@ -501,17 +414,14 @@ export function createLearnReferencesCanvas({
                     }
                     broadcast(entry);
                 } else {
-                    const pending = {
-                        selector,
-                        supportFilter: "all",
-                    };
+                    const pending = { selector };
                     await load(pending);
                     entry = await startServer(ctx.instanceId, selector);
                     instances.set(ctx.instanceId, entry);
                 }
                 const state = await load(entry);
                 return {
-                    title: `${state.question.original} · v${state.version}`,
+                    title: `Microsoft Learn references · v${state.version}`,
                     status: `${state.view} · ${state.status}`,
                     url: entry.url,
                 };

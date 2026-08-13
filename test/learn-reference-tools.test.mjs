@@ -206,6 +206,8 @@ test("quick refinement promotes to a standalone deep kickoff with one stable res
     assert.match(deep.structuredContent.kickoff, new RegExp(researchId));
     assert.match(deep.structuredContent.kickoff, /re-fetch and record every source/i);
     assert.match(deep.structuredContent.kickoff, /instanceId "learn-draft-panel"/);
+    assert.match(deep.structuredContent.kickoff, /complete research synthesis in chat/i);
+    assert.match(deep.structuredContent.kickoff, /reference-only canvas/i);
     assert.match(deep.structuredContent.kickoff, /Publish only after an explicit user publish turn/i);
     assert.equal(deep.structuredContent.kickoff.includes("fetchedMarkdown"), false);
 });

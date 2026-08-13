@@ -125,6 +125,18 @@ test("researcher avoids fixed Learn wrapper and legacy operation names", async (
     assert.match(researcher, /logical operation `docs-fetch`/);
 });
 
+test("researcher answers in chat and keeps the canvas reference-only", async () => {
+    const researcher = await readFile(RESEARCHER_PATH, "utf8");
+    assert.match(researcher, /complete user-facing synthesis in chat/i);
+    assert.match(researcher, /links directly beside the claims they support/i);
+    assert.match(researcher, /only the exact `canonicalUrl` of a persisted source backed by a successful `docs-fetch`/i);
+    assert.match(researcher, /Resolve current Microsoft Learn URLs with a bounded `docs-search`/i);
+    assert.match(researcher, /URL embedded in a skill is only a discovery hint/i);
+    assert.match(researcher, /retain only the current search-result URL/i);
+    assert.match(researcher, /canvas is reference-only: source title, section heading, exact excerpt, and canonical Microsoft Learn URL/i);
+    assert.match(researcher, /Do not use the canvas for the research answer, claim matrix, provenance, lifecycle, or unresolved-item narrative/i);
+});
+
 test("unresolved routing cannot fabricate schema provenance or publish", async () => {
     const researcher = await readFile(RESEARCHER_PATH, "utf8");
     const unresolved = researcher.match(

@@ -78,13 +78,12 @@ Agent-facing actions are read-only:
 | Action | Input | Effect |
 | --- | --- | --- |
 | `refresh` | `{}` | Revalidates the selected record and emits one SSE repaint event |
-| `set_support_filter` | `{ "support": "all\|supported\|partially-supported\|unsupported\|conflicting" }` | Changes the claim matrix filter for this panel |
 
-The embedded refresh button calls the same loopback-only refresh path. There is no publish endpoint, `session.send` bridge, remote script/style, or fetched-page route. Publishing is an explicit child-agent turn through `publish-research-draft`.
+The canvas shows only source titles, section headings, exact excerpts, and canonical Learn URLs. The embedded refresh button calls the same loopback-only refresh path. There is no publish endpoint, `session.send` bridge, remote script/style, or fetched-page route. Publishing is an explicit child-agent turn through `publish-research-draft`.
 
 ## Nested session operation
 
-Invoke `start-learn-research` in the parent. The deep path calls `prepare_learn_research`, then creates a coordinated interactive project child with the returned kickoff, `learn-researcher`, and an idle notification. The child uses `learn-draft-panel` (or another stable non-research ID) for the draft canvas. The parent uses a separate stable panel ID such as `learn-published-panel` only after verified acknowledgement.
+Invoke `start-learn-research` in the parent. The deep path calls `prepare_learn_research`, then creates a coordinated interactive project child with the returned kickoff, `learn-researcher`, and an idle notification. The child returns the synthesis in chat using only persisted canonical URLs backed by successful fetches, and uses `learn-draft-panel` (or another stable non-research ID) for source excerpts. The parent uses a separate stable panel ID such as `learn-published-panel` only after verified acknowledgement.
 
 The end-to-end live publish probe is intentionally manual because production publication writes durable shared evidence. To test without pollution, start the extension with fresh temporary `COPILOT_LEARN_DRAFT_ROOT` and `COPILOT_LEARN_PUBLISHED_ROOT`, run quick preparation, promote the returned `researchId` into a coordinated child, record one bounded fetch, persist and open the draft, explicitly publish, verify immediate schema-v1 delivery in the parent, acknowledge it, and open `{ "researchId": "<same-id>", "version": 1, "view": "published" }`. Confirm a duplicate returns `duplicate`, then remove only those exact temporary roots.
 

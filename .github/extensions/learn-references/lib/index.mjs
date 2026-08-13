@@ -82,6 +82,5 @@ export {
     LEARN_REFERENCES_CANVAS_ID,
     LEARN_REFERENCES_INPUT_SCHEMA,
     REFRESH_ACTION_SCHEMA,
-    SUPPORT_FILTER_ACTION_SCHEMA,
     createLearnReferencesCanvas,
 } from "./canvas-provider.mjs";
