@@ -53,6 +53,8 @@
 | `STARTED` arrives but `COMPLETED` or `FAILED` does not | Match the child and identifiers, inspect its transcript once, and record an execution failure |
 | A duplicate or stale callback arrives | Ignore it unless the child project-session ID, task SHA-256, and callback nonce all match the active run |
 | A completed child answer is absent from the callback | Treat the run as incomplete even if the idle event fired; the callback must contain the complete result |
+| A standard research task requests long context by default | Use the default tier; escalate only for a packet over 15,000 characters, more than 30 fixed atoms, multi-answer comparison, or measured context pressure |
+| A default-context run reaches 120,000 input tokens or loses earlier evidence | Record the run and repeat once with `long_context`; do not make long context the global default |
 | A generated Markdown review packet is rejected as an unstaged kickoff file | Do not use Git staging or the attachment field; it accepts only app-staged creator images. Save the packet as a session artifact and give a read-enabled critic its exact path |
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |

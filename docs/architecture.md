@@ -47,7 +47,9 @@ claims without being misrepresented as the researcher's original tool trace.
 A quick question stays in the current chat. Deep research invokes Copilot App's built-in
 `/orchestrate` skill with one kickoff containing the mode, complete frozen task, task hash, callback
 nonce, and coordinator session ID. The child sends correlated `STARTED` and `COMPLETED` or `FAILED`
-messages. Idle notifications are diagnostic only. Direct discovery is the only research path.
+messages. Idle notifications are diagnostic only. Direct discovery is the only research path. The
+default context tier is sufficient for standard research; long context is an explicit escalation for
+large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a

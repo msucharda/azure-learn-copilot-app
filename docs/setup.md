@@ -29,7 +29,10 @@ For isolated research, invoke `/orchestrate` and request one callback-enabled ch
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
 - coordination: `coordinate_with_creator: true`;
-- notification: `notify_on_idle: always`, used only to diagnose missing callbacks.
+- notification: `notify_on_idle: always`, used only to diagnose missing callbacks;
+- context: `context_tier: default`. Use `long_context` only for a packet over 15,000 characters, more
+  than 30 fixed atoms, a multi-answer comparison, or a prior default run that reaches 120,000 input
+  tokens or exhibits context loss.
 
 Accept only `STARTED`, `COMPLETED`, or `FAILED` callbacks from the expected child with both exact
 identifiers. Verify a complete normalized answer before archiving the child. An idle child without a

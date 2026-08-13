@@ -140,6 +140,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Accept a callback only from the expected child project-session ID/i);
     assert.match(contract, /Treat idle notifications as diagnostics, never completion/i);
     assert.match(contract, /do not automatically resend the task/i);
+    assert.match(contract, /Use `context_tier: default`/i);
+    assert.match(contract, /packets? over 15,000 characters/i);
+    assert.match(contract, /more than 30 fixed atoms/i);
+    assert.match(contract, /reaches 120,000 input tokens or shows context loss/i);
     assert.match(contract, /Git staging does not change that/i);
     assert.match(contract, /review packet in the session artifact directory/i);
     assert.match(contract, /Direct Learn discovery is the only research path/i);

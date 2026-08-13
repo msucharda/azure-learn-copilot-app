@@ -18,7 +18,8 @@ links.
 1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
 2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
    `learn-researcher` child with the complete frozen task and a task-hash-correlated callback envelope
-   in one kickoff. Idle notifications are diagnostic only.
+   in one kickoff. Idle notifications are diagnostic only. Standard research uses the default context
+   tier; long context is reserved for measured large-packet or context-pressure cases.
 3. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
    product-skill catalogs are outside the research path.
 4. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
