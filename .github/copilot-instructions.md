@@ -13,11 +13,12 @@
   friction that it can directly observe.
 - Use direct Microsoft Learn discovery in `learn-researcher`; do not load a product-skill catalog or
   add a project router.
-- Limit the authoritative source set to 12 pages, fetch every cited page, and never cite a search
+- Limit the authoritative source set to 15 pages, fetch every cited page, and never cite a search
   snippet. Use read-only access only for exact tool-spooled output, and distinguish sourced facts
   from synthesized recommendations and unresolved assumptions.
-- Require a coverage preflight that maps every explicit requested subtopic to fetched evidence or an
-  unresolved statement; neither the source cap nor the word cap permits silent omission.
+- Require an atomic coverage preflight that preserves each named service, constraint, comparison, and
+  comma-separated subtopic. A parent-area mention or unsupported recommendation is not coverage;
+  neither the source cap nor the word cap permits silent omission.
 - Require a final link preflight: use an explicitly returned canonical URL or the exact successful
   request URL, never an inferred rewrite; allow no unfetched Markdown link in any section.
 - Keep the core synthesis within 1,500 words and give every decision all three exact labels: fetched

@@ -69,19 +69,23 @@ test("repository has an agent-only project surface", async () => {
 test("researcher uses native discovery and returns website references", async () => {
     const researcher = await text(RESEARCHER_PATH);
     assert.match(researcher, /documentation search directly/i);
-    assert.match(researcher, /every explicitly\s+requested decision and subtopic into a coverage checklist/i);
+    assert.match(researcher, /every explicitly\s+requested decision and subtopic into an atomic coverage checklist/i);
+    assert.match(researcher, /comma-separated requests into individual items/i);
+    assert.match(researcher, /parent decision area does not cover its children/i);
     assert.match(researcher, /search chunks as discovery only/i);
-    assert.match(researcher, /Select at most 12 authoritative pages/i);
+    assert.match(researcher, /Select at most 15 authoritative pages/i);
     assert.match(researcher, /Fetch every selected page/i);
-    assert.match(researcher, /not successfully fetched cannot\s+appear in a claim link/i);
+    assert.match(researcher, /not successfully fetched cannot appear in a\s+claim link/i);
     assert.match(researcher, /code-sample\s+search/i);
     assert.match(researcher, /spools output to a local file/i);
     assert.match(researcher, /Do not inspect unrelated workspace\s+or user files/i);
     assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
     assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
-    assert.match(researcher, /Address every item with fetched evidence or an\s+explicit unresolved statement/i);
+    assert.match(researcher, /recommendation may synthesize trade-offs, but it cannot introduce an unfetched product\s+capability/i);
+    assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
+    assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
+    assert.match(researcher, /must not report complete coverage while any item is absent/i);
     assert.match(researcher, /Source and word limits require concise prioritization, not omission/i);
-    assert.match(researcher, /observations` do not substitute for answer coverage/i);
     assert.match(researcher, /audit every Markdown URL in the draft/i);
     assert.match(researcher, /canonical URL and title only\s+when the successful fetch explicitly returns them/i);
     assert.match(researcher, /preserve the exact request URL that\s+fetched successfully/i);

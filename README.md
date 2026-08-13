@@ -19,7 +19,7 @@ links.
 2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and have it create one
    `learn-researcher` child.
 3. The researcher maps every requested subtopic to fetched evidence or an explicit unresolved
-   statement, uses native Microsoft Learn search for discovery, selects at most 12 authoritative
+   statement, uses native Microsoft Learn search for discovery, selects at most 15 authoritative
    pages, and fetches every linked page. It cites the canonical URL returned by fetch and performs
    final coverage and all-links-fetched preflights; if no canonical URL is returned, it preserves the
    exact successful request URL rather than inferring one. Read-only file access is restricted by
@@ -46,8 +46,9 @@ and observed tool friction, changes only the agent contract when evidence suppor
 the contract before starting the next iteration. The loop deliberately compares direct Learn
 discovery against earlier skill-assisted runs rather than assuming a broad injected catalog saves
 context. The core answer is bounded to 1,500 words so source breadth does not displace decision
-quality. Every decision uses explicit fetched-facts, recommendation, and
-assumptions-or-unresolved-constraints labels, and neither cap permits a requested topic to disappear.
+quality. The coverage preflight treats every named service, constraint, comparison, and enumerated
+subtopic as an atomic item. Every decision uses explicit fetched-facts, recommendation, and
+assumptions-or-unresolved-constraints labels, and neither cap permits an item to disappear.
 
 ## Validate
 
