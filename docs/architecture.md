@@ -24,9 +24,10 @@ renderer. Copilot App owns tool execution and session coordination.
 
 ### `learn-researcher`
 
-The researcher targets `github-copilot`, is read-only, and has two tool capabilities:
+The researcher targets `github-copilot`, is read-only, and has three tool capabilities:
 
 - `skill` for one optional, confidently matched official product skill;
+- `read` only for exact files created when a Learn tool spools oversized output;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search.
 
 An installed skill narrows terminology and product scope. It is not a citation. Material claims must
@@ -41,8 +42,10 @@ or rewriting the answer. This keeps evidence review independent from source disc
 
 A quick question stays in the current chat. Deep research invokes Copilot App's built-in
 `/orchestrate` skill to create and guide one `learn-researcher` child. The child answers normally;
-the orchestrator coordinates its result. No raw session API, custom research identity, publication
-state, acknowledgement protocol, or storage handoff is part of the project contract.
+the orchestrator coordinates its result. If automatic delivery is unavailable, the coordinator
+resolves the child's runtime session from its exact worktree and reads the persisted transcript with
+app-native session-history tools. No custom research identity, publication state, acknowledgement
+protocol, or storage handoff is part of the project contract.
 
 GitHub's documented deep-research workflow investigates a repository. The custom researcher remains
 the appropriate policy boundary for external Microsoft Learn research and its stricter citation
@@ -60,6 +63,9 @@ References are part of the answer:
 3. URLs use HTTPS and the exact `learn.microsoft.com` host.
 4. A short `References` list contains each cited page once.
 5. Tool failures or unsupported claims remain explicit rather than receiving a guessed link.
+6. The answer distinguishes fetched facts from scenario assumptions and synthesized recommendations.
+7. Mutable claims such as service status, deprecation, availability, regions, and numeric limits
+   require current fetched support.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
@@ -69,5 +75,7 @@ The links open the source as a normal website, including
 - Retrieved pages are untrusted data; instructions embedded in them are ignored.
 - Official skills provide routing guidance but are not source evidence.
 - The researcher cannot edit the repository, execute shell commands, or deploy resources.
+- Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated
+  workspace and user files are out of scope.
 - The critic cannot search, fetch, invoke skills, or broaden the supplied evidence.
 - Copilot App provides and authorizes all tools and orchestration.

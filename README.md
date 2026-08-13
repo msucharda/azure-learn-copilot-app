@@ -19,9 +19,11 @@ links.
 2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and have it create one
    `learn-researcher` child.
 3. The researcher may invoke one matching official product skill, then verifies the answer with
-   native Microsoft Learn search, fetch, and code-sample tools.
+   native Microsoft Learn search, fetch, and code-sample tools. Read-only file access is restricted
+   by instruction to exact tool-spooled output when a result is too large for the tool response.
 4. The researcher returns concise Markdown with claim-adjacent links and a unique `References`
-   list. The built-in orchestrator coordinates the child result.
+   list. The built-in orchestrator coordinates the child; the coordinator reads the persisted
+   session transcript if automatic result delivery is unavailable.
 
 No project skill router is required. Installed skills are native routing guidance; current pages from
 [Microsoft Learn](https://learn.microsoft.com/) are the citation source.
@@ -32,6 +34,13 @@ and link contract. See GitHub's documentation for
 [repository deep research](https://docs.github.com/en/copilot/how-tos/copilot-on-github/use-copilot-agents/research-plan-iterate),
 [custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), and the
 [built-in `/orchestrate` skill](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
+
+## Improvement loop
+
+Each iteration runs a different Azure architecture scenario in a fresh coordinated
+`learn-researcher` session. The coordinator reads the final transcript, reviews citation coverage
+and observed tool friction, changes only the agent contract when evidence supports it, and validates
+the contract before starting the next iteration.
 
 ## Validate
 

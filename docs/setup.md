@@ -32,7 +32,9 @@ For isolated research, invoke `/orchestrate` and request one child with:
 - the complete research question, version/platform scope, and constraints in the kickoff.
 
 The built-in skill creates and guides the child. The child returns one final linked Markdown answer;
-there is no custom handoff or publish step. See the
+there is no custom handoff or publish step. If the result is not delivered automatically, use the
+App's native session history to resolve the runtime session from the exact child worktree and read
+its final transcript. See the
 [built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
 
 Use `citation-critic` when a supplied answer and its excerpts need support classification.

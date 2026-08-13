@@ -59,6 +59,7 @@ test("repository has an agent-only project surface", async () => {
     ]);
     assert.deepEqual(tools(researcher), [
         "skill",
+        "read",
         "microsoft-learn/*",
     ]);
     assert.deepEqual(tools(critic), []);
@@ -71,17 +72,25 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /documentation search directly/i);
     assert.match(researcher, /fetch\s+the most relevant pages/i);
     assert.match(researcher, /code-sample search/i);
+    assert.match(researcher, /spools truncated output to a local file/i);
+    assert.match(researcher, /Do not inspect unrelated workspace\s+or user files/i);
+    assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
+    assert.match(researcher, /source-backed facts, scenario assumptions, and your synthesized recommendation/i);
     assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);
     assert.match(researcher, /host is exactly\s+`learn\.microsoft\.com`/i);
     assert.match(researcher, /short `References` list/i);
     assert.match(researcher, /built-in `orchestrate` skill/i);
     assert.doesNotMatch(researcher, /send_session_message/);
+    for (const forbidden of ["edit", "execute", "shell", "bash"]) {
+        assert.equal(tools(researcher).includes(forbidden), false);
+    }
 });
 
 test("project instructions use native orchestration", async () => {
     const instructions = await text(INSTRUCTIONS_PATH);
     assert.match(instructions, /built-in `\/orchestrate` skill/i);
     assert.match(instructions, /`learn-researcher` agent/i);
+    assert.match(instructions, /persisted transcript with app-native session-history tools/i);
     assert.match(instructions, /native Microsoft Learn tools/i);
     assert.match(instructions, /`References` list/i);
     assert.doesNotMatch(instructions, /create_session|send_session_message/);
