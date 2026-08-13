@@ -59,9 +59,10 @@ constraints and the user's mandatory scenario requirements. A length preflight r
 and catalog detail before requested coverage; neither cap permits an item to disappear.
 
 The same preflight also checks interactions between individually supported controls, propagates source
-qualifiers through migration, backup, failover, sharing, monitoring, and cost, and places create-time
-or irreversible choices before rollout. Conditional lead choices require a fetched fallback or remain
-unresolved.
+qualifiers through migration, backup, failover, sharing, monitoring, and cost, and derives pre-rollout
+commitments from every fetched one-way or irreversible qualifier. A compact interaction table checks
+protective controls against recovery and reconfiguration actions, including single-plane dependencies.
+Conditional lead choices require a fetched fallback or remain unresolved.
 
 When an improvement review is requested, a second coordinated child from a different model family
 formally reviews the first model's exact task, answer, and fetched evidence context. It does not
@@ -69,6 +70,8 @@ produce a competing architecture. The coordinator records agreements, disagreeme
 evidence-backed system changes in a Copilot session artifact after each round; the log is not runtime
 state and is not committed. Improvement-round answers carry a compact in-band evidence manifest so
 the reviewer can receive the material source qualifiers even when the app does not retain tool traces.
+Each manifest value maps back to a core decision, assumption, or audit item; unused manifest facts
+cannot justify full coverage.
 
 ## Validate
 

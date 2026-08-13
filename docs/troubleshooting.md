@@ -23,10 +23,13 @@
 | A recommendation combines options that fetched facts call incompatible | Choose one option or present explicit alternatives with the condition for each |
 | Two individually supported controls change each other's behavior | State the interaction, disabled or delayed operation, recovery consequence, and required sequence; compatibility alone is insufficient |
 | A protective control can block failover, restore, region changes, key operations, or rollback | State its removal, exception, break-glass path, and ordering for every affected recovery or reconfiguration action |
+| Protective controls were checked only against restore | Build the interaction table across failover, failback, restore, region change, scaling, key rotation, migration, cutover, rollback, and deletion |
+| One identity, key, DNS, network, or management plane gates all access | State outage behavior and a tested, scenario-compliant recovery condition; do not invent an insecure bypass |
 | A source says preview, partially supported, only, or conditional but the answer drops that term | Restore the exact support qualifier in fetched facts, recommendations, dependent workflows, and coverage status |
 | A recommendation assigns an action to the wrong actor | Preserve who creates, rotates, adopts, fails over, or restores; automatic detection or adoption is not automatic creation |
 | Migration discovers a create-time, one-way, locked, or irreversible property after cutover | Move the property and its acceptance test before the rollout step that commits to it |
 | Mode selection or another irreversible choice is buried in prose | Add it to the dedicated `Pre-rollout commitments` table with the fixation point, acceptance check, and evidence or unresolved status |
+| A one-way or creation-only qualifier exists only in the evidence manifest | Sweep all fetched and manifested qualifiers into pre-rollout commitments or explicitly decline the option |
 | A constraint appears in facts but not in restore, failover, sharing, monitoring, or cost steps | Propagate it into every affected workflow and downgrade the corresponding audit items until the core does so |
 | A conditional lead option has no verified fallback | Add a fetched, scenario-compliant fallback or leave the lead decision unresolved |
 | A recommendation violates a mandatory scenario constraint | Remove it or present it only as a conditional alternative with the explicit scenario trade-off; convenience does not override the requirement |
@@ -34,6 +37,8 @@
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
+| The evidence manifest contains material values absent from the answer | Map each value to a core sentence or assumptions block and name the supported decision or audit item; otherwise remove unused detail or downgrade the item |
+| Two audit rows describe the same mechanism with different statuses | Explain the supported-dimension difference in the core or lower the optimistic status |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |
 | `/orchestrate` is unavailable | Keep the research in the current chat; do not recreate coordination with project code |

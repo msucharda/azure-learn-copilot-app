@@ -39,9 +39,11 @@
   boundaries; state when one recommended control changes another's operation or recovery path; carry
   constraints into relevant migration, copy, backup, failover, monitoring, and cost steps. Recheck
   locks, policies, immutability, network restrictions, key protection, and deletion guards against
-  every recovery and reconfiguration action. Require a dedicated pre-rollout commitments table for
-  every create-time, one-way, locked, irreversible, and mode-selection or mode-switch property. A
-  conditional lead choice needs a fetched, scenario-compliant fallback or remains unresolved.
+  every recovery and reconfiguration action in a compact interaction table. Flag any single identity,
+  key, DNS, network, or management plane that gates all access without a tested recovery condition.
+  Require a dedicated pre-rollout commitments table derived from a final evidence sweep for every
+  create-time, one-way, locked, irreversible, and mode-selection or mode-switch property. A conditional
+  lead choice needs a fetched, scenario-compliant fallback or remains unresolved.
 - Require a core-length preflight that removes repeated facts, catalog detail, and secondary examples
   before requested coverage; recommendations apply rather than restate fetched facts.
 - Keep the core synthesis within 1,500 words, allowing up to 2,000 only when the atomic checklist
@@ -51,16 +53,19 @@
 - For checklists over 30 items, require a compact pre-reference `Coverage audit` table that assigns
   one row and one status to every atomic item: `Covered`, `Partially covered`, or `Unresolved`. The
   table row count must equal the checklist count. An item named in an assumptions block cannot be
-  `Covered`; rebuild and recount the audit from the final assumptions blocks before answering.
+  `Covered`; rebuild and recount the audit from the final assumptions blocks before answering. Rows
+  describing the same mechanism cannot differ without an explicit reason.
 - Require dedicated fetched evidence for every named capability, generation, SKU, region, or
   compatibility relationship on which the lead recommendation depends. Surface conflicts between
   fetched pages instead of choosing silently.
 - For an improvement round that requests agent observations, require an in-band `Evidence manifest`
   with one row per fetched page: matching `References` entry, fetched title, tool-exposed retrieval
-  timestamp or `Unavailable`, and the material support states and constraints used. Preserve the exact
-  value and conditions of every cited multiplier, range, duration, percentage, count, and numeric
-  limit. Keep each exact URL only in the linked `References` list. The manifest is answer context, not
-  a durable evidence store.
+  timestamp or `Unavailable`, the core decisions or audit items supported, and only the material
+  support states and constraints actually used. Preserve the exact value and conditions of every cited
+  multiplier, range, duration, percentage, count, and numeric limit. Every material manifest value
+  must appear in the core or assumptions; otherwise downgrade the related requested item. Keep each
+  exact URL only in the linked `References` list. The manifest is answer context, not a durable
+  evidence store.
 - Do not emit numeric word-count estimates unless a tool computed them deterministically.
 - Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
   `References` list. Never fabricate or rewrite a source URL.

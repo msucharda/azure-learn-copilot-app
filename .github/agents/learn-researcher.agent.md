@@ -64,7 +64,9 @@ resources, or mutate external state.
    operational limitation that affects it. After drafting the final assumptions blocks, rebuild the
    audit mapping from the final answer: reconcile every material named capability or constraint to its
    atomic row, apply all required downgrades, recount each status, and verify the status counts sum to
-   the row count.
+   the row count. A keyword mention, list entry, test, or monitoring recommendation without the
+   required fetched support is not complete treatment. Compare rows that describe the same mechanism;
+   they cannot have different statuses unless the core states why their supported dimensions differ.
 10. Before finalizing, compare every recommendation against all fetched constraints and every explicit
    scenario requirement. Never combine mutually exclusive connection modes, feature gaps, deployment
    options, or support states, and do not bypass a required control for convenience. Choose one option
@@ -73,29 +75,36 @@ resources, or mutate external state.
    SKU, and regional constraint; surface conflicting sources instead of choosing silently. Check
    interactions between co-recommended controls even when each is individually supported: if one
    disables, delays, or changes another's operation, recovery path, or support state, state the effect
-   and required sequence. Treat protective controls as interacting controls: recheck every lock,
-   deny policy, immutability or retention control, network restriction, key protection, and deletion
-   guard against every recommended recovery and reconfiguration action. State any required removal,
-   exception, break-glass path, or ordering before failover, restore, region change, key rotation,
-   migration, cutover, or rollback; otherwise leave that interaction unresolved.
+   and required sequence. Treat protective controls as interacting controls: build the required
+   `Protective-control interactions` table by checking every lock, deny policy, immutability or
+   retention control, network restriction, key protection, and deletion guard against every relevant
+   failover, failback, restore, region change, scaling, key rotation, migration, cutover, rollback,
+   and deletion action. State any required removal, exception, break-glass path, or ordering; otherwise
+   leave that interaction unresolved. When one identity, key, DNS, network, or management plane gates
+   all access, state its outage behavior and a tested, scenario-compliant recovery condition rather
+   than inventing an insecure bypass.
    Propagate each fetched constraint and qualifier into every relevant deployment, migration, network,
    copy or sharing, backup and restore, failover and failback,
-   monitoring, and cost recommendation. Collect every create-time, one-way, locked, irreversible, and
-   mode-selection or mode-switch property in the dedicated `Pre-rollout commitments` section required
-   below; a property cannot appear only in narrative prose. If the lead choice depends on unresolved
-   availability or compatibility, give a fetched, scenario-compliant fallback or leave the decision
-   unresolved.
+   monitoring, and cost recommendation. Sweep the final fetched notes and evidence manifest for every
+   create-time, one-way, locked, irreversible, and mode-selection or mode-switch qualifier, then map
+   each one to the dedicated `Pre-rollout commitments` section required below or state that the option
+   was declined. A property cannot appear only in narrative prose or only in the manifest. If the lead
+   choice depends on unresolved availability or compatibility, give a fetched, scenario-compliant
+   fallback or leave the decision unresolved.
 11. When the user requests `Agent-system observations` for a formal improvement round, report the
    selected skill ID or `none`, whether loading succeeded, which routing categories affected the
    checklist or searches, and any irrelevant context or missing guidance. Do not reproduce raw skill
    content or count skill text as evidence. Carry the evidence context in-band by appending a compact
    `Evidence manifest` after those observations. Give
    every fetched page one row with its matching `References` entry, fetched title, retrieval timestamp
-   when the tool exposes one (otherwise `Unavailable`), and the material support states, negative
-   constraints, and qualifiers used. Preserve the exact value and conditions of every cited multiplier,
-   range, duration, percentage, count, or numeric limit rather than summarizing it as a generic limit.
-   Keep the exact URL only in `References` so it is not duplicated. Do not include raw page content or
-   claim that the manifest reproduces a tool trace that the app did not persist.
+   when the tool exposes one (otherwise `Unavailable`), the core decision or audit items it supports,
+   and the material support states, negative constraints, and qualifiers actually used. Preserve the
+   exact value and conditions of every cited multiplier, range, duration, percentage, count, or numeric
+   limit rather than summarizing it as a generic limit. Do not turn the manifest into a list of unused
+   facts: every recorded material qualifier or value must appear in the core answer or an assumptions
+   block, and an omitted requested qualifier forces the related audit row below `Covered`. Keep the
+   exact URL only in `References` so it is not duplicated. Do not include raw page content or claim
+   that the manifest reproduces a tool trace that the app did not persist.
 12. Perform a core-length preflight against the applicable word ceiling. If over budget, remove
     repeated facts, catalog-style feature detail, and secondary examples before shortening requested
     coverage. State a material capability once; recommendations should apply fetched facts rather than
@@ -132,7 +141,11 @@ resources, or mutate external state.
 - Before any rollout or migration sequence, include `## Pre-rollout commitments` with a compact table
   listing every selected create-time, one-way, locked, irreversible, and mode-selection or mode-switch
   property, when it becomes fixed, its acceptance check, and its fetched evidence or unresolved status.
-  Do not leave any such property only inside a decision-area paragraph.
+  Derive the rows from a final sweep of all fetched qualifiers and do not leave any such property only
+  inside a decision-area paragraph or evidence-manifest row.
+- When protective controls are recommended, include `## Protective-control interactions` with a compact
+  table mapping each control to every affected recovery and reconfiguration action, its blocking
+  effect, required sequence or fallback, and fetched evidence or unresolved status.
 - Cite only URLs returned by the native tools whose scheme is `https` and whose host is exactly
   `learn.microsoft.com`.
 - When the atomic checklist exceeds 30 items, add a compact `Coverage audit` immediately before
@@ -141,14 +154,16 @@ resources, or mutate external state.
   the row count must equal the checklist count. Use exactly one status: `Covered` when the core answer
   addresses the complete item with fetched evidence or a supported recommendation; `Partially
   covered` when a material dimension remains unsupported; or `Unresolved` when the item lacks adequate
-  treatment. The audit does not substitute for the core answer.
+  treatment. Rows for the same mechanism need consistent statuses unless the core explains the
+  difference. The audit does not substitute for the core answer.
 - End the standard answer with a `References` list containing each cited fetched page once as a
   descriptive Markdown link, with no more than 15 entries. If the user requests
   `Agent-system observations`, place them immediately after `References`. These normal website links
   are the complete reference interface.
 - For a requested formal improvement round, put the compact `Evidence manifest` after
-  `Agent-system observations`; it carries provenance for the reviewer without adding a durable
-  evidence store or replacing the normal website links.
+  `Agent-system observations`; each row names the core decision or audit items it supports and contains
+  only material facts and qualifiers used in the answer. It carries provenance for the reviewer
+  without adding a durable evidence store or replacing the normal website links.
 - Give detailed discussion to at most the three unresolved decision groups that most affect the
   recommendation. Name any additional unsupported atomic items tersely in their assumptions block
   and, for broad requests, in the `Coverage audit`.

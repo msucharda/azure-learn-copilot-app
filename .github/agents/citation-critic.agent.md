@@ -33,7 +33,9 @@ commits to it. A conditional lead choice without a supplied, scenario-compliant 
 partially supported or unresolved. Require a dedicated pre-rollout list for create-time, one-way,
 locked, irreversible, and mode-selection or mode-switch properties. Recheck protective controls
 against every supplied recovery and reconfiguration action and flag missing removal, exception,
-break-glass, or sequencing requirements.
+break-glass, or sequencing requirements. Require the answer to derive irreversible commitments from
+all supplied manifest qualifiers, not only narrative prose. Flag a single identity, key, DNS, network,
+or management plane that gates all access without a supplied recovery condition.
 
 Structure the review around:
 
@@ -44,10 +46,12 @@ Structure the review around:
    failover and failback, monitoring, and cost;
 5. coverage-audit classification, where every item named in a compound assumptions clause is affected
    and an omitted material interaction or qualifier prevents full support; verify that final status
-   counts reflect the final assumptions blocks and sum to the row count;
+   counts reflect the final assumptions blocks and sum to the row count; compare rows that describe the
+   same mechanism and require an explicit reason for different statuses;
 6. evidence provenance, explicitly distinguishing an original in-band manifest from reconstructed
    source context, and classify a quantitative claim as fully supported only when the supplied context
-   preserves its exact value, scope, and conditions;
+   preserves its exact value, scope, and conditions; verify that every material manifest qualifier maps
+   to a core sentence or assumptions block and that unused manifest detail does not support `Covered`;
 7. runtime or contract defects, kept separate from answer defects, including the coordinator-supplied
    answer delivery channel; and
 8. small, evidence-backed system changes.

@@ -123,6 +123,18 @@ References are part of the answer:
     every affected row is downgraded and the status counts sum to the row count.
 29. Every quantitative claim has adjacent fetched evidence for its exact value, scope, and conditions.
     In improvement rounds, the matching evidence-manifest row preserves those quantities.
+30. Pre-rollout commitments come from a final sweep of every fetched and manifested create-time,
+    one-way, locked, irreversible, and mode-switch qualifier. Each is accepted, left unresolved, or
+    explicitly declined.
+31. A compact protective-control interaction table maps each control to every affected recovery and
+    reconfiguration action, its blocking effect, and the required sequence or fallback.
+32. A single identity, key, DNS, network, or management plane that gates all access includes a tested,
+    scenario-compliant recovery condition; an insecure bypass is not an acceptable fallback.
+33. Audit rows describing the same mechanism use consistent statuses unless the core explains why
+    their supported dimensions differ.
+34. Every material fact or qualifier in an improvement-round evidence manifest maps to a core sentence
+    or assumptions block and names the decisions or audit items it supports. Unused manifest facts do
+    not justify `Covered`.
 
 ## Formal review contract
 
