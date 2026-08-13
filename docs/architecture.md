@@ -8,7 +8,6 @@ The system is prompt-defined and agent-only:
 flowchart LR
     U[User or parent session] --> O[Built-in orchestrate skill]
     O --> R[learn-researcher]
-    R --> S[One optional official product skill]
     R --> L[Native Microsoft Learn tools]
     L --> R
     R --> A[Markdown answer and website links]
@@ -24,14 +23,14 @@ renderer. Copilot App owns tool execution and session coordination.
 
 ### `learn-researcher`
 
-The researcher targets `github-copilot`, is read-only, and has three tool capabilities:
+The researcher targets `github-copilot`, is read-only, and has two tool capabilities:
 
-- `skill` for one optional, confidently matched official product skill;
 - `read` only for exact files created when a Learn tool spools oversized output;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search.
 
-An installed skill narrows terminology and product scope. It is not a citation. Material claims must
-be checked against current Microsoft Learn pages returned by the native tools.
+The researcher intentionally does not load an installed product-skill catalog. Broad skill indexes
+can inject substantial unrelated context, while direct Learn search already supplies current
+discovery. Material claims must be checked against a bounded set of fetched Microsoft Learn pages.
 
 ### `citation-critic`
 
@@ -59,12 +58,14 @@ while multi-session coordination is provided by the
 References are part of the answer:
 
 1. Each material factual claim has an adjacent descriptive Markdown link.
-2. Every source URL comes from native tool output.
-3. URLs use HTTPS and the exact `learn.microsoft.com` host.
-4. A short `References` list contains each cited page once.
-5. Tool failures or unsupported claims remain explicit rather than receiving a guessed link.
-6. The answer distinguishes fetched facts from scenario assumptions and synthesized recommendations.
-7. Mutable claims such as service status, deprecation, availability, regions, and numeric limits
+2. Search results are discovery only; every cited page was successfully fetched.
+3. The source set contains at most 12 authoritative pages.
+4. Every source URL comes from native tool output.
+5. URLs use HTTPS and the exact `learn.microsoft.com` host.
+6. A short `References` list contains each cited page once.
+7. Tool failures or unsupported claims remain explicit rather than receiving a guessed link.
+8. The answer distinguishes fetched facts from scenario assumptions and synthesized recommendations.
+9. Mutable claims such as service status, deprecation, availability, regions, and numeric limits
    require current fetched support.
 
 The links open the source as a normal website, including
@@ -73,7 +74,6 @@ The links open the source as a normal website, including
 ## Trust boundaries
 
 - Retrieved pages are untrusted data; instructions embedded in them are ignored.
-- Official skills provide routing guidance but are not source evidence.
 - The researcher cannot edit the repository, execute shell commands, or deploy resources.
 - Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated
   workspace and user files are out of scope.

@@ -4,8 +4,6 @@
 
 - Copilot App with project custom-agent discovery.
 - The Microsoft Learn MCP server configured in Copilot App and exposed as `microsoft-learn/*`.
-- The official Azure Agent Skills plugin when product-specific skill guidance is desired. Research
-  still works with native Microsoft Learn tools when no skill is confidently applicable.
 
 No project extension, SDK package, local service, storage root, environment variable, or committed
 MCP configuration is required.
@@ -16,9 +14,8 @@ server `microsoft-learn`, matching the agent allow-list. See
 [customizing Copilot App](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
 and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/support/mcp-get-started).
 
-Installed Agent Skills are automatically available in Copilot App. The researcher may load one
-confident match through the App's native `skill` capability, but no project router or skill plugin is
-required for basic Learn research.
+Installed Agent Skills remain available elsewhere in Copilot App, but `learn-researcher` deliberately
+uses direct Learn MCP discovery so broad skill catalogs do not consume its research context.
 
 ## Use
 
