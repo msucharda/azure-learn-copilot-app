@@ -77,15 +77,19 @@ test("researcher separates standard, evaluation, and repair behavior", async () 
         assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }
 
-    assert.match(contract, /Selected official product skill: <exact-id>/i);
-    assert.match(contract, /Skill text and skill-provided URLs are discovery guidance, never evidence/i);
+    assert.match(contract, /All modes use direct Microsoft Learn discovery/i);
+    assert.match(contract, /Do not invoke or request installed product skills/i);
+    assert.doesNotMatch(researcher, /Selected official product skill|Load at most.*official skill/i);
     assert.match(contract, /Each numbered item, bullet, or semicolon-delimited subtopic is one atom/i);
     assert.match(contract, /least-supported dimension determines that atom's final status/i);
     assert.match(contract, /Select at most 15 authoritative pages/i);
     assert.match(contract, /Fetch every selected page/i);
+    assert.match(contract, /Reserve evidence slots for the lead's exact service, tier, and mode/i);
+    assert.match(contract, /mark mutable facts time-sensitive and require deployment-time revalidation/i);
     assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
     assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
     assert.match(contract, /Protective-control interactions/i);
+    assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
     assert.match(contract, /identity, key, DNS, network, or management plane gates all access/i);
     assert.match(contract, /every URL must be HTTPS on exactly `learn\.microsoft\.com`/i);
     assert.match(contract, /Evaluation packet \(coordinator only\)/i);
@@ -124,8 +128,12 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Do not archive or replace a child until session history proves/i);
     assert.match(contract, /Git staging does not change that/i);
     assert.match(contract, /review packet in the session artifact directory/i);
-    assert.match(contract, /Direct Learn discovery is the default/i);
-    assert.match(contract, /Select at most one exact installed official product skill/i);
+    assert.match(contract, /Direct Learn discovery is the only research path/i);
+    assert.match(contract, /Do not load, preselect, or inject an installed product skill/i);
+    assert.match(contract, /empty response, send one short recovery instruction/i);
+    assert.match(contract, /do not resend the frozen task/i);
+    assert.match(contract, /reply exactly `Task not received`/i);
+    assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
     assert.match(contract, /do not forward that packet as user-facing output/i);
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);

@@ -19,9 +19,8 @@ links.
 2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
    `learn-researcher` child with a verified two-turn handshake: request repeated idle notifications,
    wait for the minimal initialization response, and only then send the complete task once.
-3. Direct Learn discovery is the default. The coordinator may preselect one exact official product
-   skill when it can name a concrete routing benefit; that skill guides terminology and query planning
-   but never supplies evidence.
+3. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
+   product-skill catalogs are outside the research path.
 4. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
    cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
 5. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
@@ -29,9 +28,24 @@ links.
    refetches only its existing Learn URLs, and sends a repair brief back to the original researcher.
    The coordinator publishes only the corrected user-facing answer.
 
-No project skill router or product-skill catalog is loaded into the researcher. A single progressively
-loaded official skill may narrow discovery when explicitly justified, but it is not evidence. Current
-fetched pages from [Microsoft Learn](https://learn.microsoft.com/) remain the citation source.
+No project skill router, installed product skill, or product-skill catalog is loaded into the
+researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole
+citation source.
+
+## Routing decision
+
+Three frozen-task, same-model, blinded comparisons tested direct Learn discovery against one matching
+official product skill. Critical-defect precedence determined the winner before score totals.
+
+| Round | Product | Direct | Skill | Winner |
+| --- | --- | ---: | ---: | --- |
+| 16 | Service Bus | 26/35 | 26/35 | Direct, medium confidence |
+| 17 | Key Vault | 26/35 | 23/35 | Direct, medium confidence |
+| 18 | API Management | 28/35 | 24/35 | Direct, medium confidence |
+
+Direct discovery won all three rounds. The skill arms occasionally improved product-specific depth,
+but introduced more serious lead-path defects and more initialization complexity. Product-skill
+routing is therefore removed rather than retained as a standard or evaluation option.
 
 GitHub's standard deep-research workflow is designed to investigate repository code. This custom
 agent remains useful for external Microsoft Learn research because it enforces a Learn-only source
@@ -43,8 +57,8 @@ and link contract. See GitHub's documentation for
 ## Improvement loop
 
 Each iteration runs a different Azure architecture scenario in a fresh coordinated
-`learn-researcher` session. Controlled routing experiments hold the task, model, and rubric fixed,
-anonymize the answers, and decode skill use only after blind review. The core answer is bounded to
+`learn-researcher` session. Controlled experiments hold the task, model, and rubric fixed and anonymize
+answers before blind review. The core answer is bounded to
 1,500 words, or 2,000 evaluation words for more than 30 atoms. Atomization is fixed before search:
 each numbered item, bullet, or semicolon-delimited subtopic is one row, and a compound row receives the
 status of its least-supported dimension.
@@ -53,7 +67,10 @@ The same preflight also checks interactions between individually supported contr
 qualifiers through migration, backup, failover, sharing, monitoring, and cost, and derives pre-rollout
 commitments from every fetched one-way or irreversible qualifier. A compact interaction table checks
 protective controls against recovery and reconfiguration actions, including single-plane dependencies.
-Conditional lead choices require a fetched fallback or remain unresolved.
+Conditional lead choices require a fetched fallback or remain unresolved. The source budget reserves
+lead-mode capability, operations/reliability, network/management-plane, and limits/lifecycle pages
+before alternatives. Mandatory action verbs are checked against operations pages, and mutable facts
+without tool-exposed timestamps require deployment-time revalidation.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns

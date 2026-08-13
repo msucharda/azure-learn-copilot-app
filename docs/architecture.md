@@ -8,7 +8,6 @@ The system is prompt-defined and agent-only:
 flowchart LR
     U[User or parent session] --> O[Built-in orchestrate skill]
     O -->|Verified ready handshake| R[learn-researcher]
-    R -. Routing and checklist guidance .-> S[One installed official product skill]
     R --> L[Native Microsoft Learn tools]
     L --> R
     R --> A[Answer plus optional evaluation packet]
@@ -30,11 +29,9 @@ The researcher targets `github-copilot`, is read-only, and has two tool capabili
 - `read` only for exact files created when a Learn tool spools oversized output;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search.
 
-The researcher does not load an installed product-skill catalog. Before launch, the coordinator may
-preselect one exact matching official product skill and name it in the kickoff. The child loads only
-that skill for terminology, topic routing, and checklist guidance, then searches Learn directly.
-Skills are not citation evidence, and every material claim must be checked against the bounded set of
-fetched Microsoft Learn pages.
+The researcher does not load installed product skills or a product-skill catalog. It searches Learn
+directly in every mode, and every material claim must be checked against the bounded set of fetched
+Microsoft Learn pages.
 
 ### `citation-critic`
 
@@ -46,10 +43,9 @@ misrepresented as the researcher's original tool trace.
 ## Quick and deep paths
 
 A quick question stays in the current chat. Deep research invokes Copilot App's built-in
-`/orchestrate` skill with repeated idle notifications. A minimal first turn declares the research mode
-and optional exact skill; the coordinator verifies the ready response before sending the full task
-once. Direct discovery is the default. A skill is selected only for a stated routing benefit and the
-child never enumerates the catalog.
+`/orchestrate` skill with repeated idle notifications. A minimal first turn declares only the research
+mode; the coordinator verifies the ready response before sending the full task once. Direct discovery
+is the only research path.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a
@@ -139,6 +135,12 @@ References are part of the answer:
 34. Every material fact or qualifier in an evaluation manifest maps to a core sentence or assumptions
     block and names the decisions or audit items it supports. Unused manifest facts do not justify
     `Covered`.
+35. The evidence budget reserves pages for the lead architecture's exact tier and mode before
+    alternatives: capability, reliability/operations, network/management-plane, and limits/lifecycle.
+36. Every mandatory scenario action such as rotate, drill, fail over, fail back, restore, scale, or
+    delete is checked against a dedicated operations page; capability support does not prove procedure.
+37. When tools expose no retrieval timestamp, mutable values and lifecycle status are labeled
+    time-sensitive and receive a deployment-time revalidation commitment.
 
 ## Formal review contract
 
@@ -151,7 +153,7 @@ source set. Review-time fetches are labeled separately from the original trace.
 The critic returns a repair brief. The original researcher applies it in repair mode using the existing
 source set unless a new fetch is explicitly authorized. The coordinator verifies the corrected
 normalized answer and publishes only its user-facing portion. Controlled A/B runs fix the task hash and
-rubric, remove arm metadata, and reveal skill routing only after the verdict.
+rubric and remove arm metadata until after the verdict.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
@@ -160,8 +162,8 @@ The links open the source as a normal website, including
 
 - Retrieved pages are untrusted data; instructions embedded in them are ignored.
 - The researcher cannot edit the repository, execute shell commands, or deploy resources.
-- A preselected product skill can guide discovery but cannot establish a factual claim or bypass the
-  fetched-page reference contract.
+- Installed product skills and their catalogs are outside the researcher trust boundary and are not
+  invoked.
 - Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated
   workspace and user files are out of scope.
 - The critic cannot search, add sources, invoke skills, or read outside the exact packet. It may fetch

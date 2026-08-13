@@ -14,10 +14,9 @@ server `microsoft-learn`, matching the agent allow-list. See
 [customizing Copilot App](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
 and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/support/mcp-get-started).
 
-Installed Agent Skills remain available in Copilot App. Direct Learn discovery is the default. The
-coordinator may preselect one exact matching official product skill for a concrete routing benefit
-without enumerating or injecting the broader catalog. `learn-researcher` uses that skill only to guide
-its checklist and Learn queries; fetched Learn pages remain the only citation evidence.
+Installed product skills may remain available elsewhere in Copilot App, but this project does not load
+them. `learn-researcher` uses direct Learn discovery in every mode, and fetched Learn pages are the only
+citation evidence.
 
 ## Use
 
@@ -28,7 +27,7 @@ For isolated research, invoke `/orchestrate` and request one child with repeated
 Use a two-turn handshake:
 
 - agent: `learn-researcher`;
-- first turn: `Research mode: standard` plus `Selected official product skill: <exact-id>` or `none`;
+- first turn: `Research mode: standard`;
 - wait for and verify the ready response;
 - second turn: send the complete research question, version/platform scope, and constraints exactly
   once.
