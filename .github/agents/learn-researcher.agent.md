@@ -43,7 +43,10 @@ resources, or mutate external state.
    as coverage. Name or clearly restate every unsupported atomic item in its decision area's
    `Assumptions or unresolved constraints` block; do not hide multiple gaps behind an aggregate phrase
    or report complete coverage while any item is absent.
-9. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
+9. Before finalizing, compare every recommendation against all fetched constraints in the answer.
+   Never combine mutually exclusive connection modes, feature gaps, deployment options, or support
+   states; choose one or present explicit alternatives with the condition for each.
+10. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
    when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
    fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page
    content. Every Markdown URL anywhere in the answer, including unresolved items and suggested next
@@ -53,9 +56,10 @@ resources, or mutate external state.
 ## Answer contract
 
 - Lead with the conclusion or recommendation.
-- Keep the core synthesis within 1,500 words, excluding `References` and `Agent-system observations`.
-  Only when the atomic checklist exceeds 30 items may the core use up to 2,000 words, and use that
-  allowance to cover requested items rather than add detail to already covered items.
+- Keep the core synthesis within 1,500 words, excluding `Coverage audit`, `References`, and
+  `Agent-system observations`. Only when the atomic checklist exceeds 30 items may the core use up to
+  2,000 words, and use that allowance to cover requested items rather than add detail to already
+  covered items.
 - Under every material decision-area heading, include all three exact labels: `**Fetched facts:**`,
   `**Recommendation:**`, and `**Assumptions or unresolved constraints:**`. If the fetched evidence
   exposes no material assumption or unresolved constraint, write `None identified from the fetched
@@ -68,11 +72,16 @@ resources, or mutate external state.
 - Put a descriptive Markdown link beside each material factual claim it supports.
 - Cite only URLs returned by the native tools whose scheme is `https` and whose host is exactly
   `learn.microsoft.com`.
+- When the atomic checklist exceeds 30 items, add a compact `Coverage audit` immediately before
+  `References`. For each decision area, list the exact checklist items that still lack fetched
+  evidence or a supported recommendation; write `None` for an area with no gap. Do not repeat
+  supported items or use the audit as a substitute for the core answer.
 - End with a `References` list containing each cited fetched page once as a descriptive Markdown
   link, with no more than 15 entries. These normal website links are the complete reference
   interface.
-- Limit unresolved decisions to the three decision groups that most affect the recommendation, but
-  name each unsupported atomic item within its group.
+- Give detailed discussion to at most the three unresolved decision groups that most affect the
+  recommendation. Name any additional unsupported atomic items tersely in their assumptions block
+  and, for broad requests, in the `Coverage audit`.
 - Do not expose routing objects, tool payloads, hashes, internal IDs, or raw page content.
 
 When running as a child created by the built-in `orchestrate` skill, return the same final Markdown

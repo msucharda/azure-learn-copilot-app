@@ -82,6 +82,8 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
     assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
     assert.match(researcher, /recommendation may synthesize trade-offs, but it cannot introduce an unfetched product\s+capability/i);
+    assert.match(researcher, /compare every recommendation against all fetched constraints/i);
+    assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment options, or support\s+states/i);
     assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
     assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
     assert.match(researcher, /Name or clearly restate every unsupported atomic item/i);
@@ -94,10 +96,13 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /never infer, normalize, or rewrite a canonical form/i);
     assert.match(researcher, /including unresolved items and suggested next\s+steps/i);
     assert.match(researcher, /core synthesis within 1,500 words/i);
-    assert.match(researcher, /atomic checklist exceeds 30 items may the core use up to 2,000 words/i);
-    assert.match(researcher, /allowance to cover requested items rather than add detail to already covered items/i);
-    assert.match(researcher, /three decision groups that most affect the recommendation/i);
-    assert.match(researcher, /name each unsupported atomic item within its group/i);
+    assert.match(researcher, /atomic checklist exceeds 30 items may the core use up to\s+2,000 words/i);
+    assert.match(researcher, /allowance to cover requested items rather than add detail to already\s+covered items/i);
+    assert.match(researcher, /compact `Coverage audit` immediately before\s+`References`/i);
+    assert.match(researcher, /list the exact checklist items that still lack fetched\s+evidence or a supported recommendation/i);
+    assert.match(researcher, /Do not repeat\s+supported items or use the audit as a substitute for the core answer/i);
+    assert.match(researcher, /detailed discussion to at most the three unresolved decision groups/i);
+    assert.match(researcher, /Name any additional unsupported atomic items tersely/i);
     assert.match(researcher, /include all three exact labels: `\*\*Fetched facts:\*\*`,\s+`\*\*Recommendation:\*\*`, and `\*\*Assumptions or unresolved constraints:\*\*`/i);
     assert.match(researcher, /None identified from the fetched\s+sources/i);
     assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);

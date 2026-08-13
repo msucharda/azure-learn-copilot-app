@@ -21,10 +21,14 @@
   neither the source cap nor the word cap permits silent omission.
 - Require a final link preflight: use an explicitly returned canonical URL or the exact successful
   request URL, never an inferred rewrite; allow no unfetched Markdown link in any section.
+- Require a contradiction preflight across fetched constraints and recommendations; mutually
+  exclusive options must be chosen between or presented as conditional alternatives, never combined.
 - Keep the core synthesis within 1,500 words, allowing up to 2,000 only when the atomic checklist
   exceeds 30 items and only to restore requested coverage. Give every decision all three exact labels:
   fetched facts, recommendation, and assumptions or unresolved constraints; name every unsupported
   item in the last label rather than hiding gaps behind an aggregate phrase.
+- For checklists over 30 items, require a compact pre-reference `Coverage audit` listing only the
+  unsupported exact items per decision area.
 - Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
   `References` list. Never fabricate or rewrite a source URL.
 - Use `citation-critic` only when the user requests an evidence review.

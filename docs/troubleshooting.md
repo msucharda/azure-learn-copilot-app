@@ -12,9 +12,11 @@
 | A requested topic is absent from the answer | Split the request into atomic named services, constraints, comparisons, and comma-separated subtopics, then map each to a core-answer sentence with fetched evidence, a supported recommendation, or an explicit unresolved statement |
 | The agent reports complete coverage despite a missing subtopic | Do not accept a parent-area paragraph, unsupported recommendation, or agent-system observation as coverage; rerun the item-by-item preflight |
 | A broad request loses subtopics at the word limit | If the atomic checklist exceeds 30 items, allow up to 2,000 core words and spend the additional allowance only on missing requested coverage |
+| A broad answer still hides omitted items | Add a compact `Coverage audit` before `References`, listing only unsupported exact items per decision area and `None` where no gap remains |
 | A decision area omits one of the three evidence labels | Include `Fetched facts`, `Recommendation`, and `Assumptions or unresolved constraints`; state that none were identified when applicable |
 | An assumptions block hides several gaps behind a broad phrase | Name or clearly restate every unsupported atomic item, grouped into no more than three decision-critical unresolved groups |
 | A recommendation asserts an unfetched service capability | Fetch suitable product evidence or remove the factual premise; synthesis is not a substitute for evidence |
+| A recommendation combines options that fetched facts call incompatible | Choose one option or present explicit alternatives with the condition for each |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |
 | `/orchestrate` is unavailable | Keep the research in the current chat; do not recreate coordination with project code |

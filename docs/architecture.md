@@ -79,8 +79,13 @@ References are part of the answer:
    premises.
 13. The core synthesis is at most 1,500 words. When the atomic checklist exceeds 30 items, it may use
     at most 2,000 words solely to restore requested coverage.
-14. The answer retains at most three decision-critical unresolved groups and names every unsupported
-    atomic item within its group rather than hiding gaps behind an aggregate phrase.
+14. Recommendations are checked against all fetched constraints; mutually exclusive options are
+    selected between or presented as explicit conditional alternatives.
+15. A request with more than 30 atomic items includes a compact pre-reference coverage audit listing
+    only unsupported exact items per decision area.
+16. The answer gives detailed discussion to at most three decision-critical unresolved groups and
+    names every other unsupported atomic item tersely rather than hiding gaps behind an aggregate
+    phrase.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
