@@ -1,50 +1,46 @@
-# Learn research setup
+# Setup
 
-## Prerequisites
+## Requirements
 
-Install the official `azure-agent-skills` plugin outside this repository. The app never vendors,
-copies, or modifies official skills. Record the skill name, plugin name/version, and generation
-time only when the runtime exposes them; absent provenance stays absent and metadata older than
-three calendar months is treated as stale.
+- Copilot App with project custom-agent discovery.
+- The Microsoft Learn MCP server configured in Copilot App and exposed as `microsoft-learn/*`.
+- The official Azure Agent Skills plugin when product-specific skill guidance is desired. Research
+  still works with native Microsoft Learn tools when no skill is confidently applicable.
 
-The runtime connects to `https://learn.microsoft.com/api/mcp`. It discovers tool names and schemas
-dynamically and maps them to documentation search, documentation fetch, and code-sample search.
-No fixed wrapper name or committed `.github/mcp.json` is required because this app runtime already
-supplies the MCP endpoint. Deployments that own MCP configuration may inject the same exact
-endpoint externally.
+No project extension, SDK package, local service, storage root, environment variable, or committed
+MCP configuration is required.
 
-## Configuration
+Copilot App inherits MCP servers configured for a repository or Copilot CLI and also supports
+managing servers in App settings. Configure the official Microsoft Learn endpoint there and name the
+server `microsoft-learn`, matching the agent allow-list. See
+[customizing Copilot App](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
+and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/support/mcp-get-started).
 
-| Variable | Default | Bound or purpose |
-| --- | --- | --- |
-| `COPILOT_LEARN_DRAFT_ROOT` | workspace-keyed Copilot home path | Draft bundles and fetched Markdown captures |
-| `COPILOT_LEARN_PUBLISHED_ROOT` | shared Copilot home path | Bounded published excerpts, hashes, handoffs, and acknowledgements |
-| `COPILOT_LEARN_MCP_ENDPOINT` | `https://learn.microsoft.com/api/mcp` | HTTPS exact `learn.microsoft.com` host only |
-| `COPILOT_LEARN_TIMEOUT_MS` | `30000` | 1,000 through 120,000 milliseconds per attempt |
-| `COPILOT_LEARN_RETRY_MAX_ATTEMPTS` | `3` | 1 through 5 attempts |
-| `COPILOT_LEARN_RETRY_BASE_DELAY_MS` | `100` | Up to 5,000 milliseconds |
-| `COPILOT_LEARN_RETRY_MAX_DELAY_MS` | `1000` | Up to 5,000 milliseconds |
-| `COPILOT_LEARN_RETRY_MAX_TOTAL_DELAY_MS` | `2000` | Up to 10,000 milliseconds |
-| `COPILOT_LEARN_RETRY_MAX_RETRY_AFTER_MS` | `2000` | Accept headers up to 10,000 milliseconds; effective sleep is still clamped by `MAX_DELAY_MS` |
-| `COPILOT_LEARN_RETRY_JITTER_RATIO` | `0.25` | 0 through 0.5; inject zero in deterministic tests |
-| `COPILOT_LEARN_METADATA_CACHE_TTL_MS` | `300000` | 1,000 through 3,600,000 milliseconds; validated tool schemas only |
-| `COPILOT_LEARN_REFERENCES_TELEMETRY` | disabled | Set to `1` to enable local structured telemetry |
-| `COPILOT_LEARN_REFERENCES_TELEMETRY_ROOT` | Copilot home telemetry path | Local telemetry root; must not be a symlink |
+Installed Agent Skills are automatically available in Copilot App. The researcher may load one
+confident match through the App's native `skill` capability, but no project router or skill plugin is
+required for basic Learn research.
 
-Invalid or excessive values fail startup. Full fetched pages are never persisted in the published
-store, telemetry, benchmark reports, handoffs, or acknowledgements.
+## Use
 
-## Workflows
+For a quick question, ask in the current project chat. The project instructions direct Copilot to
+use native Microsoft Learn tools and return clickable Markdown references.
 
-For a quick question, use **Refine here** in the current chat. Side Chat is user-initiated because
-the host does not expose a programmatic Quick Chat creation API; manually confirm the required
-project skills and tools are present.
+For isolated research, invoke `/orchestrate` and request one child with:
 
-For deep research, start `start-learn-research`, create the coordinated child with the returned
-kickoff, and keep draft evidence and the draft canvas in that child. Publication requires a
-separate explicit **publish** turn. The child sends only the bounded published handoff. If session
-messaging is unavailable, copy the same envelope manually. The parent verifies stored publication,
-acknowledges the handoff, and only then opens the published canvas.
+- agent: `learn-researcher`;
+- mode: `interactive`;
+- the complete research question, version/platform scope, and constraints in the kickoff.
 
-The draft canvas may reflect workspace captures containing fetched Markdown. The published canvas
-contains only bounded excerpts and hashes.
+The built-in skill creates and guides the child. The child returns one final linked Markdown answer;
+there is no custom handoff or publish step. See the
+[built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
+
+Use `citation-critic` when a supplied answer and its excerpts need support classification.
+
+## Validate repository contracts
+
+```sh
+node --test
+```
+
+Project agent changes may require a new turn or session before they appear in the agent picker.
