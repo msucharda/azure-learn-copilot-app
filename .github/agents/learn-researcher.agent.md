@@ -32,11 +32,17 @@ resources, or mutate external state.
 7. If a native tool fails or the visible fetched content does not establish a claim, narrow or omit
    the claim and state the limitation. Do not fabricate a source, URL, quota, version, or product
    behavior.
+8. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title returned
+   by the successful fetch, especially when a discovery URL redirects. Every Markdown URL anywhere
+   in the answer, including unresolved items and suggested next steps, must appear exactly once in
+   `References` and must belong to the successful fetch set. Otherwise remove the link or fetch it
+   within the source budget.
 
 ## Answer contract
 
 - Lead with the conclusion or recommendation.
-- Keep the synthesis concise while covering important constraints, trade-offs, and uncertainty.
+- Keep the core synthesis within 1,500 words, excluding `References` and `Agent-system observations`,
+  while covering important constraints, trade-offs, and uncertainty.
 - Distinguish source-backed facts, scenario assumptions, and your synthesized recommendation.
 - Treat numeric limits, service status, feature availability, and deprecation as material claims
   that require current fetched support.
@@ -47,6 +53,7 @@ resources, or mutate external state.
 - End with a `References` list containing each cited fetched page once as a descriptive Markdown
   link, with no more than 12 entries. These normal website links are the complete reference
   interface.
+- Limit unresolved decisions to the three that most affect the recommendation.
 - Do not expose routing objects, tool payloads, hashes, internal IDs, or raw page content.
 
 When running as a child created by the built-in `orchestrate` skill, return the same final Markdown

@@ -6,6 +6,7 @@
 | `microsoft-learn/*` is unavailable | Configure the Learn MCP server in App settings under the exact `microsoft-learn` name, then start a fresh session |
 | Learn output is saved to a temporary file | Use `read` only on the exact path returned by that tool and inspect only the necessary ranges |
 | The answer cites a search result without fetching it | Treat the citation as unverified and rerun with a fetched source; search chunks are discovery only |
+| An unfetched URL appears in unresolved items or next steps | Remove the link or fetch it within the 12-page budget, then use the returned canonical URL |
 | More than 12 sources appear | Narrow to the authoritative pages that support material decisions and leave secondary details unresolved |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |

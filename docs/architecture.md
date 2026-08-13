@@ -60,13 +60,17 @@ References are part of the answer:
 1. Each material factual claim has an adjacent descriptive Markdown link.
 2. Search results are discovery only; every cited page was successfully fetched.
 3. The source set contains at most 12 authoritative pages.
-4. Every source URL comes from native tool output.
-5. URLs use HTTPS and the exact `learn.microsoft.com` host.
-6. A short `References` list contains each cited page once.
-7. Tool failures or unsupported claims remain explicit rather than receiving a guessed link.
-8. The answer distinguishes fetched facts from scenario assumptions and synthesized recommendations.
-9. Mutable claims such as service status, deprecation, availability, regions, and numeric limits
+4. Every Markdown link, including unresolved and next-step links, belongs to the successful fetch
+   set and uses the canonical URL returned by fetch.
+5. Every source URL comes from native tool output.
+6. URLs use HTTPS and the exact `learn.microsoft.com` host.
+7. A short `References` list contains each linked page once.
+8. Tool failures or unsupported claims remain explicit rather than receiving a guessed link.
+9. The answer distinguishes fetched facts from scenario assumptions and synthesized recommendations.
+10. Mutable claims such as service status, deprecation, availability, regions, and numeric limits
    require current fetched support.
+11. The core synthesis is at most 1,500 words and retains at most three decision-critical unresolved
+    items.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
