@@ -10,29 +10,28 @@ links.
 | Path | Purpose |
 | --- | --- |
 | `.github/agents/learn-researcher.agent.md` | Searches and fetches current Microsoft Learn content, synthesizes an answer, and returns linked references |
-| `.github/agents/citation-critic.agent.md` | Classifies whether supplied evidence supports supplied claims |
+| `.github/agents/citation-critic.agent.md` | Reads an exact review packet and independently verifies its existing Learn references |
 | `.github/copilot-instructions.md` | Keeps quick research inline and delegates deep research through native orchestration |
 
 ## Flow
 
 1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
-2. For deeper work, identify the primary Azure product and preselect at most one exact matching
-   installed official product skill. Invoke Copilot App's built-in `/orchestrate` skill and put that
-   skill ID, or `none`, in the kickoff for one `learn-researcher` child.
-3. The child loads only the preselected skill as routing and checklist guidance, then maps every
-   requested subtopic to fetched evidence or an explicit unresolved statement, uses native Microsoft
-   Learn search for discovery, selects at most 15 authoritative
-   pages, and fetches every linked page. It cites the canonical URL returned by fetch and performs
-   final coverage and all-links-fetched preflights; if no canonical URL is returned, it preserves the
-   exact successful request URL rather than inferring one. Read-only file access is restricted by
-   instruction to exact tool-spooled output when a result is too large for the tool response.
-4. The researcher returns concise Markdown with claim-adjacent links and a unique `References`
-   list. The built-in orchestrator coordinates the child; the coordinator reads the persisted
-   session transcript if automatic result delivery is unavailable.
+2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
+   `learn-researcher` child with a verified two-turn handshake: request repeated idle notifications,
+   wait for the minimal initialization response, and only then send the complete task once.
+3. Direct Learn discovery is the default. The coordinator may preselect one exact official product
+   skill when it can name a concrete routing benefit; that skill guides terminology and query planning
+   but never supplies evidence.
+4. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
+   cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
+5. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
+   Evaluation mode appends a coordinator-only packet. A different-model critic reads that exact packet,
+   refetches only its existing Learn URLs, and sends a repair brief back to the original researcher.
+   The coordinator publishes only the corrected user-facing answer.
 
 No project skill router or product-skill catalog is loaded into the researcher. A single progressively
-loaded official skill may narrow discovery, but it is not evidence. Current fetched pages from
-[Microsoft Learn](https://learn.microsoft.com/) remain the citation source.
+loaded official skill may narrow discovery when explicitly justified, but it is not evidence. Current
+fetched pages from [Microsoft Learn](https://learn.microsoft.com/) remain the citation source.
 
 GitHub's standard deep-research workflow is designed to investigate repository code. This custom
 agent remains useful for external Microsoft Learn research because it enforces a Learn-only source
@@ -44,19 +43,11 @@ and link contract. See GitHub's documentation for
 ## Improvement loop
 
 Each iteration runs a different Azure architecture scenario in a fresh coordinated
-`learn-researcher` session. The coordinator reads the final transcript, reviews citation coverage
-and observed tool friction, changes only the agent contract when evidence supports it, and validates
-the contract before starting the next iteration. The loop compares direct Learn discovery with
-one-skill progressive discovery rather than assuming either a broad injected catalog or no skill is
-always best. The core answer is bounded to 1,500 words so source breadth does not displace decision
-quality, with a 2,000-word ceiling only when more than 30 atomic items require coverage. The coverage
-preflight treats every named service, constraint, comparison, and enumerated subtopic as an atomic
-item. Every decision uses explicit fetched-facts, recommendation, and
-assumptions-or-unresolved-constraints labels, where unsupported items are named rather than hidden
-behind an aggregate gap. Broad answers give every atomic item one audit row and one status:
-`Covered`, `Partially covered`, or `Unresolved`. A contradiction preflight checks both product
-constraints and the user's mandatory scenario requirements. A length preflight removes repeated facts
-and catalog detail before requested coverage; neither cap permits an item to disappear.
+`learn-researcher` session. Controlled routing experiments hold the task, model, and rubric fixed,
+anonymize the answers, and decode skill use only after blind review. The core answer is bounded to
+1,500 words, or 2,000 evaluation words for more than 30 atoms. Atomization is fixed before search:
+each numbered item, bullet, or semicolon-delimited subtopic is one row, and a compound row receives the
+status of its least-supported dimension.
 
 The same preflight also checks interactions between individually supported controls, propagates source
 qualifiers through migration, backup, failover, sharing, monitoring, and cost, and derives pre-rollout
@@ -64,14 +55,11 @@ commitments from every fetched one-way or irreversible qualifier. A compact inte
 protective controls against recovery and reconfiguration actions, including single-plane dependencies.
 Conditional lead choices require a fetched fallback or remain unresolved.
 
-When an improvement review is requested, a second coordinated child from a different model family
-formally reviews the first model's exact task, answer, and fetched evidence context. It does not
-produce a competing architecture. The coordinator records agreements, disagreements, failures, and
-evidence-backed system changes in a Copilot session artifact after each round; the log is not runtime
-state and is not committed. Improvement-round answers carry a compact in-band evidence manifest so
-the reviewer can receive the material source qualifiers even when the app does not retain tool traces.
-Each manifest value maps back to a core decision, assumption, or audit item; unused manifest facts
-cannot justify full coverage.
+Evaluation details live after References in a coordinator-only packet rather than the published answer.
+A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns
+a repair brief instead of another architecture. The original researcher applies one repair turn before
+publication. The coordinator records agreements, disagreements, runtime failures, repair results, and
+evidence-backed system changes in an uncommitted Copilot session artifact.
 
 ## Validate
 

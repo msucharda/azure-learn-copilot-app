@@ -21,6 +21,10 @@ async function text(path) {
     return readFile(at(path), "utf8");
 }
 
+function compact(markdown) {
+    return markdown.replace(/\s+/g, " ").trim();
+}
+
 function frontmatter(markdown) {
     const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
     assert.ok(match, "agent frontmatter is required");
@@ -47,7 +51,7 @@ async function assertMissing(path) {
     );
 }
 
-test("repository has an agent-only project surface", async () => {
+test("repository exposes only the native agent system", async () => {
     await Promise.all([
         assertMissing(".github/extensions"),
         assertMissing(".github/skills"),
@@ -57,183 +61,77 @@ test("repository has an agent-only project surface", async () => {
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
     ]);
-    assert.deepEqual(tools(researcher), [
-        "read",
-        "microsoft-learn/*",
-    ]);
-    assert.deepEqual(tools(critic), []);
+
+    assert.deepEqual(tools(researcher), ["read", "microsoft-learn/*"]);
+    assert.deepEqual(tools(critic), ["read", "microsoft-learn/*"]);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
 });
 
-test("researcher uses native discovery and returns website references", async () => {
+test("researcher separates standard, evaluation, and repair behavior", async () => {
     const researcher = await text(RESEARCHER_PATH);
-    assert.match(researcher, /kickoff includes an exact `Selected official product skill` ID/i);
-    assert.match(researcher, /load only that\s+named installed skill/i);
-    assert.match(researcher, /category index, terminology, and\s+topic map only to improve query planning/i);
-    assert.match(researcher, /Skill text and skill-provided\s+URLs are discovery guidance, not citation evidence/i);
-    assert.match(researcher, /Do not list the installed catalog, invoke additional skills, or\s+substitute a nearby skill/i);
-    assert.match(researcher, /If the named skill is unavailable or does not match the task, continue\s+with direct Learn discovery/i);
-    assert.match(researcher, /selected skill ID or `none`, whether loading succeeded/i);
-    assert.match(researcher, /documentation search directly/i);
-    assert.match(researcher, /every explicitly\s+requested decision and subtopic into an atomic coverage checklist/i);
-    assert.match(researcher, /generation, edition, tier, or deployment model as an explicit choice/i);
-    assert.match(researcher, /do not silently select a\s+variant/i);
-    assert.match(researcher, /comma-separated requests into individual items/i);
-    assert.match(researcher, /parent decision area does not cover its\s+children/i);
-    assert.match(researcher, /search chunks as discovery only/i);
-    assert.match(researcher, /Select at most 15 authoritative pages/i);
-    assert.match(researcher, /Fetch every selected page/i);
-    assert.match(researcher, /dedicated page for every named capability, variant, or compatibility relationship/i);
-    assert.match(researcher, /overview or limits page alone does not establish/i);
-    assert.match(researcher, /Preserve every material support qualifier and actor\/action boundary/i);
-    assert.match(researcher, /create-time, one-way, and irreversible\s+constraints/i);
-    assert.match(researcher, /Do not strengthen or generalize those terms/i);
-    assert.match(researcher, /not successfully fetched cannot appear in a\s+claim link/i);
-    assert.match(researcher, /code-sample\s+search/i);
-    assert.match(researcher, /spools output to a local file/i);
-    assert.match(researcher, /Do not inspect unrelated workspace\s+or user files/i);
-    assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
-    assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
-    assert.match(researcher, /recommendation may synthesize trade-offs, but it cannot introduce an unfetched product\s+capability/i);
-    assert.match(researcher, /Preserve the fetched source's actor, action, support level, scope, and condition/i);
-    assert.match(researcher, /compare every recommendation against all fetched constraints and every explicit\s+scenario requirement/i);
-    assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment\s+options, or support states/i);
-    assert.match(researcher, /do not bypass a required control for convenience/i);
-    assert.match(researcher, /Recheck the\s+lead recommendation against every fetched `not supported`, `only`, incompatibility, generation,\s+SKU, and regional constraint/i);
-    assert.match(researcher, /surface conflicting sources instead of choosing silently/i);
-    assert.match(researcher, /interactions between co-recommended controls/i);
-    assert.match(researcher, /disables, delays, or changes another's operation, recovery path, or support state/i);
-    assert.match(researcher, /Treat protective controls as interacting controls/i);
-    assert.match(researcher, /lock,\s+deny policy, immutability or\s+retention control, network restriction, key protection, and deletion\s+guard/i);
-    assert.match(researcher, /removal,\s+exception, break-glass path, or ordering/i);
-    assert.match(researcher, /Propagate each fetched constraint and qualifier into every relevant\s+deployment, migration/i);
-    assert.match(researcher, /dedicated `Pre-rollout commitments` section/i);
-    assert.match(researcher, /mode-selection or mode-switch\s+property/i);
-    assert.match(researcher, /give a fetched, scenario-compliant\s+fallback or leave the decision\s+unresolved/i);
-    assert.match(researcher, /compact `Evidence manifest`/i);
-    assert.match(researcher, /matching `References` entry/i);
-    assert.match(researcher, /Keep the\s+exact URL only in `References`/i);
-    assert.match(researcher, /retrieval timestamp\s+when the tool exposes one/i);
-    assert.match(researcher, /exact\s+value and conditions of every cited multiplier,\s+range, duration, percentage, count, or numeric\s+limit/i);
-    assert.match(researcher, /Do not include raw page content/i);
-    assert.match(researcher, /Perform a core-length preflight against the applicable word ceiling/i);
-    assert.match(researcher, /remove\s+repeated facts, catalog-style feature detail, and secondary examples/i);
-    assert.match(researcher, /recommendations should apply fetched facts rather than\s+restate them/i);
-    assert.match(researcher, /Do not emit a numeric word-count estimate unless an available tool computed it\s+deterministically/i);
-    assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
-    assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
-    assert.match(researcher, /Name or clearly restate every unsupported atomic item/i);
-    assert.match(researcher, /do not hide multiple gaps behind an aggregate phrase/i);
-    assert.match(researcher, /report complete coverage while any item is absent/i);
-    assert.match(researcher, /Source and word limits require concise prioritization, not omission/i);
-    assert.match(researcher, /audit every Markdown URL in the draft/i);
-    assert.match(researcher, /canonical URL and title only\s+when the successful fetch explicitly returns them/i);
-    assert.match(researcher, /preserve the exact request URL that\s+fetched successfully/i);
-    assert.match(researcher, /never infer, normalize, or rewrite a canonical form/i);
-    assert.match(researcher, /including unresolved items and suggested next\s+steps/i);
-    assert.match(researcher, /core synthesis within 1,500 words/i);
-    assert.match(researcher, /atomic checklist exceeds 30 items may the core use up to\s+2,000 words/i);
-    assert.match(researcher, /allowance to cover requested items rather than add detail to already\s+covered items/i);
-    assert.match(researcher, /compact `Coverage audit` immediately before\s+`References`/i);
-    assert.match(researcher, /table with `Decision area`, `Atomic item`, and `Status` columns/i);
-    assert.match(researcher, /Every atomic\s+checklist item must have exactly one row/i);
-    assert.match(researcher, /row count must equal the checklist count/i);
-    assert.match(researcher, /item named or clearly restated in an\s+assumptions block must be `Partially covered` or `Unresolved`/i);
-    assert.match(researcher, /compound assumptions clause that names several atomic items applies to every named\s+item/i);
-    assert.match(researcher, /omits a material fetched qualifier, interaction, or\s+operational limitation/i);
-    assert.match(researcher, /rebuild the\s+audit mapping from the final answer/i);
-    assert.match(researcher, /recount each status, and verify the status counts sum to\s+the row count/i);
-    assert.match(researcher, /keyword mention, list entry, test, or monitoring recommendation/i);
-    assert.match(researcher, /same mechanism;\s+they cannot have different statuses unless the core states why/i);
-    assert.match(researcher, /Use exactly one status: `Covered`/i);
-    assert.match(researcher, /`Partially\s+covered` when a material dimension remains unsupported/i);
-    assert.match(researcher, /`Unresolved` when the item lacks adequate\s+treatment/i);
-    assert.match(researcher, /audit does not substitute for the\s+core answer/i);
-    assert.match(researcher, /detailed discussion to at most the three unresolved decision groups/i);
-    assert.match(researcher, /Name any additional unsupported atomic items tersely/i);
-    assert.match(researcher, /include all three exact labels: `\*\*Fetched facts:\*\*`,\s+`\*\*Recommendation:\*\*`, and `\*\*Assumptions or unresolved constraints:\*\*`/i);
-    assert.match(researcher, /None identified from the fetched\s+sources/i);
-    assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);
-    assert.match(researcher, /include `## Pre-rollout commitments` with a compact table/i);
-    assert.match(researcher, /final sweep of all fetched qualifiers/i);
-    assert.match(researcher, /include `## Protective-control interactions`/i);
-    assert.match(researcher, /failover, failback, restore, region change, scaling, key rotation, migration, cutover, rollback,\s+and deletion action/i);
-    assert.match(researcher, /identity, key, DNS, network, or management plane gates\s+all access/i);
-    assert.match(researcher, /core decision or audit items it supports/i);
-    assert.match(researcher, /Do not turn the manifest into a list of unused\s+facts/i);
-    assert.match(researcher, /omitted requested qualifier forces the related audit row below `Covered`/i);
-    assert.match(researcher, /host is exactly\s+`learn\.microsoft\.com`/i);
-    assert.match(researcher, /`References` list containing each cited fetched page/i);
-    assert.match(researcher, /built-in `orchestrate` skill/i);
-    assert.doesNotMatch(researcher, /send_session_message/);
-    for (const forbidden of ["edit", "execute", "shell", "bash"]) {
-        assert.equal(tools(researcher).includes(forbidden), false);
+    const contract = compact(researcher);
+
+    assert.ok(researcher.split("\n").length <= 150, "researcher contract must stay compact");
+    for (const mode of ["standard", "evaluation", "repair"]) {
+        assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }
+
+    assert.match(contract, /Selected official product skill: <exact-id>/i);
+    assert.match(contract, /Skill text and skill-provided URLs are discovery guidance, never evidence/i);
+    assert.match(contract, /Each numbered item, bullet, or semicolon-delimited subtopic is one atom/i);
+    assert.match(contract, /least-supported dimension determines that atom's final status/i);
+    assert.match(contract, /Select at most 15 authoritative pages/i);
+    assert.match(contract, /Fetch every selected page/i);
+    assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
+    assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
+    assert.match(contract, /Protective-control interactions/i);
+    assert.match(contract, /identity, key, DNS, network, or management plane gates all access/i);
+    assert.match(contract, /every URL must be HTTPS on exactly `learn\.microsoft\.com`/i);
+    assert.match(contract, /Evaluation packet \(coordinator only\)/i);
+    assert.match(contract, /Publish totals and verify they sum to the fixed row count/i);
+    assert.match(contract, /current-run fetch status/i);
+    assert.match(contract, /Return the complete corrected answer, not a patch/i);
+    assert.doesNotMatch(researcher, /send_session_message|create_session/);
 });
 
-test("project instructions use native orchestration", async () => {
-    const instructions = await text(INSTRUCTIONS_PATH);
-    assert.match(instructions, /built-in `\/orchestrate` skill/i);
-    assert.match(instructions, /`learn-researcher` agent/i);
-    assert.match(instructions, /persisted transcript with app-native session-history tools/i);
-    assert.match(instructions, /local full-text index/i);
-    assert.match(instructions, /minimal turn and send the unchanged task/i);
-    assert.match(instructions, /re-emit it without new research/i);
-    assert.match(instructions, /select at most one exact\s+matching installed official product skill/i);
-    assert.match(instructions, /`Selected official product skill: <exact-id>`/i);
-    assert.match(instructions, /Do not enumerate or inject a product-skill catalog/i);
-    assert.match(instructions, /routing and checklist guidance only, never as evidence/i);
-    assert.match(instructions, /skill-provided URL used in the answer must still be established/i);
-    assert.match(instructions, /selected skill is unavailable or mismatched, continue with\s+direct Learn discovery/i);
-    assert.match(instructions, /native Microsoft Learn tools/i);
-    assert.match(instructions, /`References` list/i);
-    assert.match(instructions, /different model family/i);
-    assert.match(instructions, /exact\s+original task, complete answer, and same fetched evidence context/i);
-    assert.match(instructions, /in-band `Evidence manifest`/i);
-    assert.match(instructions, /dedicated pre-rollout commitments table/i);
-    assert.match(instructions, /Recheck\s+locks, policies, immutability, network restrictions, key protection, and deletion guards/i);
-    assert.match(instructions, /compact interaction table/i);
-    assert.match(instructions, /single identity,\s+key, DNS, network, or management plane that gates all access/i);
-    assert.match(instructions, /derived from a final evidence sweep/i);
-    assert.match(instructions, /rebuild and recount the audit from the final assumptions blocks/i);
-    assert.match(instructions, /Rows\s+describing the same mechanism cannot differ without an explicit reason/i);
-    assert.match(instructions, /exact\s+value and conditions of every cited\s+multiplier, range, duration, percentage, count, and numeric\s+limit/i);
-    assert.match(instructions, /Every material manifest value\s+must appear in the core or assumptions/i);
-    assert.match(instructions, /answer delivery channel \(`normalized turn`, `task_complete summary`, `re-emitted turn`,\s+or `reconstructed`\)/i);
-    assert.match(instructions, /reconstructed evidence rather than claiming it is the exact original context/i);
-    assert.match(instructions, /session-artifact log entry/i);
-    assert.doesNotMatch(instructions, /create_session|send_session_message/);
-});
-
-test("critic cannot fetch or broaden evidence", async () => {
+test("critic reads one packet and verifies only existing references", async () => {
     const critic = await text(CRITIC_PATH);
-    for (const status of [
-        "supported",
-        "partially-supported",
-        "unsupported",
-        "conflicting",
-    ]) {
+    const contract = compact(critic);
+
+    assert.ok(critic.split("\n").length <= 100, "critic contract must stay compact");
+    assert.match(contract, /use `read` only on that file/i);
+    assert.match(contract, /fetch only the exact `https:\/\/learn\.microsoft\.com` URLs already present/i);
+    assert.match(contract, /Do not search, use code-sample discovery, follow a new link, replace a citation, add a source/i);
+    assert.match(contract, /review-time verification, not the researcher's original tool trace/i);
+    for (const status of ["supported", "partially-supported", "unsupported", "conflicting"]) {
         assert.match(critic, new RegExp(`\\\`${status}\\\``));
     }
-    assert.match(critic, /Do not\s+open new sources, broaden the source set, rewrite the answer/i);
-    assert.match(critic, /formal reviewer, not a second solution author/i);
-    assert.match(critic, /exact original\s+task, the answer produced for that task/i);
-    assert.match(critic, /Do not propose a competing architecture/i);
-    assert.match(critic, /Record disagreements with the answer model explicitly/i);
-    assert.match(critic, /actor, action, support level, scope, and condition/i);
-    assert.match(critic, /interactions between co-recommended controls/i);
-    assert.match(critic, /create-time, one-way, locked, or irreversible property/i);
-    assert.match(critic, /dedicated pre-rollout list/i);
-    assert.match(critic, /Recheck protective controls\s+against every supplied recovery and reconfiguration action/i);
-    assert.match(critic, /derive irreversible commitments from\s+all supplied manifest qualifiers/i);
-    assert.match(critic, /single identity, key, DNS, network,\s+or management plane that gates all access/i);
-    assert.match(critic, /same mechanism and require an explicit reason for different statuses/i);
-    assert.match(critic, /material manifest qualifier maps\s+to a core sentence or assumptions block/i);
-    assert.match(critic, /exact value, scope, and conditions/i);
-    assert.match(critic, /coordinator-supplied\s+answer delivery channel/i);
-    assert.match(critic, /constraint propagation through deployment, migration/i);
-    assert.match(critic, /original in-band manifest from reconstructed\s+source context/i);
+    assert.match(contract, /deterministic atomization, row count, published status totals/i);
+    assert.match(contract, /End with a compact repair brief/i);
+    assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
+});
+
+test("project instructions enforce a verified native-session pipeline", async () => {
+    const instructions = await text(INSTRUCTIONS_PATH);
+    const contract = compact(instructions);
+
+    assert.ok(instructions.split("\n").length <= 120, "project instructions must stay compact");
+    assert.match(contract, /built-in `\/orchestrate` skill/i);
+    assert.match(contract, /notify_on_idle: always/i);
+    assert.match(contract, /verify the normalized assistant turn exactly acknowledges readiness/i);
+    assert.match(contract, /Only then send the complete research task once/i);
+    assert.match(contract, /Do not archive or replace a child until session history proves/i);
+    assert.match(contract, /Git staging does not change that/i);
+    assert.match(contract, /review packet in the session artifact directory/i);
+    assert.match(contract, /Direct Learn discovery is the default/i);
+    assert.match(contract, /Select at most one exact installed official product skill/i);
+    assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
+    assert.match(contract, /do not forward that packet as user-facing output/i);
+    assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
+    assert.match(contract, /Send the critic's repair brief to the winning or original researcher/i);
+    assert.match(contract, /publish only its user-facing portion/i);
+    assert.doesNotMatch(instructions, /create_session|send_session_message/);
 });
 
 test("documentation links are safe websites", async () => {

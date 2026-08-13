@@ -7,14 +7,15 @@ The system is prompt-defined and agent-only:
 ```mermaid
 flowchart LR
     U[User or parent session] --> O[Built-in orchestrate skill]
-    O -->|Preselected skill ID or none| R[learn-researcher]
+    O -->|Verified ready handshake| R[learn-researcher]
     R -. Routing and checklist guidance .-> S[One installed official product skill]
     R --> L[Native Microsoft Learn tools]
     L --> R
-    R --> A[Markdown answer and website links]
-    A --> O
-    O --> U
+    R --> A[Answer plus optional evaluation packet]
     A --> C[citation-critic on request]
+    C -->|Repair brief| R
+    R --> O
+    O -->|User-facing answer and website links| U
 ```
 
 There is no project runtime, custom tool server, durable evidence store, or separate reference
@@ -37,19 +38,24 @@ fetched Microsoft Learn pages.
 
 ### `citation-critic`
 
-The critic has no tools. It classifies supplied claim/evidence pairs without fetching new material
-or rewriting the answer. This keeps evidence review independent from source discovery.
+The critic has `read` and `microsoft-learn/*`. It reads only the exact coordinator-supplied packet and
+may fetch only the Learn URLs already listed in that packet. It cannot search, add a source, invoke a
+skill, or rewrite the answer. Review-time fetches independently verify claims without being
+misrepresented as the researcher's original tool trace.
 
 ## Quick and deep paths
 
 A quick question stays in the current chat. Deep research invokes Copilot App's built-in
-`/orchestrate` skill after selecting at most one exact matching installed official product skill. The
-kickoff names that skill or `none`; the child does not enumerate the catalog or choose additional
-skills. The child answers normally;
-the orchestrator coordinates its result. If automatic delivery is unavailable, the coordinator
-resolves the child's runtime session from its exact worktree and reads the persisted transcript with
-app-native session-history tools. No custom research identity, publication state, acknowledgement
-protocol, or storage handoff is part of the project contract.
+`/orchestrate` skill with repeated idle notifications. A minimal first turn declares the research mode
+and optional exact skill; the coordinator verifies the ready response before sending the full task
+once. Direct discovery is the default. A skill is selected only for a stated routing benefit and the
+child never enumerates the catalog.
+
+Standard mode returns only the user-facing answer and References. Evaluation mode appends a
+coordinator-only packet. The coordinator stores that packet as a session artifact, has a
+different-model critic review it, sends the repair brief to the original researcher, and publishes
+only the corrected user-facing portion. Markdown artifacts are read by exact path rather than passed
+as kickoff attachments, which accept only app-staged creator images.
 
 GitHub's documented deep-research workflow investigates a repository. The custom researcher remains
 the appropriate policy boundary for external Microsoft Learn research and its stricter citation
@@ -72,27 +78,25 @@ References are part of the answer:
 6. URLs use HTTPS and the exact `learn.microsoft.com` host.
 7. A short `References` list contains each linked page once.
 8. Tool failures or unsupported claims remain explicit rather than receiving a guessed link.
-9. A coverage preflight preserves every named service, constraint, comparison, and enumerated or
-   comma-separated subtopic as an atomic item. Each maps to fetched evidence, a supported
-   recommendation, or an unresolved statement; parent-area mentions and unsupported recommendations
-   do not count, and source and word limits do not permit silent omission.
+9. A coverage preflight fixes atomization before search. Each numbered item, bullet, or
+   semicolon-delimited subtopic is one atom. Terms joined inside one item remain a compound atom and its
+   least-supported dimension determines status.
 10. Each decision area uses all three exact labels for fetched facts, synthesized recommendation, and
    assumptions or unresolved constraints, even when the last reports that none were identified.
 11. Mutable claims such as service status, deprecation, availability, regions, and numeric limits
    require current fetched support.
 12. Recommendations cannot introduce unfetched product capabilities or other material factual
    premises.
-13. The core synthesis is at most 1,500 words. When the atomic checklist exceeds 30 items, it may use
-    at most 2,000 words solely to restore requested coverage.
+13. The core synthesis is at most 1,500 words. An evaluation run with more than 30 atoms may use at
+    most 2,000 words solely to restore requested coverage.
 14. Recommendations are checked against all fetched constraints and explicit scenario requirements;
     mutually exclusive options are selected between or presented as explicit conditional
     alternatives, and mandatory controls are not bypassed for convenience.
 15. A core-length preflight removes repeated facts, catalog-style detail, and secondary examples
     before requested coverage. Recommendations apply fetched facts instead of restating them.
-16. A request with more than 30 atomic items includes a compact pre-reference coverage table with one
-    row per checklist item and one status: `Covered`, `Partially covered`, or `Unresolved`. The row
-    count equals the checklist count. `Covered` requires complete treatment in the core answer with
-    fetched evidence or a supported recommendation.
+16. An evaluation request includes a coordinator-only coverage table after References with one row per
+    fixed atom and one status: `Covered`, `Partially covered`, or `Unresolved`. Published totals equal
+    the row count. A compound atom is Covered only when all named dimensions are supported.
 17. The answer gives detailed discussion to at most three decision-critical unresolved groups and
     names every other unsupported atomic item tersely rather than hiding gaps behind an aggregate
     phrase.
@@ -111,18 +115,18 @@ References are part of the answer:
     failover and failback, monitoring, and cost steps. Create-time, one-way, locked, and irreversible
     properties appear before rollout commits to them.
 24. A conditional lead choice includes a fetched, scenario-compliant fallback or remains unresolved.
-25. Improvement-round answers include an in-band evidence manifest with one row per fetched page,
-    keyed to its linked `References` entry and preserving material support states and constraints
-    without duplicating URLs, exposing raw page content, or adding a durable evidence store.
+25. Evaluation answers append a coordinator-only packet containing the coverage audit, observations,
+    and an evidence manifest with one row per fetched page. The packet is not user-facing output and
+    adds no durable evidence store.
 26. The core has a dedicated pre-rollout commitments table for every selected create-time, one-way,
     locked, irreversible, and mode-selection or mode-switch property. Each row states when the choice
     becomes fixed, its acceptance check, and fetched evidence or unresolved status.
 27. Protective controls are checked against every recommended recovery and reconfiguration action.
     Required removal, exception, break-glass, and sequencing steps are explicit.
-28. After the final assumptions blocks are drafted, the coverage audit is rebuilt and recounted so
-    every affected row is downgraded and the status counts sum to the row count.
+28. In evaluation mode, after the final assumptions blocks are drafted, the coverage audit is rebuilt
+    and recounted so every affected row is downgraded and the status counts sum to the row count.
 29. Every quantitative claim has adjacent fetched evidence for its exact value, scope, and conditions.
-    In improvement rounds, the matching evidence-manifest row preserves those quantities.
+    In evaluation mode, the matching evidence-manifest row preserves those quantities.
 30. Pre-rollout commitments come from a final sweep of every fetched and manifested create-time,
     one-way, locked, irreversible, and mode-switch qualifier. Each is accepted, left unresolved, or
     explicitly declined.
@@ -132,21 +136,22 @@ References are part of the answer:
     scenario-compliant recovery condition; an insecure bypass is not an acceptable fallback.
 33. Audit rows describing the same mechanism use consistent statuses unless the core explains why
     their supported dimensions differ.
-34. Every material fact or qualifier in an improvement-round evidence manifest maps to a core sentence
-    or assumptions block and names the decisions or audit items it supports. Unused manifest facts do
-    not justify `Covered`.
+34. Every material fact or qualifier in an evaluation manifest maps to a core sentence or assumptions
+    block and names the decisions or audit items it supports. Unused manifest facts do not justify
+    `Covered`.
 
 ## Formal review contract
 
-When the user requests iterative evidence review, a different model family receives the exact
-original task, complete answer, and same fetched evidence context. It reviews task compliance,
-claim-to-evidence support, contradictions, coverage status, and runtime defects without producing a
-competing architecture or broadening the source set. The coordinator records what worked, failures,
-the complementary analysis, model disagreements, and resulting system changes in a session artifact,
-not a repository or runtime persistence layer. If the app loses the original tool trace, a later
-refetch is labeled reconstructed evidence rather than represented as the exact original context. The
-review packet records whether the answer came from a normalized turn, task-completion summary,
-re-emitted turn, or reconstruction.
+When the user requests evidence review, a different model family receives the exact task, complete
+answer, coordinator-only packet, and delivery channel. It reads that one packet and may refetch only
+the exact Learn URLs already in References. It reviews task compliance, claim support, contradictions,
+coverage status, and runtime defects without producing a competing architecture or broadening the
+source set. Review-time fetches are labeled separately from the original trace.
+
+The critic returns a repair brief. The original researcher applies it in repair mode using the existing
+source set unless a new fetch is explicitly authorized. The coordinator verifies the corrected
+normalized answer and publishes only its user-facing portion. Controlled A/B runs fix the task hash and
+rubric, remove arm metadata, and reveal skill routing only after the verdict.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
@@ -159,5 +164,6 @@ The links open the source as a normal website, including
   fetched-page reference contract.
 - Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated
   workspace and user files are out of scope.
-- The critic cannot search, fetch, invoke skills, or broaden the supplied evidence.
+- The critic cannot search, add sources, invoke skills, or read outside the exact packet. It may fetch
+  only existing Reference URLs for review-time verification.
 - Copilot App provides and authorizes all tools and orchestration.

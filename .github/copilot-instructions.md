@@ -1,81 +1,68 @@
 # Microsoft Learn research
 
-- Use only the project agents and Copilot App-provided tools. Do not add project extensions,
-  project-defined tools, persistence services, or separate reference UI.
-- Answer narrow questions in the current chat with the native Microsoft Learn tools.
-- For deep work, invoke the built-in `/orchestrate` skill and have it create and guide one child with
-  the `learn-researcher` agent. Do not implement a custom session or handoff protocol.
-- If an orchestrated child cannot message back, resolve its runtime session from the exact child
-  worktree and read its persisted transcript with app-native session-history tools. If normalized
-  turns are unavailable, use the local full-text index for that exact runtime session and read only
-  its final response.
-- If a long kickoff repeatedly loses its runtime before the first turn, initialize the same agent with
-  a minimal turn and send the unchanged task in the next coordinated turn. If a completed answer is
-  missing from session history, ask the same child to re-emit it without new research before retrying
-  with another model.
-- Assess orchestration in the coordinator. Ask the child only about research-tool and evidence
-  friction that it can directly observe.
-- Before launching deep research, identify the primary Azure product and select at most one exact
-  matching installed official product skill. Do not enumerate or inject a product-skill catalog and do
-  not add a project router. Put `Selected official product skill: <exact-id>` in the child kickoff, or
-  `Selected official product skill: none` when there is no clear match. The child loads only that
-  preselected skill, then uses direct Microsoft Learn discovery.
-- Treat selected-skill content as routing and checklist guidance only, never as evidence. Every factual
-  premise and every skill-provided URL used in the answer must still be established by a successfully
-  fetched Microsoft Learn page. If the selected skill is unavailable or mismatched, continue with
-  direct Learn discovery and expose the issue only in requested agent-system observations.
-- Limit the authoritative source set to 15 pages, fetch every cited page, and never cite a search
-  snippet. Use read-only access only for exact tool-spooled output, and distinguish sourced facts
-  from synthesized recommendations and unresolved assumptions.
-- Require an atomic coverage preflight that preserves each named service, constraint, comparison, and
-  comma-separated subtopic. A parent-area mention or unsupported recommendation is not coverage;
-  neither the source cap nor the word cap permits silent omission.
-- Require a final link preflight: use an explicitly returned canonical URL or the exact successful
-  request URL, never an inferred rewrite; allow no unfetched Markdown link in any section.
-- Require a contradiction preflight across fetched constraints, recommendations, and explicit
-  scenario requirements. Mutually exclusive options must be chosen between or presented as
-  conditional alternatives, and mandatory controls cannot be bypassed for convenience.
-- Require an interaction and propagation preflight. Preserve source qualifiers and actor/action
-  boundaries; state when one recommended control changes another's operation or recovery path; carry
-  constraints into relevant migration, copy, backup, failover, monitoring, and cost steps. Recheck
-  locks, policies, immutability, network restrictions, key protection, and deletion guards against
-  every recovery and reconfiguration action in a compact interaction table. Flag any single identity,
-  key, DNS, network, or management plane that gates all access without a tested recovery condition.
-  Require a dedicated pre-rollout commitments table derived from a final evidence sweep for every
-  create-time, one-way, locked, irreversible, and mode-selection or mode-switch property. A conditional
-  lead choice needs a fetched, scenario-compliant fallback or remains unresolved.
-- Require a core-length preflight that removes repeated facts, catalog detail, and secondary examples
-  before requested coverage; recommendations apply rather than restate fetched facts.
-- Keep the core synthesis within 1,500 words, allowing up to 2,000 only when the atomic checklist
-  exceeds 30 items and only to restore requested coverage. Give every decision all three exact labels:
-  fetched facts, recommendation, and assumptions or unresolved constraints; name every unsupported
-  item in the last label rather than hiding gaps behind an aggregate phrase.
-- For checklists over 30 items, require a compact pre-reference `Coverage audit` table that assigns
-  one row and one status to every atomic item: `Covered`, `Partially covered`, or `Unresolved`. The
-  table row count must equal the checklist count. An item named in an assumptions block cannot be
-  `Covered`; rebuild and recount the audit from the final assumptions blocks before answering. Rows
-  describing the same mechanism cannot differ without an explicit reason.
-- Require dedicated fetched evidence for every named capability, generation, SKU, region, or
-  compatibility relationship on which the lead recommendation depends. Surface conflicts between
-  fetched pages instead of choosing silently.
-- For an improvement round that requests agent observations, require an in-band `Evidence manifest`
-  with one row per fetched page: matching `References` entry, fetched title, tool-exposed retrieval
-  timestamp or `Unavailable`, the core decisions or audit items supported, and only the material
-  support states and constraints actually used. Preserve the exact value and conditions of every cited
-  multiplier, range, duration, percentage, count, and numeric limit. Every material manifest value
-  must appear in the core or assumptions; otherwise downgrade the related requested item. Keep each
-  exact URL only in the linked `References` list. The manifest is answer context, not a durable
-  evidence store.
-- Do not emit numeric word-count estimates unless a tool computed them deterministically.
-- Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
-  `References` list. Never fabricate or rewrite a source URL.
-- Use `citation-critic` only when the user requests an evidence review. For an iterative improvement
-  review, run it in a separate coordinated child with a different model family and pass the exact
-  original task, complete answer, and same fetched evidence context. It reviews the existing answer;
-  it does not produce another architecture. If the original tool trace is unavailable, identify any
-  coordinator refetch as reconstructed evidence rather than claiming it is the exact original context.
-  Include the answer delivery channel (`normalized turn`, `task_complete summary`, `re-emitted turn`,
-  or `reconstructed`) in the reviewer packet so transport defects remain separate from answer defects.
-- At the end of every requested improvement round, append a session-artifact log entry containing what
-  worked, what failed, the complementary review, model disagreements, and system changes with their
-  rationale. Do not add a runtime persistence layer or commit the log to the repository.
+- Use only project agents and Copilot App-provided skills, sessions, Microsoft Learn tools, and session
+  artifacts. Do not add extensions, project-defined runtime tools, persistence services, canvases, or a
+  separate reference UI.
+- Answer narrow Microsoft/Azure questions in the current chat with native Microsoft Learn search and
+  fetch. Return concise claims with adjacent `https://learn.microsoft.com` links and a short References
+  list.
+- For deep work, invoke the built-in `/orchestrate` skill and use one `learn-researcher` child. Do not
+  recreate orchestration or handoff logic in project code.
+
+## Reliable child startup
+
+Use a verified two-turn handshake for every deep child:
+
+1. Request `notify_on_idle: always`.
+2. Start with a minimal initialization turn containing only the agent role, `Research mode`, and
+   `Selected official product skill`.
+3. Wait for the idle event and verify the normalized assistant turn exactly acknowledges readiness.
+4. Only then send the complete research task once. Do not queue the task while initialization or skill
+   loading is still running.
+5. Wait for the next idle event and verify that a complete normalized answer exists. If the answer
+   exists only in another delivery channel, record that channel and ask the same child to re-emit the
+   existing answer without new research.
+6. Do not archive or replace a child until session history proves that it has no unprocessed task.
+
+Coordinator-generated Markdown is not a valid kickoff attachment; the App attachment field accepts
+only app-staged image attachments from the creator message. Git staging does not change that. Put a
+review packet in the session artifact directory and give a read-enabled reviewer its exact path.
+
+## Modes and skill routing
+
+- Put `Research mode: standard`, `evaluation`, or `repair` in the initialization turn. Standard is the
+  normal path. Evaluation is only for controlled improvement or requested evidence review. Repair
+  sends a critic brief back to the original researcher before publication.
+- Direct Learn discovery is the default. Select at most one exact installed official product skill
+  only when the coordinator can name a concrete taxonomy or terminology benefit, or when the user asks
+  to test skill routing. Put `Selected official product skill: <exact-id>` or `none` in the kickoff.
+- Never enumerate or inject a skill catalog. Skill content guides queries and atomization only; every
+  factual premise and skill-provided URL still requires a successful Learn fetch.
+
+## Research and publication
+
+- Limit the evidence set to 15 authoritative pages, fetch every cited page, and treat search chunks as
+  discovery only. Preserve exact qualifiers, actor/action boundaries, mutable status, numeric
+  conditions, and successful fetch URLs.
+- Require deterministic atomization before search: each numbered item, bullet, or semicolon-delimited
+  subtopic is one row; terms joined inside that item remain one compound atom whose least-supported
+  dimension sets the status.
+- Require contradiction, qualifier-propagation, irreversible-choice, protective-control interaction,
+  single-plane recovery, link, and claim-ledger preflights.
+- Publish only the standard answer through References. An evaluation run appends
+  `## Evaluation packet (coordinator only)` containing the coverage audit, observations, and evidence
+  manifest; do not forward that packet as user-facing output.
+
+## Formal review and repair
+
+- When evidence review is requested, create a different-model `citation-critic` child. Supply the exact
+  original task, complete answer, evaluation packet, and delivery channel in one session-artifact
+  packet. The critic may read only that packet and review-fetch only the exact Learn URLs already in
+  References; it cannot search, add sources, invoke skills, or propose another architecture.
+- For controlled routing experiments, anonymize arm metadata before review, fix the scoring rubric and
+  task hash before either answer is inspected, and decode the arms only after the verdict.
+- Send the critic's repair brief to the winning or original researcher with `Research mode: repair`.
+  Unless explicitly authorized, repair reuses the existing source set. Verify the corrected normalized
+  answer, then publish only its user-facing portion.
+- Record what worked, failures, complementary findings, model disagreements, repair results, and
+  evidence-backed system changes in the session improvement-log artifact. Do not add runtime storage.

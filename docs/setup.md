@@ -14,30 +14,35 @@ server `microsoft-learn`, matching the agent allow-list. See
 [customizing Copilot App](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
 and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/support/mcp-get-started).
 
-Installed Agent Skills remain available in Copilot App. For deep research, the coordinator may
-preselect one exact matching official product skill without enumerating or injecting the broader
-catalog. `learn-researcher` uses that skill only to guide its checklist and Learn queries; fetched
-Learn pages remain the only citation evidence.
+Installed Agent Skills remain available in Copilot App. Direct Learn discovery is the default. The
+coordinator may preselect one exact matching official product skill for a concrete routing benefit
+without enumerating or injecting the broader catalog. `learn-researcher` uses that skill only to guide
+its checklist and Learn queries; fetched Learn pages remain the only citation evidence.
 
 ## Use
 
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
 
-For isolated research, invoke `/orchestrate` and request one child with:
+For isolated research, invoke `/orchestrate` and request one child with repeated idle notifications.
+Use a two-turn handshake:
 
 - agent: `learn-researcher`;
-- mode: `interactive`;
-- kickoff field: `Selected official product skill: <exact-id>` or `none`;
-- the complete research question, version/platform scope, and constraints in the kickoff.
+- first turn: `Research mode: standard` plus `Selected official product skill: <exact-id>` or `none`;
+- wait for and verify the ready response;
+- second turn: send the complete research question, version/platform scope, and constraints exactly
+  once.
 
-The built-in skill creates and guides the child. The child returns one final linked Markdown answer;
-there is no custom handoff or publish step. If the result is not delivered automatically, use the
-App's native session history to resolve the runtime session from the exact child worktree and read
-its final transcript. See the
+Verify a complete normalized answer before archiving the child. If the result is not delivered
+automatically, use App-native session history to read it and ask the same child to re-emit the existing
+answer without new research. See the
 [built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
 
-Use `citation-critic` when a supplied answer and its excerpts need support classification.
+For evidence review, use `Research mode: evaluation`, save the returned coordinator-only packet as a
+session artifact, and give `citation-critic` that exact path. It independently fetches only the Learn
+URLs already in References and returns a repair brief for the original researcher. Do not put a
+generated Markdown packet in kickoff attachments; those accept only app-staged creator images, and
+Git staging is unrelated.
 
 ## Validate repository contracts
 
