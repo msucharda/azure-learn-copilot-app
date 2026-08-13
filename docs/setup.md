@@ -14,8 +14,10 @@ server `microsoft-learn`, matching the agent allow-list. See
 [customizing Copilot App](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
 and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/support/mcp-get-started).
 
-Installed Agent Skills remain available elsewhere in Copilot App, but `learn-researcher` deliberately
-uses direct Learn MCP discovery so broad skill catalogs do not consume its research context.
+Installed Agent Skills remain available in Copilot App. For deep research, the coordinator may
+preselect one exact matching official product skill without enumerating or injecting the broader
+catalog. `learn-researcher` uses that skill only to guide its checklist and Learn queries; fetched
+Learn pages remain the only citation evidence.
 
 ## Use
 
@@ -26,6 +28,7 @@ For isolated research, invoke `/orchestrate` and request one child with:
 
 - agent: `learn-researcher`;
 - mode: `interactive`;
+- kickoff field: `Selected official product skill: <exact-id>` or `none`;
 - the complete research question, version/platform scope, and constraints in the kickoff.
 
 The built-in skill creates and guides the child. The child returns one final linked Markdown answer;

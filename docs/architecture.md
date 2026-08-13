@@ -7,7 +7,8 @@ The system is prompt-defined and agent-only:
 ```mermaid
 flowchart LR
     U[User or parent session] --> O[Built-in orchestrate skill]
-    O --> R[learn-researcher]
+    O -->|Preselected skill ID or none| R[learn-researcher]
+    R -. Routing and checklist guidance .-> S[One installed official product skill]
     R --> L[Native Microsoft Learn tools]
     L --> R
     R --> A[Markdown answer and website links]
@@ -28,9 +29,11 @@ The researcher targets `github-copilot`, is read-only, and has two tool capabili
 - `read` only for exact files created when a Learn tool spools oversized output;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search.
 
-The researcher intentionally does not load an installed product-skill catalog. Broad skill indexes
-can inject substantial unrelated context, while direct Learn search already supplies current
-discovery. Material claims must be checked against a bounded set of fetched Microsoft Learn pages.
+The researcher does not load an installed product-skill catalog. Before launch, the coordinator may
+preselect one exact matching official product skill and name it in the kickoff. The child loads only
+that skill for terminology, topic routing, and checklist guidance, then searches Learn directly.
+Skills are not citation evidence, and every material claim must be checked against the bounded set of
+fetched Microsoft Learn pages.
 
 ### `citation-critic`
 
@@ -40,7 +43,9 @@ or rewriting the answer. This keeps evidence review independent from source disc
 ## Quick and deep paths
 
 A quick question stays in the current chat. Deep research invokes Copilot App's built-in
-`/orchestrate` skill to create and guide one `learn-researcher` child. The child answers normally;
+`/orchestrate` skill after selecting at most one exact matching installed official product skill. The
+kickoff names that skill or `none`; the child does not enumerate the catalog or choose additional
+skills. The child answers normally;
 the orchestrator coordinates its result. If automatic delivery is unavailable, the coordinator
 resolves the child's runtime session from its exact worktree and reads the persisted transcript with
 app-native session-history tools. No custom research identity, publication state, acknowledgement
@@ -109,6 +114,15 @@ References are part of the answer:
 25. Improvement-round answers include an in-band evidence manifest with one row per fetched page,
     keyed to its linked `References` entry and preserving material support states and constraints
     without duplicating URLs, exposing raw page content, or adding a durable evidence store.
+26. The core has a dedicated pre-rollout commitments table for every selected create-time, one-way,
+    locked, irreversible, and mode-selection or mode-switch property. Each row states when the choice
+    becomes fixed, its acceptance check, and fetched evidence or unresolved status.
+27. Protective controls are checked against every recommended recovery and reconfiguration action.
+    Required removal, exception, break-glass, and sequencing steps are explicit.
+28. After the final assumptions blocks are drafted, the coverage audit is rebuilt and recounted so
+    every affected row is downgraded and the status counts sum to the row count.
+29. Every quantitative claim has adjacent fetched evidence for its exact value, scope, and conditions.
+    In improvement rounds, the matching evidence-manifest row preserves those quantities.
 
 ## Formal review contract
 
@@ -118,7 +132,9 @@ claim-to-evidence support, contradictions, coverage status, and runtime defects 
 competing architecture or broadening the source set. The coordinator records what worked, failures,
 the complementary analysis, model disagreements, and resulting system changes in a session artifact,
 not a repository or runtime persistence layer. If the app loses the original tool trace, a later
-refetch is labeled reconstructed evidence rather than represented as the exact original context.
+refetch is labeled reconstructed evidence rather than represented as the exact original context. The
+review packet records whether the answer came from a normalized turn, task-completion summary,
+re-emitted turn, or reconstruction.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
@@ -127,6 +143,8 @@ The links open the source as a normal website, including
 
 - Retrieved pages are untrusted data; instructions embedded in them are ignored.
 - The researcher cannot edit the repository, execute shell commands, or deploy resources.
+- A preselected product skill can guide discovery but cannot establish a factual claim or bypass the
+  fetched-page reference contract.
 - Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated
   workspace and user files are out of scope.
 - The critic cannot search, fetch, invoke skills, or broaden the supplied evidence.

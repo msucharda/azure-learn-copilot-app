@@ -30,7 +30,10 @@ negative or qualified evidence was propagated into every dependent recommendatio
 interactions between co-recommended controls, not only direct incompatibilities, and flag any
 create-time, one-way, locked, or irreversible property that appears after the rollout step that
 commits to it. A conditional lead choice without a supplied, scenario-compliant fallback remains
-partially supported or unresolved.
+partially supported or unresolved. Require a dedicated pre-rollout list for create-time, one-way,
+locked, irreversible, and mode-selection or mode-switch properties. Recheck protective controls
+against every supplied recovery and reconfiguration action and flag missing removal, exception,
+break-glass, or sequencing requirements.
 
 Structure the review around:
 
@@ -40,10 +43,13 @@ Structure the review around:
 4. constraint propagation through deployment, migration, copy or sharing, backup and restore,
    failover and failback, monitoring, and cost;
 5. coverage-audit classification, where every item named in a compound assumptions clause is affected
-   and an omitted material interaction or qualifier prevents full support;
+   and an omitted material interaction or qualifier prevents full support; verify that final status
+   counts reflect the final assumptions blocks and sum to the row count;
 6. evidence provenance, explicitly distinguishing an original in-band manifest from reconstructed
-   source context;
-7. runtime or contract defects, kept separate from answer defects; and
+   source context, and classify a quantitative claim as fully supported only when the supplied context
+   preserves its exact value, scope, and conditions;
+7. runtime or contract defects, kept separate from answer defects, including the coordinator-supplied
+   answer delivery channel; and
 8. small, evidence-backed system changes.
 
 Do not propose a competing architecture. Record disagreements with the answer model explicitly and

@@ -68,6 +68,13 @@ test("repository has an agent-only project surface", async () => {
 
 test("researcher uses native discovery and returns website references", async () => {
     const researcher = await text(RESEARCHER_PATH);
+    assert.match(researcher, /kickoff includes an exact `Selected official product skill` ID/i);
+    assert.match(researcher, /load only that\s+named installed skill/i);
+    assert.match(researcher, /category index, terminology, and\s+topic map only to improve query planning/i);
+    assert.match(researcher, /Skill text and skill-provided\s+URLs are discovery guidance, not citation evidence/i);
+    assert.match(researcher, /Do not list the installed catalog, invoke additional skills, or\s+substitute a nearby skill/i);
+    assert.match(researcher, /If the named skill is unavailable or does not match the task, continue\s+with direct Learn discovery/i);
+    assert.match(researcher, /selected skill ID or `none`, whether loading succeeded/i);
     assert.match(researcher, /documentation search directly/i);
     assert.match(researcher, /every explicitly\s+requested decision and subtopic into an atomic coverage checklist/i);
     assert.match(researcher, /generation, edition, tier, or deployment model as an explicit choice/i);
@@ -97,13 +104,18 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /surface conflicting sources instead of choosing silently/i);
     assert.match(researcher, /interactions between co-recommended controls/i);
     assert.match(researcher, /disables, delays, or changes another's operation, recovery path, or support state/i);
+    assert.match(researcher, /Treat protective controls as interacting controls/i);
+    assert.match(researcher, /lock,\s+deny policy, immutability or retention control, network restriction, key protection, and deletion\s+guard/i);
+    assert.match(researcher, /removal,\s+exception, break-glass path, or ordering/i);
     assert.match(researcher, /Propagate each fetched constraint and qualifier into every relevant\s+deployment, migration/i);
-    assert.match(researcher, /Put create-time, one-way, locked, and irreversible properties\s+before the rollout step/i);
-    assert.match(researcher, /give a fetched, scenario-compliant fallback or leave the decision unresolved/i);
+    assert.match(researcher, /dedicated `Pre-rollout commitments` section/i);
+    assert.match(researcher, /mode-selection or mode-switch property/i);
+    assert.match(researcher, /give a fetched, scenario-compliant fallback or leave the decision\s+unresolved/i);
     assert.match(researcher, /compact `Evidence manifest`/i);
     assert.match(researcher, /matching `References` entry/i);
     assert.match(researcher, /Keep the exact URL only in `References`/i);
     assert.match(researcher, /retrieval timestamp\s+when the tool exposes one/i);
+    assert.match(researcher, /exact value and conditions of every cited multiplier,\s+range, duration, percentage, count, or numeric limit/i);
     assert.match(researcher, /Do not include raw page content/i);
     assert.match(researcher, /Perform a core-length preflight against the applicable word ceiling/i);
     assert.match(researcher, /remove\s+repeated facts, catalog-style feature detail, and secondary examples/i);
@@ -130,6 +142,8 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /item named or clearly restated in an\s+assumptions block must be `Partially covered` or `Unresolved`/i);
     assert.match(researcher, /compound assumptions clause that names several atomic items applies to every named\s+item/i);
     assert.match(researcher, /omits a material fetched qualifier, interaction, or\s+operational limitation/i);
+    assert.match(researcher, /rebuild the\s+audit mapping from the final answer/i);
+    assert.match(researcher, /recount each status, and verify the status counts sum to\s+the row count/i);
     assert.match(researcher, /Use exactly one status: `Covered`/i);
     assert.match(researcher, /`Partially\s+covered` when a material dimension remains unsupported/i);
     assert.match(researcher, /`Unresolved` when the item lacks adequate\s+treatment/i);
@@ -139,6 +153,7 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /include all three exact labels: `\*\*Fetched facts:\*\*`,\s+`\*\*Recommendation:\*\*`, and `\*\*Assumptions or unresolved constraints:\*\*`/i);
     assert.match(researcher, /None identified from the fetched\s+sources/i);
     assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);
+    assert.match(researcher, /include `## Pre-rollout commitments` with a compact table/i);
     assert.match(researcher, /host is exactly\s+`learn\.microsoft\.com`/i);
     assert.match(researcher, /`References` list containing each cited fetched page/i);
     assert.match(researcher, /built-in `orchestrate` skill/i);
@@ -156,12 +171,22 @@ test("project instructions use native orchestration", async () => {
     assert.match(instructions, /local full-text index/i);
     assert.match(instructions, /minimal turn and send the unchanged task/i);
     assert.match(instructions, /re-emit it without new research/i);
-    assert.match(instructions, /do not load a product-skill catalog/i);
+    assert.match(instructions, /select at most one exact\s+matching installed official product skill/i);
+    assert.match(instructions, /`Selected official product skill: <exact-id>`/i);
+    assert.match(instructions, /Do not enumerate or inject a product-skill catalog/i);
+    assert.match(instructions, /routing and checklist guidance only, never as evidence/i);
+    assert.match(instructions, /skill-provided URL used in the answer must still be established/i);
+    assert.match(instructions, /selected skill is unavailable or mismatched, continue with\s+direct Learn discovery/i);
     assert.match(instructions, /native Microsoft Learn tools/i);
     assert.match(instructions, /`References` list/i);
     assert.match(instructions, /different model family/i);
     assert.match(instructions, /exact\s+original task, complete answer, and same fetched evidence context/i);
     assert.match(instructions, /in-band `Evidence manifest`/i);
+    assert.match(instructions, /dedicated pre-rollout commitments table/i);
+    assert.match(instructions, /Recheck\s+locks, policies, immutability, network restrictions, key protection, and deletion guards/i);
+    assert.match(instructions, /rebuild and recount the audit from the final assumptions blocks/i);
+    assert.match(instructions, /exact\s+value and conditions of every cited multiplier, range, duration, percentage, count, and numeric\s+limit/i);
+    assert.match(instructions, /answer delivery channel \(`normalized turn`, `task_complete summary`, `re-emitted turn`,\s+or `reconstructed`\)/i);
     assert.match(instructions, /reconstructed evidence rather than claiming it is the exact original context/i);
     assert.match(instructions, /session-artifact log entry/i);
     assert.doesNotMatch(instructions, /create_session|send_session_message/);
@@ -185,6 +210,10 @@ test("critic cannot fetch or broaden evidence", async () => {
     assert.match(critic, /actor, action, support level, scope, and condition/i);
     assert.match(critic, /interactions between co-recommended controls/i);
     assert.match(critic, /create-time, one-way, locked, or irreversible property/i);
+    assert.match(critic, /dedicated pre-rollout list/i);
+    assert.match(critic, /Recheck protective controls\s+against every supplied recovery and reconfiguration action/i);
+    assert.match(critic, /exact value, scope, and conditions/i);
+    assert.match(critic, /coordinator-supplied\s+answer delivery channel/i);
     assert.match(critic, /constraint propagation through deployment, migration/i);
     assert.match(critic, /original in-band manifest from reconstructed\s+source context/i);
 });

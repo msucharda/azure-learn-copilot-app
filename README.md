@@ -16,10 +16,12 @@ links.
 ## Flow
 
 1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
-2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and have it create one
-   `learn-researcher` child.
-3. The researcher maps every requested subtopic to fetched evidence or an explicit unresolved
-   statement, uses native Microsoft Learn search for discovery, selects at most 15 authoritative
+2. For deeper work, identify the primary Azure product and preselect at most one exact matching
+   installed official product skill. Invoke Copilot App's built-in `/orchestrate` skill and put that
+   skill ID, or `none`, in the kickoff for one `learn-researcher` child.
+3. The child loads only the preselected skill as routing and checklist guidance, then maps every
+   requested subtopic to fetched evidence or an explicit unresolved statement, uses native Microsoft
+   Learn search for discovery, selects at most 15 authoritative
    pages, and fetches every linked page. It cites the canonical URL returned by fetch and performs
    final coverage and all-links-fetched preflights; if no canonical URL is returned, it preserves the
    exact successful request URL rather than inferring one. Read-only file access is restricted by
@@ -28,8 +30,9 @@ links.
    list. The built-in orchestrator coordinates the child; the coordinator reads the persisted
    session transcript if automatic result delivery is unavailable.
 
-No project skill router or product-skill catalog is loaded into the researcher. Current pages from
-[Microsoft Learn](https://learn.microsoft.com/) are the discovery and citation source.
+No project skill router or product-skill catalog is loaded into the researcher. A single progressively
+loaded official skill may narrow discovery, but it is not evidence. Current fetched pages from
+[Microsoft Learn](https://learn.microsoft.com/) remain the citation source.
 
 GitHub's standard deep-research workflow is designed to investigate repository code. This custom
 agent remains useful for external Microsoft Learn research because it enforces a Learn-only source
@@ -43,9 +46,9 @@ and link contract. See GitHub's documentation for
 Each iteration runs a different Azure architecture scenario in a fresh coordinated
 `learn-researcher` session. The coordinator reads the final transcript, reviews citation coverage
 and observed tool friction, changes only the agent contract when evidence supports it, and validates
-the contract before starting the next iteration. The loop deliberately compares direct Learn
-discovery against earlier skill-assisted runs rather than assuming a broad injected catalog saves
-context. The core answer is bounded to 1,500 words so source breadth does not displace decision
+the contract before starting the next iteration. The loop compares direct Learn discovery with
+one-skill progressive discovery rather than assuming either a broad injected catalog or no skill is
+always best. The core answer is bounded to 1,500 words so source breadth does not displace decision
 quality, with a 2,000-word ceiling only when more than 30 atomic items require coverage. The coverage
 preflight treats every named service, constraint, comparison, and enumerated subtopic as an atomic
 item. Every decision uses explicit fetched-facts, recommendation, and
