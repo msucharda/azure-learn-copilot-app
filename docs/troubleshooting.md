@@ -12,6 +12,7 @@
 | A requested topic is absent from the answer | Split the request into atomic named services, constraints, comparisons, and comma-separated subtopics, then map each to a core-answer sentence with fetched evidence, a supported recommendation, or an explicit unresolved statement |
 | The agent reports complete coverage despite a missing subtopic | Do not accept a parent-area paragraph, unsupported recommendation, or agent-system observation as coverage; rerun the item-by-item preflight |
 | A broad request loses subtopics at the word limit | If the atomic checklist exceeds 30 items, allow up to 2,000 core words and spend the additional allowance only on missing requested coverage |
+| The core exceeds its word ceiling | Remove repeated facts, catalog-style feature detail, and secondary examples; keep each capability once and have recommendations apply rather than restate it |
 | A broad answer still hides omitted items | Add a compact `Coverage audit` table before `References`; give every atomic item exactly one row and one status: `Covered`, `Partially covered`, or `Unresolved` |
 | An audit item is marked both covered and unresolved | Use the single `Partially covered` status and state the unsupported dimension in the core answer |
 | Coverage row count differs from the checklist count | Reconcile the table before answering; every atomic item requires exactly one row |

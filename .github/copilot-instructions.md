@@ -24,6 +24,8 @@
 - Require a contradiction preflight across fetched constraints, recommendations, and explicit
   scenario requirements. Mutually exclusive options must be chosen between or presented as
   conditional alternatives, and mandatory controls cannot be bypassed for convenience.
+- Require a core-length preflight that removes repeated facts, catalog detail, and secondary examples
+  before requested coverage; recommendations apply rather than restate fetched facts.
 - Keep the core synthesis within 1,500 words, allowing up to 2,000 only when the atomic checklist
   exceeds 30 items and only to restore requested coverage. Give every decision all three exact labels:
   fetched facts, recommendation, and assumptions or unresolved constraints; name every unsupported

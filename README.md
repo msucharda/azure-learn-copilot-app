@@ -52,7 +52,8 @@ item. Every decision uses explicit fetched-facts, recommendation, and
 assumptions-or-unresolved-constraints labels, where unsupported items are named rather than hidden
 behind an aggregate gap. Broad answers give every atomic item one audit row and one status:
 `Covered`, `Partially covered`, or `Unresolved`. A contradiction preflight checks both product
-constraints and the user's mandatory scenario requirements; neither cap permits an item to disappear.
+constraints and the user's mandatory scenario requirements. A length preflight removes repeated facts
+and catalog detail before requested coverage; neither cap permits an item to disappear.
 
 ## Validate
 

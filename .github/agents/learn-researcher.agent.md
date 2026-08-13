@@ -47,7 +47,11 @@ resources, or mutate external state.
    scenario requirement. Never combine mutually exclusive connection modes, feature gaps, deployment
    options, or support states, and do not bypass a required control for convenience. Choose one option
    or present explicit alternatives with the condition and scenario trade-off for each.
-10. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
+10. Perform a core-length preflight against the applicable word ceiling. If over budget, remove
+    repeated facts, catalog-style feature detail, and secondary examples before shortening requested
+    coverage. State a material capability once; recommendations should apply fetched facts rather than
+    restate them. Do not report word-bound compliance without this check.
+11. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
    when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
    fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page
    content. Every Markdown URL anywhere in the answer, including unresolved items and suggested next

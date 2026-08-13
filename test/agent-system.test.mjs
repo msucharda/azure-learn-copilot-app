@@ -85,6 +85,10 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /compare every recommendation against all fetched constraints and every explicit\s+scenario requirement/i);
     assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment\s+options, or support states/i);
     assert.match(researcher, /do not bypass a required control for convenience/i);
+    assert.match(researcher, /Perform a core-length preflight against the applicable word ceiling/i);
+    assert.match(researcher, /remove\s+repeated facts, catalog-style feature detail, and secondary examples/i);
+    assert.match(researcher, /recommendations should apply fetched facts rather than\s+restate them/i);
+    assert.match(researcher, /Do not report word-bound compliance without this check/i);
     assert.match(researcher, /Point every atomic item to a sentence\s+in the core answer/i);
     assert.match(researcher, /unsupported recommendation, or `Agent-system observations` do not count\s+as coverage/i);
     assert.match(researcher, /Name or clearly restate every unsupported atomic item/i);
