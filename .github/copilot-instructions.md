@@ -9,22 +9,21 @@
 - For deep work, invoke the built-in `/orchestrate` skill and use one `learn-researcher` child. Do not
   recreate orchestration or handoff logic in project code.
 
-## Reliable child startup
+## Correlated child execution
 
-Use a verified two-turn handshake for every deep child:
+Use one kickoff and an explicit agent callback for every deep child:
 
-1. Request `notify_on_idle: always`.
-2. Start with a minimal initialization turn containing only the agent role and `Research mode`.
-3. Wait for the idle event and verify the normalized assistant turn exactly acknowledges readiness.
-4. Only then send the complete research task once. Do not queue the task while initialization is still
-   running.
-5. Wait for the next idle event and inspect normalized history. If the exact task turn exists with an
-   empty response, send one short recovery instruction to complete the existing run; do not resend the
-   frozen task. If the task turn is absent, ask the same child to re-emit completed work or reply exactly
-   `Task not received`; resend only after that explicit response and record the retry.
-6. If the answer exists only in another delivery channel, record that channel and ask the same child to
-   re-emit the existing answer without new research.
-7. Do not archive or replace a child until session history proves that it has no unprocessed task.
+1. Freeze the complete task and compute its SHA-256. Generate a unique callback nonce.
+2. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
+3. Put `Research mode`, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the complete frozen
+   task in the kickoff. Do not deliver work in a follow-up session message.
+4. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
+   `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
+   when both identifiers match.
+5. Treat idle notifications as diagnostics, never completion. If the child becomes idle without the
+   required callback, inspect its transcript once, record a delivery failure, and do not automatically
+   resend the task.
+6. Ignore duplicate or stale callbacks. Validate the complete normalized result before archiving.
 
 Coordinator-generated Markdown is not a valid kickoff attachment; the App attachment field accepts
 only app-staged image attachments from the creator message. Git staging does not change that. Put a
@@ -32,9 +31,9 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Modes and direct discovery
 
-- Put `Research mode: standard`, `evaluation`, or `repair` in the initialization turn. Standard is the
-  normal path. Evaluation is only for controlled improvement or requested evidence review. Repair
-  sends a critic brief back to the original researcher before publication.
+- Put `Research mode: standard`, `evaluation`, or `repair` in the kickoff. Standard is the normal path.
+  Evaluation is only for controlled improvement or requested evidence review. Repair starts a fresh
+  child with the prior answer and critic brief in one exact packet.
 - Direct Learn discovery is the only research path in all three modes. Do not load, preselect, or inject
   an installed product skill or skill catalog. Three blinded routing rounds found no quality benefit
   and added startup complexity; factual premises come only from successfully fetched Learn pages.
@@ -59,14 +58,15 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Formal review and repair
 
-- When evidence review is requested, create a different-model `citation-critic` child. Supply the exact
-  original task, complete answer, evaluation packet, and delivery channel in one session-artifact
-  packet. The critic may read only that packet and review-fetch only the exact Learn URLs already in
-  References; it cannot search, add sources, invoke skills, or propose another architecture.
+- When evidence review is requested, create a different-model `citation-critic` child with the callback
+  envelope. Supply the exact original task, complete answer, evaluation packet, and delivery channel in
+  one session-artifact packet. The critic may read only that packet and review-fetch only the exact
+  Learn URLs already in References; it cannot search, add sources, invoke skills, or propose another
+  architecture.
 - For controlled A/B experiments, anonymize arm metadata before review, fix the scoring rubric and task
   hash before either answer is inspected, and decode the arms only after the verdict.
-- Send the critic's repair brief to the winning or original researcher with `Research mode: repair`.
-  Unless explicitly authorized, repair reuses the existing source set. Verify the corrected normalized
-  answer, then publish only its user-facing portion.
+- Start a fresh callback-enabled `learn-researcher` child with `Research mode: repair` and one exact
+  packet containing the prior answer and critic brief. Unless explicitly authorized, repair reuses the
+  existing source set. Verify the corrected result, then publish only its user-facing portion.
 - Record what worked, failures, complementary findings, model disagreements, repair results, and
   evidence-backed system changes in the session improvement-log artifact. Do not add runtime storage.

@@ -23,25 +23,24 @@ citation evidence.
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
 
-For isolated research, invoke `/orchestrate` and request one child with repeated idle notifications.
-Use a two-turn handshake:
+For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
-- first turn: `Research mode: standard`;
-- wait for and verify the ready response;
-- second turn: send the complete research question, version/platform scope, and constraints exactly
-  once.
+- kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
+  and the complete research question, version/platform scope, and constraints;
+- coordination: `coordinate_with_creator: true`;
+- notification: `notify_on_idle: always`, used only to diagnose missing callbacks.
 
-Verify a complete normalized answer before archiving the child. If the result is not delivered
-automatically, use App-native session history to read it and ask the same child to re-emit the existing
-answer without new research. See the
+Accept only `STARTED`, `COMPLETED`, or `FAILED` callbacks from the expected child with both exact
+identifiers. Verify a complete normalized answer before archiving the child. An idle child without a
+matching callback is a delivery failure and is not automatically retried. See the
 [built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
 
 For evidence review, use `Research mode: evaluation`, save the returned coordinator-only packet as a
 session artifact, and give `citation-critic` that exact path. It independently fetches only the Learn
-URLs already in References and returns a repair brief for the original researcher. Do not put a
-generated Markdown packet in kickoff attachments; those accept only app-staged creator images, and
-Git staging is unrelated.
+URLs already in References. Give its repair brief and the prior answer to a fresh callback-enabled
+researcher in one repair-mode packet. Do not put a generated Markdown packet in kickoff attachments;
+those accept only app-staged creator images, and Git staging is unrelated.
 
 ## Validate repository contracts
 

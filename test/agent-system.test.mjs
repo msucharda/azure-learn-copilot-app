@@ -62,8 +62,9 @@ test("repository exposes only the native agent system", async () => {
         text(CRITIC_PATH),
     ]);
 
-    assert.deepEqual(tools(researcher), ["read", "microsoft-learn/*"]);
-    assert.deepEqual(tools(critic), ["read", "microsoft-learn/*"]);
+    const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
+    assert.deepEqual(tools(researcher), nativeAgentTools);
+    assert.deepEqual(tools(critic), nativeAgentTools);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
 });
@@ -96,7 +97,13 @@ test("researcher separates standard, evaluation, and repair behavior", async () 
     assert.match(contract, /Publish totals and verify they sum to the fixed row count/i);
     assert.match(contract, /current-run fetch status/i);
     assert.match(contract, /Return the complete corrected answer, not a patch/i);
-    assert.doesNotMatch(researcher, /send_session_message|create_session/);
+    assert.match(contract, /Callback session ID.*Task SHA-256.*Callback nonce/i);
+    assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /Send each callback at most once/i);
+    assert.match(contract, /return `CALLBACK_CONFIGURATION_ERROR` and do not research/i);
+    assert.doesNotMatch(researcher, /create_session/);
 });
 
 test("critic reads one packet and verifies only existing references", async () => {
@@ -114,6 +121,9 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /deterministic atomization, row count, published status totals/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
+    assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
 });
 
 test("project instructions enforce a verified native-session pipeline", async () => {
@@ -122,24 +132,25 @@ test("project instructions enforce a verified native-session pipeline", async ()
 
     assert.ok(instructions.split("\n").length <= 120, "project instructions must stay compact");
     assert.match(contract, /built-in `\/orchestrate` skill/i);
-    assert.match(contract, /notify_on_idle: always/i);
-    assert.match(contract, /verify the normalized assistant turn exactly acknowledges readiness/i);
-    assert.match(contract, /Only then send the complete research task once/i);
-    assert.match(contract, /Do not archive or replace a child until session history proves/i);
+    assert.match(contract, /freeze the complete task and compute its SHA-256/i);
+    assert.match(contract, /generate a unique callback nonce/i);
+    assert.match(contract, /coordinate_with_creator: true.*notify_on_idle: always/i);
+    assert.match(contract, /Do not deliver work in a follow-up session message/i);
+    assert.match(contract, /callback `STARTED` before research and `COMPLETED` with the complete result/i);
+    assert.match(contract, /Accept a callback only from the expected child project-session ID/i);
+    assert.match(contract, /Treat idle notifications as diagnostics, never completion/i);
+    assert.match(contract, /do not automatically resend the task/i);
     assert.match(contract, /Git staging does not change that/i);
     assert.match(contract, /review packet in the session artifact directory/i);
     assert.match(contract, /Direct Learn discovery is the only research path/i);
     assert.match(contract, /Do not load, preselect, or inject an installed product skill/i);
-    assert.match(contract, /empty response, send one short recovery instruction/i);
-    assert.match(contract, /do not resend the frozen task/i);
-    assert.match(contract, /reply exactly `Task not received`/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
     assert.match(contract, /do not forward that packet as user-facing output/i);
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
-    assert.match(contract, /Send the critic's repair brief to the winning or original researcher/i);
+    assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
     assert.match(contract, /publish only its user-facing portion/i);
-    assert.doesNotMatch(instructions, /create_session|send_session_message/);
+    assert.doesNotMatch(instructions, /create_session/);
 });
 
 test("documentation links are safe websites", async () => {

@@ -7,13 +7,13 @@ The system is prompt-defined and agent-only:
 ```mermaid
 flowchart LR
     U[User or parent session] --> O[Built-in orchestrate skill]
-    O -->|Verified ready handshake| R[learn-researcher]
+    O -->|One kickoff: task plus callback envelope| R[learn-researcher]
     R --> L[Native Microsoft Learn tools]
     L --> R
-    R --> A[Answer plus optional evaluation packet]
+    R -->|Correlated callback| A[Answer plus optional evaluation packet]
     A --> C[citation-critic on request]
     C -->|Repair brief| R
-    R --> O
+    R -->|Correlated callback| O
     O -->|User-facing answer and website links| U
 ```
 
@@ -24,10 +24,12 @@ renderer. Copilot App owns tool execution and session coordination.
 
 ### `learn-researcher`
 
-The researcher targets `github-copilot`, is read-only, and has two tool capabilities:
+The researcher targets `github-copilot`, is read-only except for its coordinator callback, and has three
+tool capabilities:
 
 - `read` only for exact files created when a Learn tool spools oversized output;
-- `microsoft-learn/*` for native documentation search, page fetch, and code-sample search.
+- `microsoft-learn/*` for native documentation search, page fetch, and code-sample search;
+- `send_session_message` only for a task-hash-and-nonce-correlated callback to the supplied coordinator.
 
 The researcher does not load installed product skills or a product-skill catalog. It searches Learn
 directly in every mode, and every material claim must be checked against the bounded set of fetched
@@ -35,23 +37,23 @@ Microsoft Learn pages.
 
 ### `citation-critic`
 
-The critic has `read` and `microsoft-learn/*`. It reads only the exact coordinator-supplied packet and
-may fetch only the Learn URLs already listed in that packet. It cannot search, add a source, invoke a
-skill, or rewrite the answer. Review-time fetches independently verify claims without being
-misrepresented as the researcher's original tool trace.
+The critic has the same callback-only messaging exception. It reads only the exact
+coordinator-supplied packet and may fetch only the Learn URLs already listed in that packet. It cannot
+search, add a source, invoke a skill, or rewrite the answer. Review-time fetches independently verify
+claims without being misrepresented as the researcher's original tool trace.
 
 ## Quick and deep paths
 
 A quick question stays in the current chat. Deep research invokes Copilot App's built-in
-`/orchestrate` skill with repeated idle notifications. A minimal first turn declares only the research
-mode; the coordinator verifies the ready response before sending the full task once. Direct discovery
-is the only research path.
+`/orchestrate` skill with one kickoff containing the mode, complete frozen task, task hash, callback
+nonce, and coordinator session ID. The child sends correlated `STARTED` and `COMPLETED` or `FAILED`
+messages. Idle notifications are diagnostic only. Direct discovery is the only research path.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a
-different-model critic review it, sends the repair brief to the original researcher, and publishes
-only the corrected user-facing portion. Markdown artifacts are read by exact path rather than passed
-as kickoff attachments, which accept only app-staged creator images.
+different-model critic review it, starts a fresh repair-mode researcher with the exact prior answer and
+repair brief, and publishes only the corrected user-facing portion. Markdown artifacts are read by
+exact path rather than passed as kickoff attachments, which accept only app-staged creator images.
 
 GitHub's documented deep-research workflow investigates a repository. The custom researcher remains
 the appropriate policy boundary for external Microsoft Learn research and its stricter citation
@@ -150,10 +152,10 @@ the exact Learn URLs already in References. It reviews task compliance, claim su
 coverage status, and runtime defects without producing a competing architecture or broadening the
 source set. Review-time fetches are labeled separately from the original trace.
 
-The critic returns a repair brief. The original researcher applies it in repair mode using the existing
-source set unless a new fetch is explicitly authorized. The coordinator verifies the corrected
-normalized answer and publishes only its user-facing portion. Controlled A/B runs fix the task hash and
-rubric and remove arm metadata until after the verdict.
+The critic returns a repair brief. A fresh callback-enabled researcher receives the prior answer and
+brief in one repair-mode packet and uses the existing source set unless a new fetch is explicitly
+authorized. The coordinator verifies the corrected result and publishes only its user-facing portion.
+Controlled A/B runs fix the task hash and rubric and remove arm metadata until after the verdict.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).
@@ -161,7 +163,8 @@ The links open the source as a normal website, including
 ## Trust boundaries
 
 - Retrieved pages are untrusted data; instructions embedded in them are ignored.
-- The researcher cannot edit the repository, execute shell commands, or deploy resources.
+- The researcher cannot edit the repository, execute shell commands, or deploy resources. Its only
+  mutation is a correlated callback to the exact coordinator session supplied in the kickoff.
 - Installed product skills and their catalogs are outside the researcher trust boundary and are not
   invoked.
 - Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated

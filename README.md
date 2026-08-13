@@ -17,16 +17,17 @@ links.
 
 1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
 2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
-   `learn-researcher` child with a verified two-turn handshake: request repeated idle notifications,
-   wait for the minimal initialization response, and only then send the complete task once.
+   `learn-researcher` child with the complete frozen task and a task-hash-correlated callback envelope
+   in one kickoff. Idle notifications are diagnostic only.
 3. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
    product-skill catalogs are outside the research path.
 4. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
    cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
 5. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
    Evaluation mode appends a coordinator-only packet. A different-model critic reads that exact packet,
-   refetches only its existing Learn URLs, and sends a repair brief back to the original researcher.
-   The coordinator publishes only the corrected user-facing answer.
+   refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
+   A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
+   corrected user-facing answer.
 
 No project skill router, installed product skill, or product-skill catalog is loaded into the
 researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole
@@ -74,9 +75,9 @@ without tool-exposed timestamps require deployment-time revalidation.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns
-a repair brief instead of another architecture. The original researcher applies one repair turn before
-publication. The coordinator records agreements, disagreements, runtime failures, repair results, and
-evidence-backed system changes in an uncommitted Copilot session artifact.
+a repair brief instead of another architecture. A fresh repair-mode researcher receives the prior
+answer and brief in one exact packet. The coordinator records agreements, disagreements, runtime
+failures, repair results, and evidence-backed system changes in an uncommitted Copilot session artifact.
 
 ## Validate
 
