@@ -97,6 +97,18 @@ References are part of the answer:
     recommendation depends has dedicated fetched evidence. Conflicting fetched sources remain
     explicit.
 20. Numeric word-count estimates appear only when an available tool computed them deterministically.
+21. Source actor, action, scope, support level, and conditions survive synthesis. Partial support is
+    not promoted to support, and an automatic adoption step is not renamed as automatic creation or
+    rotation.
+22. Co-recommended controls receive an interaction preflight. Effects on operation and recovery are
+    stated even when the controls are not strictly incompatible.
+23. Fetched constraints propagate into relevant migration, copy or sharing, backup and restore,
+    failover and failback, monitoring, and cost steps. Create-time, one-way, locked, and irreversible
+    properties appear before rollout commits to them.
+24. A conditional lead choice includes a fetched, scenario-compliant fallback or remains unresolved.
+25. Improvement-round answers include an in-band evidence manifest with one row per fetched page,
+    keyed to its linked `References` entry and preserving material support states and constraints
+    without duplicating URLs, exposing raw page content, or adding a durable evidence store.
 
 ## Formal review contract
 
@@ -105,7 +117,8 @@ original task, complete answer, and same fetched evidence context. It reviews ta
 claim-to-evidence support, contradictions, coverage status, and runtime defects without producing a
 competing architecture or broadening the source set. The coordinator records what worked, failures,
 the complementary analysis, model disagreements, and resulting system changes in a session artifact,
-not a repository or runtime persistence layer.
+not a repository or runtime persistence layer. If the app loses the original tool trace, a later
+refetch is labeled reconstructed evidence rather than represented as the exact original context.
 
 The links open the source as a normal website, including
 [Microsoft Learn](https://learn.microsoft.com/).

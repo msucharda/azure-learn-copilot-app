@@ -9,6 +9,10 @@
   worktree and read its persisted transcript with app-native session-history tools. If normalized
   turns are unavailable, use the local full-text index for that exact runtime session and read only
   its final response.
+- If a long kickoff repeatedly loses its runtime before the first turn, initialize the same agent with
+  a minimal turn and send the unchanged task in the next coordinated turn. If a completed answer is
+  missing from session history, ask the same child to re-emit it without new research before retrying
+  with another model.
 - Assess orchestration in the coordinator. Ask the child only about research-tool and evidence
   friction that it can directly observe.
 - Use direct Microsoft Learn discovery in `learn-researcher`; do not load a product-skill catalog or
@@ -24,6 +28,11 @@
 - Require a contradiction preflight across fetched constraints, recommendations, and explicit
   scenario requirements. Mutually exclusive options must be chosen between or presented as
   conditional alternatives, and mandatory controls cannot be bypassed for convenience.
+- Require an interaction and propagation preflight. Preserve source qualifiers and actor/action
+  boundaries; state when one recommended control changes another's operation or recovery path; carry
+  constraints into relevant migration, copy, backup, failover, monitoring, and cost steps; and surface
+  create-time or irreversible choices before rollout. A conditional lead choice needs a fetched,
+  scenario-compliant fallback or remains unresolved.
 - Require a core-length preflight that removes repeated facts, catalog detail, and secondary examples
   before requested coverage; recommendations apply rather than restate fetched facts.
 - Keep the core synthesis within 1,500 words, allowing up to 2,000 only when the atomic checklist
@@ -37,13 +46,19 @@
 - Require dedicated fetched evidence for every named capability, generation, SKU, region, or
   compatibility relationship on which the lead recommendation depends. Surface conflicts between
   fetched pages instead of choosing silently.
+- For an improvement round that requests agent observations, require an in-band `Evidence manifest`
+  with one row per fetched page: matching `References` entry, fetched title, tool-exposed retrieval
+  timestamp or `Unavailable`, and the material support states and constraints used. Keep each exact
+  URL only in the linked `References` list. The manifest is answer context, not a durable evidence
+  store.
 - Do not emit numeric word-count estimates unless a tool computed them deterministically.
 - Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
   `References` list. Never fabricate or rewrite a source URL.
 - Use `citation-critic` only when the user requests an evidence review. For an iterative improvement
   review, run it in a separate coordinated child with a different model family and pass the exact
   original task, complete answer, and same fetched evidence context. It reviews the existing answer;
-  it does not produce another architecture.
+  it does not produce another architecture. If the original tool trace is unavailable, identify any
+  coordinator refetch as reconstructed evidence rather than claiming it is the exact original context.
 - At the end of every requested improvement round, append a session-artifact log entry containing what
   worked, what failed, the complementary review, model disagreements, and system changes with their
   rationale. Do not add a runtime persistence layer or commit the log to the repository.

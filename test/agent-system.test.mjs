@@ -79,6 +79,9 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /Fetch every selected page/i);
     assert.match(researcher, /dedicated page for every named capability, variant, or compatibility relationship/i);
     assert.match(researcher, /overview or limits page alone does not establish/i);
+    assert.match(researcher, /Preserve every material support qualifier and actor\/action boundary/i);
+    assert.match(researcher, /create-time, one-way, and irreversible\s+constraints/i);
+    assert.match(researcher, /Do not strengthen or generalize those terms/i);
     assert.match(researcher, /not successfully fetched cannot appear in a\s+claim link/i);
     assert.match(researcher, /code-sample\s+search/i);
     assert.match(researcher, /spools output to a local file/i);
@@ -86,11 +89,22 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
     assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
     assert.match(researcher, /recommendation may synthesize trade-offs, but it cannot introduce an unfetched product\s+capability/i);
+    assert.match(researcher, /Preserve the fetched source's actor, action, support level, scope, and condition/i);
     assert.match(researcher, /compare every recommendation against all fetched constraints and every explicit\s+scenario requirement/i);
     assert.match(researcher, /Never combine mutually exclusive connection modes, feature gaps, deployment\s+options, or support states/i);
     assert.match(researcher, /do not bypass a required control for convenience/i);
     assert.match(researcher, /Recheck the\s+lead recommendation against every fetched `not supported`, `only`, incompatibility, generation,\s+SKU, and regional constraint/i);
     assert.match(researcher, /surface conflicting sources instead of choosing silently/i);
+    assert.match(researcher, /interactions between co-recommended controls/i);
+    assert.match(researcher, /disables, delays, or changes another's operation, recovery path, or support state/i);
+    assert.match(researcher, /Propagate each fetched constraint and qualifier into every relevant\s+deployment, migration/i);
+    assert.match(researcher, /Put create-time, one-way, locked, and irreversible properties\s+before the rollout step/i);
+    assert.match(researcher, /give a fetched, scenario-compliant fallback or leave the decision unresolved/i);
+    assert.match(researcher, /compact `Evidence manifest`/i);
+    assert.match(researcher, /matching `References` entry/i);
+    assert.match(researcher, /Keep the exact URL only in `References`/i);
+    assert.match(researcher, /retrieval timestamp\s+when the tool exposes one/i);
+    assert.match(researcher, /Do not include raw page content/i);
     assert.match(researcher, /Perform a core-length preflight against the applicable word ceiling/i);
     assert.match(researcher, /remove\s+repeated facts, catalog-style feature detail, and secondary examples/i);
     assert.match(researcher, /recommendations should apply fetched facts rather than\s+restate them/i);
@@ -114,6 +128,8 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /Every atomic\s+checklist item must have exactly one row/i);
     assert.match(researcher, /row count must equal the checklist count/i);
     assert.match(researcher, /item named or clearly restated in an\s+assumptions block must be `Partially covered` or `Unresolved`/i);
+    assert.match(researcher, /compound assumptions clause that names several atomic items applies to every named\s+item/i);
+    assert.match(researcher, /omits a material fetched qualifier, interaction, or\s+operational limitation/i);
     assert.match(researcher, /Use exactly one status: `Covered`/i);
     assert.match(researcher, /`Partially\s+covered` when a material dimension remains unsupported/i);
     assert.match(researcher, /`Unresolved` when the item lacks adequate\s+treatment/i);
@@ -138,11 +154,15 @@ test("project instructions use native orchestration", async () => {
     assert.match(instructions, /`learn-researcher` agent/i);
     assert.match(instructions, /persisted transcript with app-native session-history tools/i);
     assert.match(instructions, /local full-text index/i);
+    assert.match(instructions, /minimal turn and send the unchanged task/i);
+    assert.match(instructions, /re-emit it without new research/i);
     assert.match(instructions, /do not load a product-skill catalog/i);
     assert.match(instructions, /native Microsoft Learn tools/i);
     assert.match(instructions, /`References` list/i);
     assert.match(instructions, /different model family/i);
     assert.match(instructions, /exact\s+original task, complete answer, and same fetched evidence context/i);
+    assert.match(instructions, /in-band `Evidence manifest`/i);
+    assert.match(instructions, /reconstructed evidence rather than claiming it is the exact original context/i);
     assert.match(instructions, /session-artifact log entry/i);
     assert.doesNotMatch(instructions, /create_session|send_session_message/);
 });
@@ -162,6 +182,11 @@ test("critic cannot fetch or broaden evidence", async () => {
     assert.match(critic, /exact original\s+task, the answer produced for that task/i);
     assert.match(critic, /Do not propose a competing architecture/i);
     assert.match(critic, /Record disagreements with the answer model explicitly/i);
+    assert.match(critic, /actor, action, support level, scope, and condition/i);
+    assert.match(critic, /interactions between co-recommended controls/i);
+    assert.match(critic, /create-time, one-way, locked, or irreversible property/i);
+    assert.match(critic, /constraint propagation through deployment, migration/i);
+    assert.match(critic, /original in-band manifest from reconstructed\s+source context/i);
 });
 
 test("documentation links are safe websites", async () => {
