@@ -29,7 +29,8 @@
   fetched facts, recommendation, and assumptions or unresolved constraints; name every unsupported
   item in the last label rather than hiding gaps behind an aggregate phrase.
 - For checklists over 30 items, require a compact pre-reference `Coverage audit` table that assigns
-  every atomic item exactly once to `Covered` or `Unresolved`.
+  one row and one status to every atomic item: `Covered`, `Partially covered`, or `Unresolved`. The
+  table row count must equal the checklist count.
 - Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
   `References` list. Never fabricate or rewrite a source URL.
 - Use `citation-critic` only when the user requests an evidence review.

@@ -100,9 +100,12 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /atomic checklist exceeds 30 items may the core use up to\s+2,000 words/i);
     assert.match(researcher, /allowance to cover requested items rather than add detail to already\s+covered items/i);
     assert.match(researcher, /compact `Coverage audit` immediately before\s+`References`/i);
-    assert.match(researcher, /table with `Decision area`, `Covered`, and `Unresolved` columns/i);
-    assert.match(researcher, /Every atomic\s+checklist item must appear exactly once/i);
-    assert.match(researcher, /Mark an item `Covered` only when the core answer explicitly addresses it/i);
+    assert.match(researcher, /table with `Decision area`, `Atomic item`, and `Status` columns/i);
+    assert.match(researcher, /Every atomic\s+checklist item must have exactly one row/i);
+    assert.match(researcher, /row count must equal the checklist count/i);
+    assert.match(researcher, /Use exactly one status: `Covered`/i);
+    assert.match(researcher, /`Partially\s+covered` when a material dimension remains unsupported/i);
+    assert.match(researcher, /`Unresolved` when the item lacks adequate\s+treatment/i);
     assert.match(researcher, /audit does not substitute for the\s+core answer/i);
     assert.match(researcher, /detailed discussion to at most the three unresolved decision groups/i);
     assert.match(researcher, /Name any additional unsupported atomic items tersely/i);

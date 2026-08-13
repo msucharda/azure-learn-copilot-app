@@ -82,9 +82,10 @@ References are part of the answer:
 14. Recommendations are checked against all fetched constraints and explicit scenario requirements;
     mutually exclusive options are selected between or presented as explicit conditional
     alternatives, and mandatory controls are not bypassed for convenience.
-15. A request with more than 30 atomic items includes a compact pre-reference coverage table that
-    assigns every item exactly once to `Covered` or `Unresolved`. `Covered` requires explicit treatment
-    in the core answer with fetched evidence or a supported recommendation.
+15. A request with more than 30 atomic items includes a compact pre-reference coverage table with one
+    row per checklist item and one status: `Covered`, `Partially covered`, or `Unresolved`. The row
+    count equals the checklist count. `Covered` requires complete treatment in the core answer with
+    fetched evidence or a supported recommendation.
 16. The answer gives detailed discussion to at most three decision-critical unresolved groups and
     names every other unsupported atomic item tersely rather than hiding gaps behind an aggregate
     phrase.

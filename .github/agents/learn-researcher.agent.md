@@ -74,11 +74,12 @@ resources, or mutate external state.
 - Cite only URLs returned by the native tools whose scheme is `https` and whose host is exactly
   `learn.microsoft.com`.
 - When the atomic checklist exceeds 30 items, add a compact `Coverage audit` immediately before
-  `References` as a table with `Decision area`, `Covered`, and `Unresolved` columns. Every atomic
-  checklist item must appear exactly once, using its exact name or an unambiguous shortened form.
-  Mark an item `Covered` only when the core answer explicitly addresses it with fetched evidence or a
-  supported recommendation; otherwise mark it `Unresolved`. The audit does not substitute for the
-  core answer.
+  `References` as a table with `Decision area`, `Atomic item`, and `Status` columns. Every atomic
+  checklist item must have exactly one row, using its exact name or an unambiguous shortened form, and
+  the row count must equal the checklist count. Use exactly one status: `Covered` when the core answer
+  addresses the complete item with fetched evidence or a supported recommendation; `Partially
+  covered` when a material dimension remains unsupported; or `Unresolved` when the item lacks adequate
+  treatment. The audit does not substitute for the core answer.
 - End with a `References` list containing each cited fetched page once as a descriptive Markdown
   link, with no more than 15 entries. These normal website links are the complete reference
   interface.
