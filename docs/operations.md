@@ -9,7 +9,6 @@ The production extension is `.github/extensions/learn-references/extension.mjs`.
 | Draft bundles and captured fetch Markdown | `COPILOT_LEARN_DRAFT_ROOT` | `$COPILOT_HOME/learn-references/drafts/<workspaceHash>` or the equivalent under `~/.copilot` | Current workspace only |
 | Published evidence, lifecycle, handoffs, acknowledgements | `COPILOT_LEARN_PUBLISHED_ROOT` | `$COPILOT_HOME/learn-references/published` or `~/.copilot/learn-references/published` | Cross-session |
 | Learn MCP endpoint | `COPILOT_LEARN_MCP_ENDPOINT` | `https://learn.microsoft.com/api/mcp` | Network transport; exact Learn host only |
-| Local telemetry | `COPILOT_LEARN_REFERENCES_TELEMETRY=1` and optional `COPILOT_LEARN_REFERENCES_TELEMETRY_ROOT` | Disabled | Bounded local operational metadata only |
 
 Tests always configure fresh operating-system temporary directories. Runtime data is never written into the repository. A configured root may not itself be a symbolic link; descendants are checked on every access.
 
@@ -17,17 +16,8 @@ The default draft root is durable but workspace-keyed and separate from the cros
 
 Workspace draft captures may contain bounded fetched Markdown. Published records contain only
 bounded excerpts, hashes, lifecycle metadata, retention intervals, handoffs, and acknowledgements.
-Telemetry and evaluation reports contain no full fetched page. Cleanup must target only the exact
-configured draft, published, or telemetry root.
-
-When enabled, telemetry stores allowlisted NDJSON operation events in at most four 256 KiB files
-(1 MiB maximum retained payload before filesystem metadata). Files use owner-only permissions,
-rotation and append are serialized across instances/processes by a bounded per-root lock, and
-roots/files/locks may not be symbolic links. Lock contention fails explicitly rather than dropping
-records or writing past a cap. Events contain only timestamp,
-operation/outcome, bounded duration/counts, coarse error kind, optional retry/cache state, and an
-opaque research-ID hash. They never contain prompts, questions, URLs, excerpts, pages, argument
-JSON, session messages, secrets, raw errors, or absolute paths.
+Evaluation reports contain no full fetched page. Cleanup must target only the exact configured
+draft or published root.
 
 ## Published layout
 
@@ -123,9 +113,9 @@ The generated project router is validated with:
 python .github/skills/repository-skill-generator/scripts/manage_project_skills.py validate --repo . --require-meta
 ```
 
-It contains two exact external entries, `azure-functions` and `microsoft-foundry`, and no fallback. Excluded neighboring products and unknown products remain unresolved. The researcher records plugin name/version and generation date only when exposed by trusted runtime metadata or kickoff context. A generation date older than three calendar months is visibly stale; absent metadata remains absent.
+It contains three exact external entries, `azure-container-apps`, `azure-functions`, and `microsoft-foundry`, and no fallback. Excluded neighboring products and unknown products remain unresolved. The researcher records plugin name/version and generation date only when exposed by trusted runtime metadata or kickoff context. A generation date older than three calendar months is visibly stale; absent metadata remains absent.
 
-Skill files and local operation telemetry cannot prove context reduction if the host injects the complete installed-skill catalog. Do not claim savings. For an out-of-band observation, run equivalent bounded prompts in fresh sessions: one with plugin-wide discovery and one with compact-router selection to the exact skill. Compare only host-visible input-token totals and skill/tool loading events, record host/model/plugin versions and prompt hashes, and report the observation without generalizing beyond that runtime.
+Skill files cannot prove context reduction if the host injects the complete installed-skill catalog. Do not claim savings. For an out-of-band observation, run equivalent bounded prompts in fresh sessions: one with plugin-wide discovery and one with compact-router selection to the exact skill. Compare only host-visible input-token totals and skill/tool loading events, record host/model/plugin versions and prompt hashes, and report the observation without generalizing beyond that runtime.
 
 Project agent and skill changes may require a fresh turn or session before the runtime picker sees them. Reload extensions separately, inspect diagnostics, and use a fresh session for the bounded router-to-skill-to-fetch/record probe.
 

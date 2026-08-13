@@ -13,13 +13,19 @@ metadata:
 
 # Routing
 
-Use when a research question names a high-confidence Azure Functions or Microsoft Foundry surface represented by this repository's agent, skill, extension, evidence, or SDK work.
+Use when a research question names Azure Container Apps, Azure Functions, or Microsoft Foundry.
 
-Do not use for general repository maintenance, Microsoft Learn mechanics alone, neighboring Azure hosting products, legacy Foundry branding, local Foundry runtimes, or uncovered products. An unresolved route uses lightweight Learn discovery without loading multiple official skills.
+Do not use for general repository maintenance, Microsoft Learn mechanics alone, or neighboring products. An unresolved route uses lightweight Learn discovery without loading multiple official skills.
 
 ## Official skill allow-list
 
 Use only these exact external skill names. Load no official skill body until selection.
+
+### `azure-container-apps`
+
+- Aliases: azure container apps, container apps, container app environment
+- Exclusions: azure container instances, azure kubernetes service, app service
+- Category: storage, scaling, networking
 
 ### `azure-functions`
 

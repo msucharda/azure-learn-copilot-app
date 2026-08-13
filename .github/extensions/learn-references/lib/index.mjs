@@ -75,15 +75,6 @@ export {
 } from "./tool-schemas.mjs";
 export { createLearnReferenceTools } from "./tools.mjs";
 export {
-    LocalStructuredTelemetry,
-    LocalTelemetryError,
-    TELEMETRY_MAX_FILE_BYTES,
-    TELEMETRY_MAX_FILES,
-    createLocalTelemetryFromEnv,
-    opaqueTelemetryHash,
-    telemetryErrorKind,
-} from "./local-telemetry.mjs";
-export {
     deepResearchKickoff,
     normalizeResearchStart,
 } from "./nested-research.mjs";

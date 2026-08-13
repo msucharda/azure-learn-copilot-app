@@ -88,23 +88,6 @@ async function state(url) {
     };
 }
 
-function waitForSse(url, expectedText) {
-    return new Promise((resolve, reject) => {
-        const request = get(new URL("/events", url), (response) => {
-            let body = "";
-            response.setEncoding("utf8");
-            response.on("data", (chunk) => {
-                body += chunk;
-                if (body.includes(expectedText)) {
-                    request.destroy();
-                    resolve(body);
-                }
-            });
-        });
-        request.on("error", reject);
-    });
-}
-
 async function openSse(url) {
     let request;
     const response = await new Promise((resolve, reject) => {
@@ -303,13 +286,24 @@ test("refresh action validates input and pushes a bounded SSE repaint event", as
         researchId: RESEARCH_ID,
         view: "draft",
     }));
-    const sse = waitForSse(opened.url, '"revision":1');
+    const { request, response } = await openSse(opened.url);
+    response.setEncoding("utf8");
+    let body = "";
+    const sse = new Promise((resolve) => {
+        response.on("data", (chunk) => {
+            body += chunk;
+            if (body.includes("event: refresh")) {
+                resolve(body);
+            }
+        });
+    });
     const refreshed = await action(context.canvas, "refresh").handler({
         instanceId: "refresh-instance",
         input: {},
     });
     assert.equal(refreshed.revision, 1);
     assert.match(await sse, /event: refresh/);
+    request.destroy();
     await assert.rejects(
         action(context.canvas, "refresh").handler({
             instanceId: "refresh-instance",

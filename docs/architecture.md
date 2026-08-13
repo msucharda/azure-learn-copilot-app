@@ -1,6 +1,6 @@
 # Learn research architecture
 
-Status: schema version 1 contracts, deterministic evidence validation, production extension tools, bounded retry, compact official-skill routing, production researcher/critic agents, atomic reference storage, the read-only reference canvas, nested-session publish-back, opt-in local telemetry, and deterministic release evaluation are implemented.
+Status: schema version 1 contracts, deterministic evidence validation, production extension tools, bounded retry, compact official-skill routing, production researcher/critic agents, atomic reference storage, the read-only reference canvas, nested-session publish-back, and deterministic release evaluation are implemented.
 
 ## Repository boundaries
 
@@ -140,6 +140,8 @@ Both entry modes use the same `researchId`, evidence contract, and eventual pare
 
 Promotion to deep research preserves the existing `researchId`, versioned evidence, and unresolved items. It does not restart research or create an unrelated record.
 
+A child idle notification only reports execution state. The parent treats only a verified published handoff as research completion and never infers that a draft exists from idleness.
+
 ## Microsoft Learn MCP configuration
 
 PR 0 confirmed two runtime naming layers:
@@ -173,11 +175,6 @@ long-lived evidence is re-fetched before reuse. A content cache keyed by URL and
 could not determine freshness without fetching and would risk stale excerpt reuse. Active
 connection tool discovery is the only in-memory metadata reuse: one validated operation mapping,
 refreshed after a five-minute default TTL. Search and code results are never cached.
-
-Opt-in telemetry observes only bounded operation metadata after schema validation. It never receives
-prompts, questions, URLs, excerpts, pages, argument JSON, session messages, secrets, absolute paths,
-or raw errors. Telemetry storage is local, symlink-safe, bounded, and rotated. A telemetry failure
-is explicit to the operator and cannot transform a failed research operation into success.
 
 ## Storage model
 

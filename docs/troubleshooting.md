@@ -11,7 +11,6 @@
 | `AUTHORITATIVE_DRAFT_NOT_VALIDATED` | Explicit validated state is missing | Complete validation and persist the validated revision |
 | `HANDOFF_NOT_FOUND` or binding mismatch | Handoff is absent or belongs to another parent/version | Verify stored publication and use the exact bounded envelope |
 | `stale` acknowledgement | An older handoff arrived after a newer one | Keep the newer acknowledgement; no regression is written |
-| telemetry startup/write failure | Opt-in telemetry path or rotation is unsafe/unwritable | Fix or disable telemetry; never reinterpret a failed research operation as success |
 
 The adapter does not retry caller errors, redirects, protocol/schema/domain failures, or invalid
 hosts. It retries only 429, transient 5xx, timeouts, and network failures, with small attempt and
@@ -25,8 +24,7 @@ tool-schema mapping expires after five minutes by default and is refreshed from 
 
 To clean up, remove only the exact workspace draft root after its research is no longer needed.
 Retain or remove published evidence, handoffs, and acknowledgements according to the application
-evidence policy. Opt-in telemetry rotates within its configured bounded root; disable it before
-removing that exact root. Never recursively remove the Copilot home or repository root.
+evidence policy. Never recursively remove the Copilot home or repository root.
 
 Short attributed Microsoft Learn excerpts and canonical links are evidence, not permission to
 redistribute full pages. Do not publish full-page captures. Obtain legal review before commercial

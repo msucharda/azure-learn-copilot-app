@@ -1,6 +1,6 @@
 # azure-learn-copilot-app
 
-Foundation for a sourced Microsoft Learn research-agent system. The production pipeline implements deterministic validation, bounded Learn-result adaptation and retry, atomic published storage, compact official-skill routing, isolated nested research, verified publish-back, privacy-safe opt-in local telemetry, an offline release benchmark, and a read-only reference canvas.
+Minimal sourced Microsoft Learn research-agent system. The production pipeline keeps the core path: bounded Learn retrieval, deterministic validation, draft review, explicit publication, verified handoff, and a read-only reference canvas.
 
 ## Retained spike scaffold
 
@@ -27,7 +27,7 @@ See [setup](docs/setup.md), [architecture](docs/architecture.md),
 
 The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoint remain external prerequisites. Production code discovers logical Learn operations from runtime tool schemas rather than compiling against a wrapper or legacy tool spelling.
 
-The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-functions` and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
+The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-container-apps`, `azure-functions`, and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
 
 The reference canvas renders only bounded evidence fields already accepted by the draft or published stores. It never serves retained fetched Markdown, does not expose publishing controls, and does not bridge iframe input into an agent turn. Publishing remains the explicit `publish-research-draft` chat skill.
 

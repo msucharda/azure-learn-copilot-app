@@ -62,11 +62,22 @@ test("generated router has exact ownership metadata and bounded allow-list", asy
     ]);
     assert.ok(Buffer.byteLength(router) <= 12 * 1024);
     assert.deepEqual(parseRoutes(router).map(({ name }) => name), [
+        "azure-container-apps",
         "azure-functions",
         "microsoft-foundry",
     ]);
     assert.equal(parseRoutes(router).filter(({ fallback }) => fallback).length, 0);
     assert.match(router, /\{"status":"resolved\|unresolved","primary_skill":"exact-name\|null","fallback_skill":"exact-name\|null","matched_alias":"string\|null"\}/);
+});
+
+test("router resolves stateful Azure Container Apps research to one exact official skill", async () => {
+    const routes = parseRoutes(await readFile(ROUTER_PATH, "utf8"));
+    assert.deepEqual(resolve(routes, "Research stateful storage on Azure Container Apps"), {
+        status: "resolved",
+        primary_skill: "azure-container-apps",
+        fallback_skill: null,
+        matched_alias: "azure container apps",
+    });
 });
 
 test("router resolves Azure Functions to one exact official skill", async () => {
@@ -91,6 +102,7 @@ test("router resolves Microsoft Foundry to one exact official skill", async () =
 
 test("router exclusions and uncovered products remain unresolved", async () => {
     const routes = parseRoutes(await readFile(ROUTER_PATH, "utf8"));
+    assert.equal(resolve(routes, "Use Azure Container Instances").status, "unresolved");
     assert.equal(resolve(routes, "Use Foundry Local with a foundry sdk").status, "unresolved");
     assert.equal(resolve(routes, "Configure Azure Kubernetes Service").status, "unresolved");
 });
@@ -180,6 +192,9 @@ test("two-speed start and published-only consumption use app-native session boun
     assert.match(start, /"agent": "learn-researcher"/);
     assert.match(start, /Reuse the returned UUID-v4/);
     assert.match(start, /parent does not read, retrieve, summarize, or synthesize child draft evidence/);
+    assert.match(start, /idle notification means only that the child stopped running/i);
+    assert.match(start, /Never describe research as successful or a draft as ready from that notification/i);
+    assert.match(start, /published handoff is the only completion signal consumed by the parent/i);
     assert.match(consume, /Call `get_research_bundle`/);
     assert.match(consume, /Call `acknowledge_research_handoff`/);
     assert.match(consume, /"view":"published"/);

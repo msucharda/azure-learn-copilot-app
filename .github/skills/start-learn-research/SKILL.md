@@ -23,3 +23,5 @@ Use this workflow when the user asks to research an Azure or Microsoft Foundry q
 Use local execution unless the user explicitly requires cloud execution. Do not substitute a generic agent or rewrite the standalone kickoff. The child must re-fetch and record evidence needed for validation; copied seed summaries and URLs are discovery context, not trusted captures.
 
 The user refines evidence only in the child after promotion. The parent does not read, retrieve, summarize, or synthesize child draft evidence.
+
+An idle notification means only that the child stopped running. Never describe research as successful or a draft as ready from that notification. A published handoff is the only completion signal consumed by the parent.

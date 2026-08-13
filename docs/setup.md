@@ -28,11 +28,9 @@ endpoint externally.
 | `COPILOT_LEARN_RETRY_MAX_RETRY_AFTER_MS` | `2000` | Accept headers up to 10,000 milliseconds; effective sleep is still clamped by `MAX_DELAY_MS` |
 | `COPILOT_LEARN_RETRY_JITTER_RATIO` | `0.25` | 0 through 0.5; inject zero in deterministic tests |
 | `COPILOT_LEARN_METADATA_CACHE_TTL_MS` | `300000` | 1,000 through 3,600,000 milliseconds; validated tool schemas only |
-| `COPILOT_LEARN_REFERENCES_TELEMETRY` | disabled | Set to `1` to enable local structured telemetry |
-| `COPILOT_LEARN_REFERENCES_TELEMETRY_ROOT` | Copilot home telemetry path | Local telemetry root; must not be a symlink |
 
 Invalid or excessive values fail startup. Full fetched pages are never persisted in the published
-store, telemetry, benchmark reports, handoffs, or acknowledgements.
+store, benchmark reports, handoffs, or acknowledgements.
 
 ## Workflows
 
