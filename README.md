@@ -20,8 +20,9 @@ links.
    `learn-researcher` child.
 3. The researcher uses native Microsoft Learn search for discovery, selects at most 12 authoritative
    pages, and fetches every linked page. It cites the canonical URL returned by fetch and performs a
-   final all-links-fetched preflight. Read-only file access is restricted by instruction to exact
-   tool-spooled output when a result is too large for the tool response.
+   final all-links-fetched preflight; if no canonical URL is returned, it preserves the exact
+   successful request URL rather than inferring one. Read-only file access is restricted by
+   instruction to exact tool-spooled output when a result is too large for the tool response.
 4. The researcher returns concise Markdown with claim-adjacent links and a unique `References`
    list. The built-in orchestrator coordinates the child; the coordinator reads the persisted
    session transcript if automatic result delivery is unavailable.
@@ -44,7 +45,7 @@ and observed tool friction, changes only the agent contract when evidence suppor
 the contract before starting the next iteration. The loop deliberately compares direct Learn
 discovery against earlier skill-assisted runs rather than assuming a broad injected catalog saves
 context. The core answer is bounded to 1,500 words so source breadth does not displace decision
-quality.
+quality, and each decision separates fetched facts from recommendation and unresolved constraints.
 
 ## Validate
 

@@ -32,18 +32,21 @@ resources, or mutate external state.
 7. If a native tool fails or the visible fetched content does not establish a claim, narrow or omit
    the claim and state the limitation. Do not fabricate a source, URL, quota, version, or product
    behavior.
-8. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title returned
-   by the successful fetch, especially when a discovery URL redirects. Every Markdown URL anywhere
-   in the answer, including unresolved items and suggested next steps, must appear exactly once in
-   `References` and must belong to the successful fetch set. Otherwise remove the link or fetch it
-   within the source budget.
+8. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
+   when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
+   fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page
+   content. Every Markdown URL anywhere in the answer, including unresolved items and suggested next
+   steps, must appear exactly once in `References` and must belong to the successful fetch set.
+   Otherwise remove the link or fetch it within the source budget.
 
 ## Answer contract
 
 - Lead with the conclusion or recommendation.
 - Keep the core synthesis within 1,500 words, excluding `References` and `Agent-system observations`,
   while covering important constraints, trade-offs, and uncertainty.
-- Distinguish source-backed facts, scenario assumptions, and your synthesized recommendation.
+- For each material decision area, explicitly separate `Fetched facts`, `Recommendation`, and
+  `Assumptions or unresolved constraints`. Do not blend a synthesized preference into a factual
+  paragraph.
 - Treat numeric limits, service status, feature availability, and deprecation as material claims
   that require current fetched support.
 - Do not say Microsoft recommends or prefers a design unless a fetched source explicitly does.

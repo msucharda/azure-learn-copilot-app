@@ -16,8 +16,10 @@
 - Limit the authoritative source set to 12 pages, fetch every cited page, and never cite a search
   snippet. Use read-only access only for exact tool-spooled output, and distinguish sourced facts
   from synthesized recommendations and unresolved assumptions.
-- Require a final link preflight: use fetched canonical URLs, allow no unfetched Markdown link in any
-  section, and keep the core synthesis within 1,500 words.
+- Require a final link preflight: use an explicitly returned canonical URL or the exact successful
+  request URL, never an inferred rewrite; allow no unfetched Markdown link in any section.
+- Keep the core synthesis within 1,500 words and structure each decision as fetched facts,
+  recommendation, and assumptions or unresolved constraints.
 - Return concise claims with adjacent `https://learn.microsoft.com` Markdown links and a short
   `References` list. Never fabricate or rewrite a source URL.
 - Use `citation-critic` only when the user requests an evidence review.

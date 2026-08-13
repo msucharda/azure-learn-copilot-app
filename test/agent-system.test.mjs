@@ -77,13 +77,15 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /spools output to a local file/i);
     assert.match(researcher, /Do not inspect unrelated workspace\s+or user files/i);
     assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
-    assert.match(researcher, /source-backed facts, scenario assumptions, and your synthesized recommendation/i);
     assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
     assert.match(researcher, /audit every Markdown URL in the draft/i);
-    assert.match(researcher, /canonical URL and title returned\s+by the successful fetch/i);
-    assert.match(researcher, /including unresolved items and suggested next steps/i);
+    assert.match(researcher, /canonical URL and title only\s+when the successful fetch explicitly returns them/i);
+    assert.match(researcher, /preserve the exact request URL that\s+fetched successfully/i);
+    assert.match(researcher, /never infer, normalize, or rewrite a canonical form/i);
+    assert.match(researcher, /including unresolved items and suggested next\s+steps/i);
     assert.match(researcher, /core synthesis within 1,500 words/i);
     assert.match(researcher, /three that most affect the recommendation/i);
+    assert.match(researcher, /explicitly separate `Fetched facts`, `Recommendation`, and\s+`Assumptions or unresolved constraints`/i);
     assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);
     assert.match(researcher, /host is exactly\s+`learn\.microsoft\.com`/i);
     assert.match(researcher, /`References` list containing each cited fetched page/i);
