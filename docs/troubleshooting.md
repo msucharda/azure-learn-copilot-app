@@ -9,6 +9,8 @@
 | An unfetched URL appears in unresolved items or next steps | Remove the link or fetch it within the 12-page budget |
 | Fetch redirects but returns no canonical URL | Preserve the exact request URL that fetched successfully; do not infer or rewrite a canonical form |
 | More than 12 sources appear | Narrow to the authoritative pages that support material decisions and leave secondary details unresolved |
+| A requested topic is absent from the answer | Rerun the coverage preflight and address it with fetched evidence or an explicit unresolved statement; do not treat source or word limits as permission to omit it |
+| A decision area omits one of the three evidence labels | Include `Fetched facts`, `Recommendation`, and `Assumptions or unresolved constraints`; state that none were identified when applicable |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |
 | `/orchestrate` is unavailable | Keep the research in the current chat; do not recreate coordination with project code |

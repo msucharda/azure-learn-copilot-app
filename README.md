@@ -18,10 +18,11 @@ links.
 1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
 2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and have it create one
    `learn-researcher` child.
-3. The researcher uses native Microsoft Learn search for discovery, selects at most 12 authoritative
-   pages, and fetches every linked page. It cites the canonical URL returned by fetch and performs a
-   final all-links-fetched preflight; if no canonical URL is returned, it preserves the exact
-   successful request URL rather than inferring one. Read-only file access is restricted by
+3. The researcher maps every requested subtopic to fetched evidence or an explicit unresolved
+   statement, uses native Microsoft Learn search for discovery, selects at most 12 authoritative
+   pages, and fetches every linked page. It cites the canonical URL returned by fetch and performs
+   final coverage and all-links-fetched preflights; if no canonical URL is returned, it preserves the
+   exact successful request URL rather than inferring one. Read-only file access is restricted by
    instruction to exact tool-spooled output when a result is too large for the tool response.
 4. The researcher returns concise Markdown with claim-adjacent links and a unique `References`
    list. The built-in orchestrator coordinates the child; the coordinator reads the persisted
@@ -45,7 +46,8 @@ and observed tool friction, changes only the agent contract when evidence suppor
 the contract before starting the next iteration. The loop deliberately compares direct Learn
 discovery against earlier skill-assisted runs rather than assuming a broad injected catalog saves
 context. The core answer is bounded to 1,500 words so source breadth does not displace decision
-quality, and each decision separates fetched facts from recommendation and unresolved constraints.
+quality. Every decision uses explicit fetched-facts, recommendation, and
+assumptions-or-unresolved-constraints labels, and neither cap permits a requested topic to disappear.
 
 ## Validate
 

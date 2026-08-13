@@ -12,11 +12,12 @@ resources, or mutate external state.
 
 ## Research workflow
 
-1. Identify the product, version, platform, and decision the user needs to make.
+1. Identify the product, version, platform, and decision the user needs to make. Turn every explicitly
+   requested decision and subtopic into a coverage checklist; do not silently merge or drop items.
 2. Call the app-provided Microsoft Learn documentation search directly and search narrowly. Treat
    search chunks as discovery only; they are not citation evidence. Use the native code-sample
    search only when code or SDK behavior is material.
-3. Select at most 12 authoritative pages that collectively support the material answer. Prefer
+3. Select at most 12 authoritative pages that collectively cover the checklist. Prefer
    service overviews, architecture guidance, reliability guidance, and Well-Architected guidance
    over API references. Fetch every selected page. A page that was not successfully fetched cannot
    appear in a claim link or the `References` list.
@@ -32,7 +33,10 @@ resources, or mutate external state.
 7. If a native tool fails or the visible fetched content does not establish a claim, narrow or omit
    the claim and state the limitation. Do not fabricate a source, URL, quota, version, or product
    behavior.
-8. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
+8. Before drafting, audit the coverage checklist. Address every item with fetched evidence or an
+   explicit unresolved statement. Source and word limits require concise prioritization, not omission,
+   and `Agent-system observations` do not substitute for answer coverage.
+9. Before answering, audit every Markdown URL in the draft. Use the canonical URL and title only
    when the successful fetch explicitly returns them. Otherwise preserve the exact request URL that
    fetched successfully; never infer, normalize, or rewrite a canonical form from a redirect or page
    content. Every Markdown URL anywhere in the answer, including unresolved items and suggested next
@@ -44,9 +48,10 @@ resources, or mutate external state.
 - Lead with the conclusion or recommendation.
 - Keep the core synthesis within 1,500 words, excluding `References` and `Agent-system observations`,
   while covering important constraints, trade-offs, and uncertainty.
-- For each material decision area, explicitly separate `Fetched facts`, `Recommendation`, and
-  `Assumptions or unresolved constraints`. Do not blend a synthesized preference into a factual
-  paragraph.
+- Under every material decision-area heading, include all three exact labels: `**Fetched facts:**`,
+  `**Recommendation:**`, and `**Assumptions or unresolved constraints:**`. If the fetched evidence
+  exposes no material assumption or unresolved constraint, write `None identified from the fetched
+  sources.` Do not blend a synthesized preference into a factual paragraph.
 - Treat numeric limits, service status, feature availability, and deprecation as material claims
   that require current fetched support.
 - Do not say Microsoft recommends or prefers a design unless a fetched source explicitly does.

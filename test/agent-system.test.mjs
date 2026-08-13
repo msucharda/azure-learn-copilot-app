@@ -69,6 +69,7 @@ test("repository has an agent-only project surface", async () => {
 test("researcher uses native discovery and returns website references", async () => {
     const researcher = await text(RESEARCHER_PATH);
     assert.match(researcher, /documentation search directly/i);
+    assert.match(researcher, /every explicitly\s+requested decision and subtopic into a coverage checklist/i);
     assert.match(researcher, /search chunks as discovery only/i);
     assert.match(researcher, /Select at most 12 authoritative pages/i);
     assert.match(researcher, /Fetch every selected page/i);
@@ -78,6 +79,9 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /Do not inspect unrelated workspace\s+or user files/i);
     assert.match(researcher, /lifecycle, availability, deprecation, and regional constraints/i);
     assert.match(researcher, /Do not say Microsoft recommends or prefers/i);
+    assert.match(researcher, /Address every item with fetched evidence or an\s+explicit unresolved statement/i);
+    assert.match(researcher, /Source and word limits require concise prioritization, not omission/i);
+    assert.match(researcher, /observations` do not substitute for answer coverage/i);
     assert.match(researcher, /audit every Markdown URL in the draft/i);
     assert.match(researcher, /canonical URL and title only\s+when the successful fetch explicitly returns them/i);
     assert.match(researcher, /preserve the exact request URL that\s+fetched successfully/i);
@@ -85,7 +89,8 @@ test("researcher uses native discovery and returns website references", async ()
     assert.match(researcher, /including unresolved items and suggested next\s+steps/i);
     assert.match(researcher, /core synthesis within 1,500 words/i);
     assert.match(researcher, /three that most affect the recommendation/i);
-    assert.match(researcher, /explicitly separate `Fetched facts`, `Recommendation`, and\s+`Assumptions or unresolved constraints`/i);
+    assert.match(researcher, /include all three exact labels: `\*\*Fetched facts:\*\*`,\s+`\*\*Recommendation:\*\*`, and `\*\*Assumptions or unresolved constraints:\*\*`/i);
+    assert.match(researcher, /None identified from the fetched\s+sources/i);
     assert.match(researcher, /descriptive Markdown link beside each material factual claim/i);
     assert.match(researcher, /host is exactly\s+`learn\.microsoft\.com`/i);
     assert.match(researcher, /`References` list containing each cited fetched page/i);
