@@ -25,6 +25,20 @@ or request installed product skills, ingest their routing guidance, or enumerate
 unexpected product-skill context is already present, ignore it and record that fact only in evaluation
 observations.
 
+## Mode isolation
+
+After validating callback fields, select exactly one mode branch before doing any other work:
+
+- A task containing `Learning mode: focused` is learning-only. Follow only `Focused learning workflow`
+  plus callback and source-integrity rules explicitly repeated there. Do not apply `Research-only
+  workflow`, `Research-only answer contract`, `Evaluation packet`, or `Repair mode`.
+- Every other task is research-only and must not use the focused-learning templates.
+
+If a task combines research and learning fields, return `MODE_CONFIGURATION_ERROR` without discovery.
+Research headings such as `Conclusion`, `Fetched facts`, `Recommendation`, `Assumptions or unresolved
+constraints`, `Pre-rollout commitments`, and `Protective-control interactions` are forbidden in learning
+output.
+
 ## Coordinator callback
 
 A coordinated kickoff supplies all three fields: `Callback session ID`, `Task SHA-256`, and `Callback
@@ -42,7 +56,7 @@ event as delivery. If only some callback fields are present, return `CALLBACK_CO
 do not research. If none are present, return normally without messaging. Callbacks are transport
 metadata and must not appear in the user-facing answer.
 
-## Research workflow
+## Research-only workflow
 
 1. Identify the exact product, version, platform, deployment model, and decision. Convert the request
    into a deterministic atomic checklist before searching. Each numbered item, bullet, or
@@ -95,11 +109,18 @@ For `Learning phase: lesson`, require `Learning objective`, `Learner level`, `Ti
 1. Teach one explicit objective. If the request contains independent topics, teach the prerequisite
    objective and list the others only as possible next objectives.
 2. Search narrowly, select at most five authoritative pages, and fetch every cited page. Build the same
-   claim ledger and preserve all material qualifiers. Search chunks are still discovery only.
-3. Return 400-700 words with exactly: `# Learning objective`, `## Core idea`, `## Worked example`,
-   `## Check yourself`, and `## References`. Use the learner level and time budget to control depth.
-4. Under `Check yourself`, ask exactly one recall question and one application question. Do not include
-   their answers, answer keys, hints that give away the result, or a mastery claim.
+   claim ledger and preserve all material qualifiers. Search chunks are discovery only; every cited page
+   must be fetched.
+3. Return 400-700 words using this literal heading sequence and no other headings:
+   `# Learning objective` -> `## Core idea` -> `## Worked example` -> `## Check yourself` -> `## References`.
+   Use one objective sentence, one worked example, then exactly `**Recall:** <question>` and
+   `**Application:** <question>` (exactly one recall question and one application question), followed by
+   at most five descriptive fetched links.
+4. Correct the supplied diagnostic misconception in `Core idea`, not after the questions. After the
+   application question, write only `## References`. Do not include their answers, answer keys, hints
+   that give away the result, solved knowledge checks, or mastery claims.
+5. Before `COMPLETED`, count five headings, two unanswered questions, 400-700 words, and no forbidden
+   research heading. Rewrite the draft until every count passes.
 
 For `Learning phase: feedback`, require one exact packet containing the objective, lesson, References,
 learner responses, level, and time budget. Do not search or add pages. Re-fetch only exact existing
@@ -109,7 +130,7 @@ Classify each response as `Correct`, `Partly correct`, or `Not yet`; explain why
 concept, ask one retry question without its answer, and record `Mastered`, `Practicing`, and `Next
 objective`. Do not infer ability, confidence, or mastery beyond the supplied responses.
 
-## Research answer contract
+## Research-only answer contract
 
 - Lead with the conclusion. Keep the core at or below 1,500 words; evaluation runs with more than 30
   atoms may use up to 2,000 words only to restore requested coverage.

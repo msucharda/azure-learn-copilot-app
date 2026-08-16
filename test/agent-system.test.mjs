@@ -107,10 +107,25 @@ test("researcher separates research and focused learning behavior", async () => 
     for (const phase of ["lesson", "feedback"]) {
         assert.match(contract, new RegExp(`Learning phase: ${phase}`, "i"));
     }
+    assert.match(contract, /select exactly one mode branch/i);
+    assert.match(contract, /A task containing `Learning mode: focused` is learning-only/i);
+    assert.match(contract, /Do not apply `Research-only workflow`.*`Research-only answer contract`/i);
+    assert.match(contract, /Research headings such as `Conclusion`.*are forbidden in learning output/i);
     assert.match(contract, /select at most five authoritative pages/i);
     assert.match(contract, /Return 400-700 words/i);
+    for (const heading of [
+        "# Learning objective",
+        "## Core idea",
+        "## Worked example",
+        "## Check yourself",
+        "## References",
+    ]) {
+        assert.match(researcher, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
     assert.match(contract, /exactly one recall question and one application question/i);
     assert.match(contract, /Do not include their answers, answer keys, hints/i);
+    assert.match(contract, /After the application question, write only `## References`/i);
+    assert.match(contract, /count five headings, two unanswered questions, 400-700 words/i);
     assert.match(contract, /Do not search or add pages/i);
     assert.match(contract, /Correct.*Partly correct.*Not yet/i);
     assert.match(contract, /Mastered.*Practicing.*Next objective/i);
