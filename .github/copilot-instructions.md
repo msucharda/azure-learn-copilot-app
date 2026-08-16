@@ -84,6 +84,10 @@ review packet in the session artifact directory and give a read-enabled reviewer
 - For a requested runbook, include an exact fetched CLI, API, or IaC operation and target scope when
   available. Label synthesized conditions in the conclusion, and rebuild the final core, audit, and
   evidence manifest together so no unused manifest value or optimistic status survives.
+- Count all user-visible core text before References, including headings, labels, tables, and fenced code;
+  exclude Markdown URL targets. Target 1,350 words when code or tables appear, with 1,500 as the ceiling.
+- Reverse-map each assumption or unresolved dimension to its compound audit row. If one fetched page says
+  a method is unavailable and another exposes it, report a conflict instead of choosing silently.
 - Publish only the standard answer through References. An evaluation run appends
   `## Evaluation packet (coordinator only)` containing the coverage audit, observations, and evidence
   manifest; do not forward that packet as user-facing output.

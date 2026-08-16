@@ -14,9 +14,11 @@
 | The agent reports complete coverage despite a missing subtopic | Do not accept a parent-area paragraph, unsupported recommendation, or agent-system observation as coverage; rerun the item-by-item preflight |
 | A broad request loses subtopics at the word limit | If the atomic checklist exceeds 30 items, allow up to 2,000 core words and spend the additional allowance only on missing requested coverage |
 | The core exceeds its word ceiling | Remove repeated facts, catalog-style feature detail, and secondary examples; keep each capability once and have recommendations apply rather than restate it |
+| A runbook appears under 1,500 words only when commands are ignored | Count all visible core text before References, including headings, labels, tables, and fenced code; exclude only Markdown URL targets and target 1,350 when code or tables appear |
 | An evaluation answer still hides omitted items | Add the exhaustive coverage audit to `Evaluation packet (coordinator only)` after References; never publish that packet as part of the user answer |
 | An audit item is marked both covered and unresolved | Use the single `Partially covered` status and state the unsupported dimension in the core answer |
 | An item appears in assumptions but is marked `Covered` | Reclassify it as `Partially covered` or `Unresolved`; assumptions and full coverage are inconsistent |
+| One dimension of a compound atom is conditional or unresolved | Reverse-map the specific assumption to its audit row; the least-supported dimension forces `Partially covered` or `Unresolved` |
 | Two runs produce different checklist row counts for the same task | Rebuild both from the frozen rule: each numbered item, bullet, or semicolon-delimited subtopic is one atom; keep joined terms as one compound atom |
 | Coverage row count differs from the checklist count | Reconcile the table and publish status totals; every fixed atom requires exactly one row |
 | A decision area omits one of the three evidence labels | Include `Fetched facts`, `Recommendation`, and `Assumptions or unresolved constraints`; state that none were identified when applicable |
@@ -43,6 +45,7 @@
 | A recommendation violates a mandatory scenario constraint | Remove it or present it only as a conditional alternative with the explicit scenario trade-off; convenience does not override the requirement |
 | A lead feature is supported only by an overview or limits page | Fetch the feature or variant's dedicated page and verify generation, SKU, region, and compatibility constraints |
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
+| A how-to says a method is unavailable but another fetched page exposes it | Record a source conflict and keep the method conditional until resolved; do not silently prefer either page |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
 | The evidence manifest contains material values absent from the answer | Rebuild the core, audit, and manifest together; map each value to a qualified core sentence or remove it, then downgrade any optimistic status it had supported |

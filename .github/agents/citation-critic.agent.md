@@ -58,7 +58,8 @@ website link. Check:
    optimistic Covered rows; and
 9. evidence provenance and runtime/delivery defects, kept separate from answer defects; and
 10. whether requested runbooks include an exact fetched CLI, API, or IaC operation and scope when
-    available, and whether conclusions label synthesized conditions rather than presenting them as facts.
+    available, whether conclusions label synthesized conditions, and whether all user-visible core text including
+    headings, labels, tables, and fenced code satisfies the stated word ceiling.
 
 For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
 usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one

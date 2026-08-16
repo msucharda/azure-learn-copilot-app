@@ -96,6 +96,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /requested runbook or procedure.*exact fetched CLI, API, or IaC operation/i);
     assert.match(contract, /relevant documented mode variants, including preview alternatives/i);
     assert.match(contract, /Remove each manifest value absent from the core/i);
+    assert.match(contract, /one fetched page says a method is unavailable and another exposes it, mark the conflict/i);
     assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
     assert.match(contract, /Protective-control interactions/i);
     assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
@@ -104,6 +105,11 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /Evaluation packet \(coordinator only\)/i);
     assert.match(contract, /Publish totals and verify they sum to the fixed row count/i);
     assert.match(contract, /current-run fetch status/i);
+    assert.match(contract, /Count all user-visible text before References, including headings, labels, tables, and fenced code/i);
+    assert.match(contract, /target 1,350 when code or tables appear/i);
+    assert.match(contract, /Reverse-map every specific assumption or unresolved constraint to its row/i);
+    assert.match(contract, /missing or conditional dimension forces `Partially covered` or `Unresolved`/i);
+    assert.match(contract, /Match each semicolon-delimited value to its qualified core use/i);
     assert.match(contract, /Return the complete corrected answer, not a patch/i);
     assert.match(contract, /Callback session ID.*Task SHA-256.*Callback nonce/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -167,6 +173,7 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /every manifest value must appear with its qualifier in the final core/i);
     assert.match(contract, /runbooks include an exact fetched CLI, API, or IaC operation/i);
     assert.match(contract, /conclusions label synthesized conditions/i);
+    assert.match(contract, /all user-visible core text including headings, labels, tables, and fenced code/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -219,6 +226,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /requested runbook, include an exact fetched CLI, API, or IaC operation/i);
     assert.match(contract, /rebuild the final core, audit, and evidence manifest together/i);
     assert.match(contract, /no unused manifest value or optimistic status survives/i);
+    assert.match(contract, /Count all user-visible core text before References, including headings, labels, tables, and fenced code/i);
+    assert.match(contract, /Target 1,350 words when code or tables appear/i);
+    assert.match(contract, /Reverse-map each assumption or unresolved dimension to its compound audit row/i);
+    assert.match(contract, /method is unavailable and another exposes it, report a conflict/i);
     assert.doesNotMatch(instructions, /create_session/);
 });
 

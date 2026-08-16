@@ -89,7 +89,8 @@ lead-mode capability, operations/reliability, network/management-plane, and limi
 before alternatives. Mandatory action verbs are checked against operations pages, and mutable facts
 without tool-exposed timestamps require deployment-time revalidation. Current-to-target decisions also
 surface lost capabilities, restart and cost consequences, permission scope, preview alternatives, and
-source conflicts. Requested runbooks include fetched executable operations rather than intentions alone.
+source conflicts. Requested runbooks include fetched executable operations rather than intentions alone,
+but fenced commands count toward the core ceiling. Assumptions reverse-map to compound audit rows.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns

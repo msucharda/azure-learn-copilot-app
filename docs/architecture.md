@@ -164,6 +164,13 @@ References are part of the answer:
 41. Conclusions distinguish documented behavior from synthesized conditions and sequences.
 42. The final core, coverage audit, and evidence manifest are rebuilt together. No manifest value absent
     from the core or source conflict silently reconciled by the answer may support `Covered`.
+43. The word ceiling counts all user-visible core text before References, including headings, labels,
+    tables, and fenced code, while excluding Markdown URL targets. Answers with code or tables target
+    1,350 words to retain margin below the 1,500-word ceiling.
+44. Every specific assumption or unresolved dimension reverse-maps to its compound audit row; the
+    least-supported dimension sets the row status.
+45. If one fetched page says an operation is unavailable while another exposes it, the answer reports a
+    source conflict instead of silently choosing one.
 
 ## Formal review contract
 

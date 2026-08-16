@@ -96,8 +96,8 @@ metadata and must not appear in the user-facing answer.
    identity, key, DNS, network, or management plane gates all access, state outage behavior and a
    tested, scenario-compliant recovery condition without inventing an insecure bypass.
 10. Rebuild the final claim ledger, core, audit, and manifest together. Remove each manifest value absent from
-    the core or add qualified uses; downgrade optimistic statuses. Recheck numeric conditions, source
-    conflicts, and links. Use only a returned canonical URL or the exact successful request URL. Every URL
+    the core or add qualified uses; downgrade optimistic statuses. If one fetched page says a method is
+    unavailable and another exposes it, mark the conflict. Recheck numeric conditions and links. Use only a returned canonical URL or the exact successful request URL. Every URL
     must be HTTPS on exactly `learn.microsoft.com`, belong to the fetch set, and appear once in References.
 
 ## Focused learning workflow
@@ -135,8 +135,8 @@ in a Reference or learner response. References verify lesson claims; learner res
 
 ## Research-only answer contract
 
-- Lead with the conclusion. Keep the core at or below 1,500 words; evaluation runs with more than 30
-  atoms may use up to 2,000 words only to restore requested coverage.
+- Lead with the conclusion. Count all user-visible text before References, including headings, labels,
+  tables, and fenced code but excluding URL targets; keep at or below 1,500 words and target 1,350 when code or tables appear. Only evaluation runs over 30 atoms may use 2,000 words.
 - Under each material decision heading use `**Fetched facts:**`, `**Recommendation:**`, and
   `**Assumptions or unresolved constraints:**`. Name unsupported items explicitly; write `None
   identified from the fetched sources.` only when appropriate.
@@ -153,15 +153,15 @@ in a Reference or learner response. References verify lesson claims; learner res
 Only in `Research mode: evaluation`, append `## Evaluation packet (coordinator only)` after References.
 The coordinator must not publish this packet as part of the user-facing answer. Include:
 
-1. `### Coverage audit`: one row per precomputed atom with `Decision area`, `Atomic item`, and exactly
-   one status: `Covered`, `Partially covered`, or `Unresolved`. A compound atom is only Covered when all
-   its named dimensions are supported. Publish totals and verify they sum to the fixed row count.
+1. `### Coverage audit`: one row per precomputed atom with `Decision area`, `Atomic item`, and one status:
+   `Covered`, `Partially covered`, or `Unresolved`. A compound atom is Covered only when all dimensions are
+   supported. Reverse-map every specific assumption or unresolved constraint to its row; any missing or conditional dimension forces `Partially covered` or `Unresolved`. Publish totals and verify they sum to the fixed row count.
 2. `### Agent-system observations`: research mode, confirmation of direct discovery, unexpected
    product-skill context if any, source-budget pressure, and tool friction. Do not count these
    observations as answer coverage.
 3. `### Evidence manifest`: one row per fetched reference with fetched title, current-run fetch status,
-   tool-exposed retrieval timestamp or `Unavailable`, exact core decisions/audit atoms supported, and
-   only material values and qualifiers present in the final core. Keep exact URLs only in References.
+   timestamp or `Unavailable`, exact core decisions/audit atoms supported, and only material values and
+   qualifiers in the final core. Match each semicolon-delimited value to its qualified core use; remove unused values. Keep exact URLs only in References.
 
 A keyword mention, list entry, test, or monitoring recommendation without fetched support is not
 coverage. Any atom named as unresolved in the core cannot be Covered. Rebuild and recount the audit
@@ -171,7 +171,7 @@ after final assumptions and ledger reconciliation.
 
 Apply the supplied critic brief to the complete prior answer. Preserve supported conclusions, remove
 or downgrade unsupported claims, update assumptions, commitments, interactions, audit statuses,
-totals, and the evidence manifest together. Return the complete corrected answer, not a patch. If the
+totals, evidence manifest, and word budget together. Return the complete corrected answer, not a patch. If the
 brief requests revision notes, append only the material changes after the corrected evaluation packet.
 
 Return the complete result in the child session even after a successful callback. The coordinator owns
