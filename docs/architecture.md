@@ -10,9 +10,11 @@ flowchart LR
     O -->|One kickoff: task plus callback envelope| R[learn-researcher]
     R --> L[Native Microsoft Learn tools]
     L --> R
-    R -->|Correlated callback| A[Answer plus optional evaluation packet]
+    R -->|Correlated callback| A[Research answer or focused lesson]
     A --> C[citation-critic on request]
     C -->|Repair brief| R
+    A -->|Learner response| O
+    O -->|Fresh feedback phase| R
     R -->|Correlated callback| O
     O -->|User-facing answer and website links| U
 ```
@@ -56,6 +58,13 @@ coordinator-only packet. The coordinator stores that packet as a session artifac
 different-model critic review it, starts a fresh repair-mode researcher with the exact prior answer and
 repair brief, and publishes only the corrected user-facing portion. Markdown artifacts are read by
 exact path rather than passed as kickoff attachments, which accept only app-staged creator images.
+
+Focused learning has two fresh-child phases. A lesson receives one objective, learner level, time
+budget, and optional diagnostic response; it uses at most five fetched pages and stops after one recall
+and one application question. Feedback receives the exact lesson and learner responses, performs no new
+discovery, corrects only missed concepts, asks one retry question, and returns a small learning ledger.
+Conversation context is the only learner state unless the user explicitly requests a native scheduled
+review.
 
 GitHub's documented deep-research workflow investigates a repository. The custom researcher remains
 the appropriate policy boundary for external Microsoft Learn research and its stricter citation

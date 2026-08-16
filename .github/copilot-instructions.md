@@ -1,4 +1,4 @@
-# Microsoft Learn research
+# Microsoft Learn research and focused learning
 
 - Use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
@@ -15,8 +15,8 @@ Use one kickoff and an explicit agent callback for every deep child:
 
 1. Freeze the complete task and compute its SHA-256. Generate a unique callback nonce.
 2. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-3. Put `Research mode`, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the complete frozen
-   task in the kickoff. Do not deliver work in a follow-up session message.
+3. Put the mode and phase fields, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
+   complete frozen task in the kickoff. Do not deliver work in a follow-up session message.
 4. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
    `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
    when both identifiers match.
@@ -37,9 +37,25 @@ review packet in the session artifact directory and give a read-enabled reviewer
 - Put `Research mode: standard`, `evaluation`, or `repair` in the kickoff. Standard is the normal path.
   Evaluation is only for controlled improvement or requested evidence review. Repair starts a fresh
   child with the prior answer and critic brief in one exact packet.
-- Direct Learn discovery is the only research path in all three modes. Do not load, preselect, or inject
-  an installed product skill or skill catalog. Three blinded routing rounds found no quality benefit
-  and added startup complexity; factual premises come only from successfully fetched Learn pages.
+- Use `Learning mode: focused` with `Learning phase: lesson` or `feedback` for bounded teaching.
+- Direct Learn discovery is the only evidence path. Do not load, preselect, or inject an installed
+  product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
+  startup complexity; factual premises come only from successfully fetched Learn pages.
+
+## Focused learning loop
+
+1. Establish one learning objective, learner level, and time budget. If no baseline is available, ask
+   one short diagnostic question; use `Diagnostic response: Not supplied` only when the user wants the
+   lesson immediately.
+2. Start one callback-enabled lesson child with the objective, level, budget, and diagnostic response.
+   Require 400-700 words, at most five fetched Learn pages, one worked example, one recall question, and
+   one application question without answers.
+3. Publish the lesson and stop for the learner's responses.
+4. Put the exact lesson, References, and learner responses in one packet for a fresh feedback child.
+   Feedback reuses only those References, corrects missed concepts, asks one unanswered retry, and ends
+   with a `Mastered` / `Practicing` / `Next objective` ledger.
+5. Do not create a learner database or schedule review automatically. Use current conversation context;
+   create an App-native scheduled review only when the learner explicitly requests it.
 
 ## Research and publication
 

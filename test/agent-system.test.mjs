@@ -69,16 +69,16 @@ test("repository exposes only the native agent system", async () => {
     assert.equal(property(critic, "target"), "github-copilot");
 });
 
-test("researcher separates standard, evaluation, and repair behavior", async () => {
+test("researcher separates research and focused learning behavior", async () => {
     const researcher = await text(RESEARCHER_PATH);
     const contract = compact(researcher);
 
-    assert.ok(researcher.split("\n").length <= 150, "researcher contract must stay compact");
+    assert.ok(researcher.split("\n").length <= 180, "researcher contract must stay compact");
     for (const mode of ["standard", "evaluation", "repair"]) {
         assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }
 
-    assert.match(contract, /All modes use direct Microsoft Learn discovery/i);
+    assert.match(contract, /All discovery uses Microsoft Learn directly/i);
     assert.match(contract, /Do not invoke or request installed product skills/i);
     assert.doesNotMatch(researcher, /Selected official product skill|Load at most.*official skill/i);
     assert.match(contract, /Each numbered item, bullet, or semicolon-delimited subtopic is one atom/i);
@@ -103,6 +103,17 @@ test("researcher separates standard, evaluation, and repair behavior", async () 
     assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /Send each callback at most once/i);
     assert.match(contract, /return `CALLBACK_CONFIGURATION_ERROR` and do not research/i);
+    assert.match(contract, /Learning mode: focused/i);
+    for (const phase of ["lesson", "feedback"]) {
+        assert.match(contract, new RegExp(`Learning phase: ${phase}`, "i"));
+    }
+    assert.match(contract, /select at most five authoritative pages/i);
+    assert.match(contract, /Return 400-700 words/i);
+    assert.match(contract, /exactly one recall question and one application question/i);
+    assert.match(contract, /Do not include their answers, answer keys, hints/i);
+    assert.match(contract, /Do not search or add pages/i);
+    assert.match(contract, /Correct.*Partly correct.*Not yet/i);
+    assert.match(contract, /Mastered.*Practicing.*Next objective/i);
     assert.doesNotMatch(researcher, /create_session/);
 });
 
@@ -124,6 +135,9 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /For a focused-learning packet, score factual fidelity, focus, teaching clarity/i);
+    assert.match(contract, /exactly one recall and one application question/i);
+    assert.match(contract, /unsupported load-bearing fact, leaked answer, false mastery claim/i);
 });
 
 test("project instructions enforce a verified native-session pipeline", async () => {
@@ -146,10 +160,16 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /reaches 120,000 input tokens or shows context loss/i);
     assert.match(contract, /Git staging does not change that/i);
     assert.match(contract, /review packet in the session artifact directory/i);
-    assert.match(contract, /Direct Learn discovery is the only research path/i);
+    assert.match(contract, /Direct Learn discovery is the only evidence path/i);
     assert.match(contract, /Do not load, preselect, or inject an installed product skill/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
+    assert.match(contract, /Learning mode: focused.*Learning phase: lesson.*feedback/i);
+    assert.match(contract, /Establish one learning objective, learner level, and time budget/i);
+    assert.match(contract, /400-700 words, at most five fetched Learn pages/i);
+    assert.match(contract, /Publish the lesson and stop for the learner's responses/i);
+    assert.match(contract, /Feedback reuses only those References/i);
+    assert.match(contract, /Do not create a learner database or schedule review automatically/i);
     assert.match(contract, /do not forward that packet as user-facing output/i);
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
     assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
