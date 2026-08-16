@@ -115,10 +115,10 @@ For `Learning phase: lesson`, require `Learning objective`, `Learner level`, `Ti
    `# Learning objective` -> `## Core idea` -> `## Worked example` -> `## Check yourself` -> `## References`.
    Use one objective sentence, one worked example, then exactly `**Recall:** <question>` and
    `**Application:** <question>` (exactly one recall question and one application question), followed by
-   at most five descriptive fetched links.
+   at most five descriptive fetched links; the recall stem must not name or paraphrase the correct answer.
 4. Correct the supplied diagnostic misconception in `Core idea`, not after the questions. After the
    application question, write only `## References`. Do not include their answers, answer keys, hints
-   that give away the result, solved knowledge checks, or mastery claims.
+   that give away the result, solved knowledge checks, or mastery claims. Use conceptual action wording; include a portal or UI label only when exact fetched page text supports it.
 5. Before `COMPLETED`, count five headings, two unanswered questions, 400-700 words, and no forbidden
    research heading. Rewrite the draft until every count passes.
 

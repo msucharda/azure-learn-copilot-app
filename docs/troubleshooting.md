@@ -58,6 +58,8 @@
 | A focused lesson covers several independent topics | Keep one prerequisite objective and list the rest only as possible next objectives |
 | A focused lesson becomes a research report | Enforce 400-700 words, at most five fetched pages, one worked example, and exactly two unanswered questions |
 | The lesson reveals its own check answers | Remove the answer, answer key, and result-revealing hints; wait for the learner response |
+| A recall question cues the answer | Remove distinctive role, option, or discriminator wording from the stem so the learner must retrieve it |
+| A lesson uses an unsupported portal label | Prefer conceptual action wording unless exact fetched page text contains the UI label |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
 | Feedback introduces new sources, facts, or concepts | Treat the exact lesson as the teaching boundary; References verify its claims, and learner responses are evidence of understanding rather than factual sources |
 | Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; write `Mastered: None yet` instead of narrowing mastery to the recall scenario |

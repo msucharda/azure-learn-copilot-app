@@ -123,7 +123,9 @@ test("researcher separates research and focused learning behavior", async () => 
         assert.match(researcher, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
     assert.match(contract, /exactly one recall question and one application question/i);
+    assert.match(contract, /recall stem must not name or paraphrase the correct answer/i);
     assert.match(contract, /Do not include their answers, answer keys, hints/i);
+    assert.match(contract, /include a portal or UI label only when exact fetched page text supports it/i);
     assert.match(contract, /After the application question, write only `## References`/i);
     assert.match(contract, /count five headings, two unanswered questions, 400-700 words/i);
     assert.match(contract, /Do not search or add pages/i);

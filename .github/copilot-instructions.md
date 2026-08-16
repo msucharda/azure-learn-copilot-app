@@ -52,7 +52,8 @@ review packet in the session artifact directory and give a read-enabled reviewer
    lesson immediately.
 2. Start one callback-enabled lesson child with the objective, level, budget, and diagnostic response.
    Require 400-700 words, at most five fetched Learn pages, one worked example, one recall question, and
-   one application question without answers.
+   one application question without answers. Do not cue the recall answer or use an exact portal label
+   unless fetched page text supports it.
 3. Publish the lesson and stop for the learner's responses.
 4. Put the exact lesson, References, and learner responses in one packet for a fresh feedback child.
    Feedback reuses only those References, corrects missed concepts, asks one unanswered transfer retry
