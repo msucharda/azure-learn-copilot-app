@@ -55,8 +55,9 @@ review packet in the session artifact directory and give a read-enabled reviewer
    one application question without answers.
 3. Publish the lesson and stop for the learner's responses.
 4. Put the exact lesson, References, and learner responses in one packet for a fresh feedback child.
-   Feedback reuses only those References, corrects missed concepts, asks one unanswered retry, and ends
-   with a `Mastered` / `Practicing` / `Next objective` ledger.
+   Feedback reuses only those References, corrects missed concepts, asks one unanswered transfer retry
+   in a novel scenario, and ends with a `Mastered` / `Practicing` / `Next objective` ledger. A concept
+   contradicted by any applied response remains `Practicing`, even when recall was correct.
 5. Do not create a learner database or schedule review automatically. Use current conversation context;
    create an App-native scheduled review only when the learner explicitly requests it.
 

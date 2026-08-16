@@ -60,7 +60,8 @@
 | The lesson reveals its own check answers | Remove the answer, answer key, and result-revealing hints; wait for the learner response |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
 | Feedback introduces new sources or concepts | Reuse only the lesson References and correct only concepts missed in the supplied responses |
-| Feedback claims mastery without evidence | Limit `Mastered` to concepts demonstrated by the learner response; put uncertain items under `Practicing` |
+| Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; keep that concept under `Practicing` until every supplied response exercising it is correct |
+| The retry repeats the targeted correction | Ask a transfer question in a novel scenario that cannot be answered by copying the correction |
 | The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
 | A generated Markdown review packet is rejected as an unstaged kickoff file | Do not use Git staging or the attachment field; it accepts only app-staged creator images. Save the packet as a session artifact and give a read-enabled critic its exact path |
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |

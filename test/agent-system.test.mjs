@@ -129,6 +129,11 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /Do not search or add pages/i);
     assert.match(contract, /Correct.*Partly correct.*Not yet/i);
     assert.match(contract, /Mastered.*Practicing.*Next objective/i);
+    assert.match(contract, /concept is `Mastered` only when every supplied response that exercises it is correct/i);
+    assert.match(contract, /any applied mistake puts it under `Practicing` even when recall is correct/i);
+    assert.match(contract, /unanswered transfer question in a novel scenario/i);
+    assert.match(contract, /must not repeat the corrected entity names or be answerable by copying/i);
+    assert.match(contract, /Do not introduce an operational qualifier that the lesson or its References did not establish/i);
     assert.doesNotMatch(researcher, /create_session/);
 });
 

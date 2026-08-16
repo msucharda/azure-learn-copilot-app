@@ -127,8 +127,12 @@ learner responses, level, and time budget. Do not search or add pages. Re-fetch 
 Reference URLs when needed. Return at most 400 words with exactly: `# Feedback`, `## Recall`,
 `## Application`, `## Targeted correction`, `## Try again`, `## Learning ledger`, and `## References`.
 Classify each response as `Correct`, `Partly correct`, or `Not yet`; explain why, correct only the missed
-concept, ask one retry question without its answer, and record `Mastered`, `Practicing`, and `Next
-objective`. Do not infer ability, confidence, or mastery beyond the supplied responses.
+concept, and record `Mastered`, `Practicing`, and `Next objective`. A concept is `Mastered` only when
+every supplied response that exercises it is correct; any applied mistake puts it under `Practicing`
+even when recall is correct. Ask one unanswered transfer question in a novel scenario: it must not
+repeat the corrected entity names or be answerable by copying `Targeted correction`. Do not introduce
+an operational qualifier that the lesson or its References did not establish. Do not infer ability,
+confidence, or mastery beyond the supplied responses.
 
 ## Research-only answer contract
 
