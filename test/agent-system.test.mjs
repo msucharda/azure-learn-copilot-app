@@ -163,6 +163,9 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /built-in `\/orchestrate` skill/i);
     assert.match(contract, /freeze the complete task and compute its SHA-256/i);
     assert.match(contract, /generate a unique callback nonce/i);
+    assert.match(contract, /commit and push the current branch.*pass it as `base_branch`/i);
+    assert.match(contract, /verify the child branch contains the expected commit/i);
+    assert.match(contract, /local-only commit is not a valid child-session base/i);
     assert.match(contract, /coordinate_with_creator: true.*notify_on_idle: always/i);
     assert.match(contract, /Do not deliver work in a follow-up session message/i);
     assert.match(contract, /callback `STARTED` before research and `COMPLETED` with the complete result/i);

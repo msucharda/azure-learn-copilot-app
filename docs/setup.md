@@ -51,6 +51,10 @@ identifiers. Verify a complete normalized answer before archiving the child. An 
 matching callback is a delivery failure and is not automatically retried. See the
 [built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
 
+When a child must test agent changes that are not on the default branch, commit and push the feature
+branch first, pass that branch as `base_branch`, and verify the child contains the expected commit.
+Native child-session creation resolves the pushed branch state; an unpushed local commit is not inherited.
+
 For evidence review, use `Research mode: evaluation`, save the returned coordinator-only packet as a
 session artifact, and give `citation-critic` that exact path. It independently fetches only the Learn
 URLs already in References. Give its repair brief and the prior answer to a fresh callback-enabled

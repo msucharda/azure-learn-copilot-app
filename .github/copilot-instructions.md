@@ -14,17 +14,20 @@
 Use one kickoff and an explicit agent callback for every deep child:
 
 1. Freeze the complete task and compute its SHA-256. Generate a unique callback nonce.
-2. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-3. Put the mode and phase fields, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
+2. If a child depends on unmerged agent or instruction changes, commit and push the current branch,
+   pass it as `base_branch`, and verify the child branch contains the expected commit before accepting
+   `STARTED`. A local-only commit is not a valid child-session base.
+3. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
+4. Put the mode and phase fields, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
    complete frozen task in the kickoff. Do not deliver work in a follow-up session message.
-4. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
+5. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
    `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
    when both identifiers match.
-5. Treat idle notifications as diagnostics, never completion. If the child becomes idle without the
+6. Treat idle notifications as diagnostics, never completion. If the child becomes idle without the
    required callback, inspect its transcript once, record a delivery failure, and do not automatically
    resend the task.
-6. Ignore duplicate or stale callbacks. Validate the complete normalized result before archiving.
-7. Use `context_tier: default`. Escalate to `long_context` only for evaluation/A-B packets over 15,000
+7. Ignore duplicate or stale callbacks. Validate the complete normalized result before archiving.
+8. Use `context_tier: default`. Escalate to `long_context` only for evaluation/A-B packets over 15,000
    characters, more than 30 fixed atoms, multi-answer comparison, or a recorded default-context run that
    reaches 120,000 input tokens or shows context loss. Record every escalation.
 

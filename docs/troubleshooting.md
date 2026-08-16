@@ -58,6 +58,7 @@
 | A focused lesson covers several independent topics | Keep one prerequisite objective and list the rest only as possible next objectives |
 | A focused lesson becomes a research report | Enforce 400-700 words, at most five fetched pages, one worked example, and exactly two unanswered questions |
 | The lesson reveals its own check answers | Remove the answer, answer key, and result-revealing hints; wait for the learner response |
+| A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
 | Feedback introduces new sources or concepts | Reuse only the lesson References and correct only concepts missed in the supplied responses |
 | Feedback claims mastery without evidence | Limit `Mastered` to concepts demonstrated by the learner response; put uncertain items under `Practicing` |
 | The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
