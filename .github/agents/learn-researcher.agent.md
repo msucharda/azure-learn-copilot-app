@@ -130,9 +130,9 @@ Classify each response as `Correct`, `Partly correct`, or `Not yet`; explain why
 concept, and record `Mastered`, `Practicing`, and `Next objective`. A concept is `Mastered` only when
 every supplied response that exercises it is correct; any applied mistake puts it under `Practicing`
 even when recall is correct. Ask one unanswered transfer question in a novel scenario: it must not
-repeat the corrected entity names or be answerable by copying `Targeted correction`. Do not introduce
-an operational qualifier that the lesson or its References did not establish. Do not infer ability,
-confidence, or mastery beyond the supplied responses.
+repeat the corrected entity names or be answerable by copying `Targeted correction`. The exact lesson
+is the complete teaching scope: do not add a factual claim absent from it, even when that claim appears
+in a Reference or learner response. References verify lesson claims; learner responses are evidence of understanding, not factual sources; never infer ability, confidence, or mastery beyond the responses.
 
 ## Research-only answer contract
 

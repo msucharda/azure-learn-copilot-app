@@ -133,7 +133,9 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /any applied mistake puts it under `Practicing` even when recall is correct/i);
     assert.match(contract, /unanswered transfer question in a novel scenario/i);
     assert.match(contract, /must not repeat the corrected entity names or be answerable by copying/i);
-    assert.match(contract, /Do not introduce an operational qualifier that the lesson or its References did not establish/i);
+    assert.match(contract, /exact lesson is the complete teaching scope/i);
+    assert.match(contract, /do not add a factual claim absent from it, even when that claim appears in a Reference or learner response/i);
+    assert.match(contract, /learner responses are evidence of understanding, not factual sources/i);
     assert.doesNotMatch(researcher, /create_session/);
 });
 

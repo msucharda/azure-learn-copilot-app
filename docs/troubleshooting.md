@@ -59,7 +59,7 @@
 | A focused lesson becomes a research report | Enforce 400-700 words, at most five fetched pages, one worked example, and exactly two unanswered questions |
 | The lesson reveals its own check answers | Remove the answer, answer key, and result-revealing hints; wait for the learner response |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
-| Feedback introduces new sources or concepts | Reuse only the lesson References and correct only concepts missed in the supplied responses |
+| Feedback introduces new sources, facts, or concepts | Treat the exact lesson as the teaching boundary; References verify its claims, and learner responses are evidence of understanding rather than factual sources |
 | Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; keep that concept under `Practicing` until every supplied response exercising it is correct |
 | The retry repeats the targeted correction | Ask a transfer question in a novel scenario that cannot be answered by copying the correction |
 | The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
