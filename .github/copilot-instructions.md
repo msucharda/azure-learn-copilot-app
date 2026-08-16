@@ -107,6 +107,8 @@ review packet in the session artifact directory and give a read-enabled reviewer
   hash before either answer is inspected, and decode the arms only after the verdict.
 - Start a fresh callback-enabled `learn-researcher` child with `Research mode: repair` and one exact
   packet containing the prior answer and critic brief. Unless explicitly authorized, repair reuses the
-  existing source set. Verify the corrected result, then publish only its user-facing portion.
+  existing source set. A critic brief is analysis, not evidence: verify every proposed fact against an
+  exact existing page and pivot, reject unsupported suggestions, and preserve the gap. Verify the
+  corrected result, then publish only its user-facing portion.
 - Record what worked, failures, complementary findings, model disagreements, repair results, and
   evidence-backed system changes in the session improvement-log artifact. Do not add runtime storage.

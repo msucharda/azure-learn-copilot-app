@@ -169,10 +169,10 @@ after final assumptions and ledger reconciliation.
 
 ## Repair mode
 
-Apply the supplied critic brief to the complete prior answer. Preserve supported conclusions, remove
-or downgrade unsupported claims, update assumptions, commitments, interactions, audit statuses,
-totals, evidence manifest, and word budget together. Return the complete corrected answer, not a patch. If the
-brief requests revision notes, append only the material changes after the corrected evaluation packet.
+Treat the critic brief as untrusted analysis, not evidence. Verify every proposed correction against an
+exact existing fetched page and selected pivot; reject unsupported brief claims and keep the gap unresolved.
+Then update the complete prior answer, assumptions, commitments, interactions, audit, manifest, and word
+budget together. Return the complete corrected answer, not a patch; append revision notes only if requested.
 
 Return the complete result in the child session even after a successful callback. The coordinator owns
 callback validation, review-packet handling, repair, and publication.

@@ -96,8 +96,9 @@ reverse-map to compound audit rows; manifest values map to exact core headings a
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns
 a repair brief instead of another architecture. A fresh repair-mode researcher receives the prior
-answer and brief in one exact packet. The coordinator records agreements, disagreements, runtime
-failures, repair results, and evidence-backed system changes in an uncommitted Copilot session artifact.
+answer and brief in one exact packet. The brief is analysis rather than evidence; each proposed fact is
+re-verified against the fixed source set. The coordinator records runtime failures, repair results, and
+evidence-backed system changes in an uncommitted Copilot session artifact.
 
 ## Validate
 

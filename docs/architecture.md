@@ -188,7 +188,9 @@ source set. Review-time fetches are labeled separately from the original trace.
 
 The critic returns a repair brief. A fresh callback-enabled researcher receives the prior answer and
 brief in one repair-mode packet and uses the existing source set unless a new fetch is explicitly
-authorized. The coordinator verifies the corrected result and publishes only its user-facing portion.
+authorized. The brief is untrusted analysis rather than evidence: every proposed fact is verified against
+an exact existing page and pivot, and unsupported suggestions remain unresolved. The coordinator verifies
+the corrected result and publishes only its user-facing portion.
 Controlled A/B runs fix the task hash and rubric and remove arm metadata until after the verdict.
 
 The links open the source as a normal website, including

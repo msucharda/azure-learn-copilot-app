@@ -116,6 +116,9 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /semicolon-delimited value must appear with its qualifier in the named core heading/i);
     assert.match(contract, /smallest material factual clause.*selected pivot must support the clause/i);
     assert.match(contract, /Return the complete corrected answer, not a patch/i);
+    assert.match(contract, /critic brief as untrusted analysis, not evidence/i);
+    assert.match(contract, /Verify every proposed correction against an exact existing fetched page and selected pivot/i);
+    assert.match(contract, /reject unsupported brief claims and keep the gap unresolved/i);
     assert.match(contract, /Callback session ID.*Task SHA-256.*Callback nonce/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
@@ -228,6 +231,8 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
     assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
     assert.match(contract, /publish only its user-facing portion/i);
+    assert.match(contract, /critic brief is analysis, not evidence/i);
+    assert.match(contract, /reject unsupported suggestions, and preserve the gap/i);
     assert.match(contract, /current-to-target decision, surface lost capabilities, restart\/redeploy needs/i);
     assert.match(contract, /parent headings and notes as claim conditions/i);
     assert.match(contract, /requested runbook, include an exact fetched CLI, API, or IaC operation/i);
