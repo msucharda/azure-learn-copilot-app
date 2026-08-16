@@ -31,10 +31,13 @@
 | One identity, key, DNS, network, or management plane gates all access | State outage behavior and a tested, scenario-compliant recovery condition; do not invent an insecure bypass |
 | A source says preview, partially supported, only, or conditional but the answer drops that term | Restore the exact support qualifier in fetched facts, recommendations, dependent workflows, and coverage status |
 | A claim is accurate only inside a source section or parent heading | Treat that heading or note as a claim condition and propagate its scope; a sentence does not become globally applicable when synthesized |
+| A claim comes from a different pivot than the cited URL selects | Treat the query parameter and selected pivot as evidence scope; cite a page/pivot that actually renders the claim or leave it unresolved |
+| A sentence co-cites two pages but only one supports the qualifier | Split the sentence and attach each link to the smallest factual clause it independently supports |
 | A recommendation changes mode but omits what the current mode loses | Compare current and target states; surface incompatible features, restart/redeploy requirements, defaults, side effects, cost, permission scope, and management scope |
 | A runbook describes intentions but no executable operation | Include an exact fetched CLI, API, or IaC operation with its target scope when the selected operations page provides one; otherwise mark the step unresolved |
 | A recommendation keeps capacity, protection, or diagnostics enabled without consequences | Carry documented billing, restart, default behavior, permissions, and resource-scope consequences into the recommendation and pre-rollout checks |
 | A selected page documents another relevant mode, especially preview | Name it and explain why it is selected, excluded, or unresolved; do not silently collapse the documented mode set |
+| A recommended numeric default changes under an optional creation-time mode | Surface the conditional override and explicitly select or exclude the triggering mode before marking the atom `Covered` |
 | A recommendation assigns an action to the wrong actor | Preserve who creates, rotates, adopts, fails over, or restores; automatic detection or adoption is not automatic creation |
 | A capability is supported but its drill, rotation, failover, or restore procedure is unclear | Fetch the dedicated operations page and propagate prerequisites, unsupported modes, and management-plane versus data-plane behavior |
 | Migration discovers a create-time, one-way, locked, or irreversible property after cutover | Move the property and its acceptance test before the rollout step that commits to it |
@@ -49,6 +52,7 @@
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
 | The evidence manifest contains material values absent from the answer | Rebuild the core, audit, and manifest together; map each value to a qualified core sentence or remove it, then downgrade any optimistic status it had supported |
+| A manifest row names broad audit atoms but its values drift from the final core | Add an exact `Core location` heading and require every semicolon-delimited value to appear there with its qualifier |
 | Two audit rows describe the same mechanism with different statuses | Explain the supported-dimension difference in the core or lower the optimistic status |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |

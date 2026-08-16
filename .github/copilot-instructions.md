@@ -88,6 +88,10 @@ review packet in the session artifact directory and give a read-enabled reviewer
   exclude Markdown URL targets. Target 1,350 words when code or tables appear, with 1,500 as the ceiling.
 - Reverse-map each assumption or unresolved dimension to its compound audit row. If one fetched page says
   a method is unavailable and another exposes it, report a conflict instead of choosing silently.
+- Treat query parameters and selected pivots as citation scope. Attach each link to the smallest factual
+  clause it supports; a co-citation cannot transfer support from another page.
+- Sweep each recommended numeric/default value for conditional overrides and creation-time toggles.
+  Require manifest `Core location` headings and an exact qualified core match for every listed value.
 - Publish only the standard answer through References. An evaluation run appends
   `## Evaluation packet (coordinator only)` containing the coverage audit, observations, and evidence
   manifest; do not forward that packet as user-facing output.

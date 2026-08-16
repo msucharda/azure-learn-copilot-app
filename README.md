@@ -90,7 +90,8 @@ before alternatives. Mandatory action verbs are checked against operations pages
 without tool-exposed timestamps require deployment-time revalidation. Current-to-target decisions also
 surface lost capabilities, restart and cost consequences, permission scope, preview alternatives, and
 source conflicts. Requested runbooks include fetched executable operations rather than intentions alone,
-but fenced commands count toward the core ceiling. Assumptions reverse-map to compound audit rows.
+but fenced commands count toward the core ceiling. Assumptions and conditional numeric overrides
+reverse-map to compound audit rows; manifest values map to exact core headings and pivot-scoped links.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns

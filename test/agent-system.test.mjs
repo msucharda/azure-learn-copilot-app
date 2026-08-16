@@ -89,11 +89,13 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /mark mutable facts time-sensitive and require deployment-time revalidation/i);
     assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
     assert.match(contract, /parent-heading or section scope/i);
+    assert.match(contract, /query-parameter or selected-pivot scope/i);
     assert.match(contract, /current-to-target change.*lost or incompatible features.*restart\/redeploy needs/i);
     assert.match(contract, /billing\/cost, permissions, and management scope/i);
     assert.match(contract, /surface source-internal conflicts instead of harmonizing them/i);
     assert.match(contract, /In `Conclusion`, label any synthesized condition or sequence/i);
     assert.match(contract, /requested runbook or procedure.*exact fetched CLI, API, or IaC operation/i);
+    assert.match(contract, /recommended numeric\/default setting.*conditional overrides and creation-time toggles/i);
     assert.match(contract, /relevant documented mode variants, including preview alternatives/i);
     assert.match(contract, /Remove each manifest value absent from the core/i);
     assert.match(contract, /one fetched page says a method is unavailable and another exposes it, mark the conflict/i);
@@ -110,6 +112,9 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /Reverse-map every specific assumption or unresolved constraint to its row/i);
     assert.match(contract, /missing or conditional dimension forces `Partially covered` or `Unresolved`/i);
     assert.match(contract, /Match each semicolon-delimited value to its qualified core use/i);
+    assert.match(contract, /`Core location` headings/i);
+    assert.match(contract, /semicolon-delimited value must appear with its qualifier in the named core heading/i);
+    assert.match(contract, /smallest material factual clause.*selected pivot must support the clause/i);
     assert.match(contract, /Return the complete corrected answer, not a patch/i);
     assert.match(contract, /Callback session ID.*Task SHA-256.*Callback nonce/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -174,6 +179,8 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /runbooks include an exact fetched CLI, API, or IaC operation/i);
     assert.match(contract, /conclusions label synthesized conditions/i);
     assert.match(contract, /all user-visible core text including headings, labels, tables, and fenced code/i);
+    assert.match(contract, /final core under the named `Core location`/i);
+    assert.match(contract, /recommended numeric\/default setting includes or explicitly excludes/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -230,6 +237,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Target 1,350 words when code or tables appear/i);
     assert.match(contract, /Reverse-map each assumption or unresolved dimension to its compound audit row/i);
     assert.match(contract, /method is unavailable and another exposes it, report a conflict/i);
+    assert.match(contract, /query parameters and selected pivots as citation scope/i);
+    assert.match(contract, /co-citation cannot transfer support/i);
+    assert.match(contract, /Sweep each recommended numeric\/default value for conditional overrides/i);
+    assert.match(contract, /manifest `Core location` headings/i);
     assert.doesNotMatch(instructions, /create_session/);
 });
 

@@ -71,7 +71,7 @@ metadata and must not appear in the user-facing answer.
    capability, reliability/operations, network/management-plane, and limits/lifecycle pages come before
    conditional alternatives or generic summaries.
 4. Build a claim ledger from successful fetches. Record only facts used in the answer: parent-heading or
-   section scope, actor/action, numeric conditions, lifecycle, region/SKU, negative support, preview,
+   section scope, including query-parameter or selected-pivot scope; actor/action; numeric conditions; lifecycle; region/SKU; negative support; preview;
    creation-only behavior, transitions, reversibility, and for a current-to-target change, lost or
    incompatible features, restart/redeploy needs, defaults/side effects, billing/cost, permissions, and
    management scope. Treat headings and notes as conditions; surface source-internal conflicts instead of harmonizing them; ensure every
@@ -84,7 +84,7 @@ metadata and must not appear in the user-facing answer.
 7. Run contradiction, transition, and interaction passes. Compare the lead with fetched constraints and
    current versus target states for lost capabilities, restart/redeploy needs, defaults, side effects,
    cost/billing, permissions, and management scope. Propagate qualifiers through affected operations and
-   recovery. For each mandatory scenario verb, check the dedicated operations page and distinguish data-plane from management-plane behavior. A requested runbook or procedure includes an exact fetched CLI, API, or IaC operation and target scope
+   recovery. Sweep every recommended numeric/default setting for conditional overrides and creation-time toggles; include or explicitly exclude each trigger. For each mandatory scenario verb, check the dedicated operations page and distinguish data-plane from management-plane behavior. A requested runbook or procedure includes an exact fetched CLI, API, or IaC operation and target scope
    when available; otherwise mark the executable step unresolved.
 8. Put every selected creation-time, one-way, locked, irreversible, or mode-selection property in
    `Pre-rollout commitments` with fixation, acceptance, and evidence or unresolved status. Enumerate relevant
@@ -140,9 +140,9 @@ in a Reference or learner response. References verify lesson claims; learner res
 - Under each material decision heading use `**Fetched facts:**`, `**Recommendation:**`, and
   `**Assumptions or unresolved constraints:**`. Name unsupported items explicitly; write `None
   identified from the fetched sources.` only when appropriate.
-- Put a descriptive fetched link beside each material factual claim. Preserve the source's actor,
-  action, scope, support level, and conditions. Do not say Microsoft recommends a synthesis unless the
-  fetched source does.
+- Put a descriptive fetched link after the smallest material factual clause. That exact page and selected
+  pivot must support the clause and qualifiers; do not use a co-citation to borrow support. Preserve actor,
+  action, scope, and conditions. Do not call a synthesis a Microsoft recommendation.
 - Numeric limits, durations, ranges, percentages, counts, mutable availability, and lifecycle status
   require adjacent fetched support for their exact conditions; otherwise omit or mark them unresolved.
 - End the user-facing answer with no more than 15 unique descriptive links under `## References`.
@@ -155,13 +155,13 @@ The coordinator must not publish this packet as part of the user-facing answer. 
 
 1. `### Coverage audit`: one row per precomputed atom with `Decision area`, `Atomic item`, and one status:
    `Covered`, `Partially covered`, or `Unresolved`. A compound atom is Covered only when all dimensions are
-   supported. Reverse-map every specific assumption or unresolved constraint to its row; any missing or conditional dimension forces `Partially covered` or `Unresolved`. Publish totals and verify they sum to the fixed row count.
+   supported. Reverse-map every specific assumption or unresolved constraint to its row. Map each omitted conditional numeric override too; any missing or conditional dimension forces `Partially covered` or `Unresolved`. Publish totals and verify they sum to the fixed row count.
 2. `### Agent-system observations`: research mode, confirmation of direct discovery, unexpected
    product-skill context if any, source-budget pressure, and tool friction. Do not count these
    observations as answer coverage.
-3. `### Evidence manifest`: one row per fetched reference with fetched title, current-run fetch status,
-   timestamp or `Unavailable`, exact core decisions/audit atoms supported, and only material values and
-   qualifiers in the final core. Match each semicolon-delimited value to its qualified core use; remove unused values. Keep exact URLs only in References.
+3. `### Evidence manifest`: one row per fetched reference with title, current-run fetch status, timestamp or `Unavailable`,
+   exact audit atoms, `Core location` headings, and only material values in those locations. Each
+   Match each semicolon-delimited value to its qualified core use; each semicolon-delimited value must appear with its qualifier in the named core heading. Remove unused values. Keep exact URLs only in References.
 
 A keyword mention, list entry, test, or monitoring recommendation without fetched support is not
 coverage. Any atom named as unresolved in the core cannot be Covered. Rebuild and recount the audit

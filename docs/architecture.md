@@ -171,6 +171,12 @@ References are part of the answer:
     least-supported dimension sets the row status.
 45. If one fetched page says an operation is unavailable while another exposes it, the answer reports a
     source conflict instead of silently choosing one.
+46. Query parameters and selected pivots are evidence scope. Each link follows the smallest factual clause
+    it independently supports; co-citation does not transfer qualifiers between pages.
+47. Every recommended numeric or default setting is checked for conditional overrides and creation-time
+    toggles, which are selected, explicitly excluded, or mapped to a partial audit status.
+48. Each evidence-manifest row names exact `Core location` headings. Every semicolon-delimited value
+    appears there with its qualifier, and material core facts map back to the supporting row.
 
 ## Formal review contract
 

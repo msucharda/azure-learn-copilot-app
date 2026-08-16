@@ -41,7 +41,7 @@ Give one concise reason tied to the supplied or review-fetched evidence and pres
 website link. Check:
 
 1. exact task and mandatory-scenario compliance;
-2. actor, action, parent-heading or section scope, SKU, region, lifecycle, support level, negative
+2. actor, action, parent-heading, section, query-parameter or selected-pivot scope, SKU, region, lifecycle, negative
    qualifiers, restart/redeploy requirements, defaults, side effects, billing/cost, permission scope, and
    numeric conditions;
 3. internal contradictions and conflicts between supplied pages;
@@ -53,13 +53,15 @@ website link. Check:
 6. every protective control against relevant recovery and reconfiguration actions, including
    single-plane dependencies and required sequencing;
 7. bidirectional answer-to-manifest mapping: every manifest value must appear with its qualifier in the
-   final core, and every material answer claim absent from the manifest is a defect;
+   final core under the named `Core location`, and every material core claim absent is a defect;
 8. deterministic atomization, row count, published status totals, assumptions/status consistency, and
    optimistic Covered rows; and
 9. evidence provenance and runtime/delivery defects, kept separate from answer defects; and
 10. whether requested runbooks include an exact fetched CLI, API, or IaC operation and scope when
     available, whether conclusions label synthesized conditions, and whether all user-visible core text including
-    headings, labels, tables, and fenced code satisfies the stated word ceiling.
+    headings, labels, tables, and fenced code satisfies the stated word ceiling; and
+11. whether each recommended numeric/default setting includes or explicitly excludes every fetched
+    conditional override and creation-time toggle.
 
 For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
 usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one
