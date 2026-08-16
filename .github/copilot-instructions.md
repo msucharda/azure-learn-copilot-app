@@ -57,8 +57,9 @@ review packet in the session artifact directory and give a read-enabled reviewer
 4. Put the exact lesson, References, and learner responses in one packet for a fresh feedback child.
    Feedback reuses only those References, corrects missed concepts, asks one unanswered transfer retry
    in a novel scenario, and ends with a `Mastered` / `Practicing` / `Next objective` ledger. A concept
-   contradicted by any applied response remains `Practicing`, even when recall was correct. The exact
-   lesson is the teaching boundary; References verify it and learner responses are not factual sources.
+   contradicted by any applied response remains `Practicing`; use `Mastered: None yet` rather than
+   narrowing mastery to recall. The exact lesson is the teaching boundary; References verify it and
+   learner responses are not factual sources.
 5. Do not create a learner database or schedule review automatically. Use current conversation context;
    create an App-native scheduled review only when the learner explicitly requests it.
 

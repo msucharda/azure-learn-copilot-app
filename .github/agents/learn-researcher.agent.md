@@ -128,9 +128,9 @@ Reference URLs when needed. Return at most 400 words with exactly: `# Feedback`,
 `## Application`, `## Targeted correction`, `## Try again`, `## Learning ledger`, and `## References`.
 Classify each response as `Correct`, `Partly correct`, or `Not yet`; explain why, correct only the missed
 concept, and record `Mastered`, `Practicing`, and `Next objective`. A concept is `Mastered` only when
-every supplied response that exercises it is correct; any applied mistake puts it under `Practicing`
-even when recall is correct. Ask one unanswered transfer question in a novel scenario: it must not
-repeat the corrected entity names or be answerable by copying `Targeted correction`. The exact lesson
+every supplied response that exercises it is correct. If application contradicts recall, write
+`Mastered: None yet`; never narrow the claim to the recall scenario. Ask one unanswered transfer
+question that changes or inverts the actor/action scenario; it must not repeat the corrected entities, options, checklist, sequence, or be answerable by copying `Targeted correction`. The exact lesson
 is the complete teaching scope: do not add a factual claim absent from it, even when that claim appears
 in a Reference or learner response. References verify lesson claims; learner responses are evidence of understanding, not factual sources; never infer ability, confidence, or mastery beyond the responses.
 
