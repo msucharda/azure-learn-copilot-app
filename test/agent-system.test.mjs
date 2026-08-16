@@ -88,6 +88,14 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /Reserve evidence slots for the lead's exact service, tier, and mode/i);
     assert.match(contract, /mark mutable facts time-sensitive and require deployment-time revalidation/i);
     assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
+    assert.match(contract, /parent-heading or section scope/i);
+    assert.match(contract, /current-to-target change.*lost or incompatible features.*restart\/redeploy needs/i);
+    assert.match(contract, /billing\/cost, permissions, and management scope/i);
+    assert.match(contract, /surface source-internal conflicts instead of harmonizing them/i);
+    assert.match(contract, /In `Conclusion`, label any synthesized condition or sequence/i);
+    assert.match(contract, /requested runbook or procedure.*exact fetched CLI, API, or IaC operation/i);
+    assert.match(contract, /relevant documented mode variants, including preview alternatives/i);
+    assert.match(contract, /Remove each manifest value absent from the core/i);
     assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
     assert.match(contract, /Protective-control interactions/i);
     assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
@@ -155,6 +163,10 @@ test("critic reads one packet and verifies only existing references", async () =
         assert.match(critic, new RegExp(`\\\`${status}\\\``));
     }
     assert.match(contract, /deterministic atomization, row count, published status totals/i);
+    assert.match(contract, /current-state to target-state transition, including lost capabilities/i);
+    assert.match(contract, /every manifest value must appear with its qualifier in the final core/i);
+    assert.match(contract, /runbooks include an exact fetched CLI, API, or IaC operation/i);
+    assert.match(contract, /conclusions label synthesized conditions/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -202,6 +214,11 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
     assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
     assert.match(contract, /publish only its user-facing portion/i);
+    assert.match(contract, /current-to-target decision, surface lost capabilities, restart\/redeploy needs/i);
+    assert.match(contract, /parent headings and notes as claim conditions/i);
+    assert.match(contract, /requested runbook, include an exact fetched CLI, API, or IaC operation/i);
+    assert.match(contract, /rebuild the final core, audit, and evidence manifest together/i);
+    assert.match(contract, /no unused manifest value or optimistic status survives/i);
     assert.doesNotMatch(instructions, /create_session/);
 });
 

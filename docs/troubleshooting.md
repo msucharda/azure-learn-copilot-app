@@ -28,6 +28,11 @@
 | Protective controls were checked only against restore | Build the interaction table across failover, failback, restore, region change, scaling, key rotation, migration, cutover, rollback, and deletion |
 | One identity, key, DNS, network, or management plane gates all access | State outage behavior and a tested, scenario-compliant recovery condition; do not invent an insecure bypass |
 | A source says preview, partially supported, only, or conditional but the answer drops that term | Restore the exact support qualifier in fetched facts, recommendations, dependent workflows, and coverage status |
+| A claim is accurate only inside a source section or parent heading | Treat that heading or note as a claim condition and propagate its scope; a sentence does not become globally applicable when synthesized |
+| A recommendation changes mode but omits what the current mode loses | Compare current and target states; surface incompatible features, restart/redeploy requirements, defaults, side effects, cost, permission scope, and management scope |
+| A runbook describes intentions but no executable operation | Include an exact fetched CLI, API, or IaC operation with its target scope when the selected operations page provides one; otherwise mark the step unresolved |
+| A recommendation keeps capacity, protection, or diagnostics enabled without consequences | Carry documented billing, restart, default behavior, permissions, and resource-scope consequences into the recommendation and pre-rollout checks |
+| A selected page documents another relevant mode, especially preview | Name it and explain why it is selected, excluded, or unresolved; do not silently collapse the documented mode set |
 | A recommendation assigns an action to the wrong actor | Preserve who creates, rotates, adopts, fails over, or restores; automatic detection or adoption is not automatic creation |
 | A capability is supported but its drill, rotation, failover, or restore procedure is unclear | Fetch the dedicated operations page and propagate prerequisites, unsupported modes, and management-plane versus data-plane behavior |
 | Migration discovers a create-time, one-way, locked, or irreversible property after cutover | Move the property and its acceptance test before the rollout step that commits to it |
@@ -40,7 +45,7 @@
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
-| The evidence manifest contains material values absent from the answer | Map each value to a core sentence or assumptions block and name the supported decision or audit item; otherwise remove unused detail or downgrade the item |
+| The evidence manifest contains material values absent from the answer | Rebuild the core, audit, and manifest together; map each value to a qualified core sentence or remove it, then downgrade any optimistic status it had supported |
 | Two audit rows describe the same mechanism with different statuses | Explain the supported-dimension difference in the core or lower the optimistic status |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |

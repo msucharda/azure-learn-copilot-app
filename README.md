@@ -87,7 +87,9 @@ protective controls against recovery and reconfiguration actions, including sing
 Conditional lead choices require a fetched fallback or remain unresolved. The source budget reserves
 lead-mode capability, operations/reliability, network/management-plane, and limits/lifecycle pages
 before alternatives. Mandatory action verbs are checked against operations pages, and mutable facts
-without tool-exposed timestamps require deployment-time revalidation.
+without tool-exposed timestamps require deployment-time revalidation. Current-to-target decisions also
+surface lost capabilities, restart and cost consequences, permission scope, preview alternatives, and
+source conflicts. Requested runbooks include fetched executable operations rather than intentions alone.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns

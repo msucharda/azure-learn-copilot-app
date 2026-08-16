@@ -154,6 +154,16 @@ References are part of the answer:
     delete is checked against a dedicated operations page; capability support does not prove procedure.
 37. When tools expose no retrieval timestamp, mutable values and lifecycle status are labeled
     time-sensitive and receive a deployment-time revalidation commitment.
+38. Parent-heading and section scope are claim conditions. A current-to-target decision also surfaces
+    lost capabilities, restart or redeploy requirements, defaults, side effects, billing or cost,
+    permission scope, and management scope.
+39. Relevant documented mode variants, including preview alternatives, are selected, explicitly
+    excluded, or left unresolved rather than omitted.
+40. A requested runbook includes an exact fetched CLI, API, or IaC operation and target scope when the
+    selected operations page supplies one; otherwise the executable step remains unresolved.
+41. Conclusions distinguish documented behavior from synthesized conditions and sequences.
+42. The final core, coverage audit, and evidence manifest are rebuilt together. No manifest value absent
+    from the core or source conflict silently reconciled by the answer may support `Covered`.
 
 ## Formal review contract
 
