@@ -1,50 +1,70 @@
-# Learn research setup
+# Setup
 
-## Prerequisites
+## Requirements
 
-Install the official `azure-agent-skills` plugin outside this repository. The app never vendors,
-copies, or modifies official skills. Record the skill name, plugin name/version, and generation
-time only when the runtime exposes them; absent provenance stays absent and metadata older than
-three calendar months is treated as stale.
+- Copilot App with project custom-agent discovery.
+- The Microsoft Learn MCP server configured in Copilot App and exposed as `microsoft-learn/*`.
 
-The runtime connects to `https://learn.microsoft.com/api/mcp`. It discovers tool names and schemas
-dynamically and maps them to documentation search, documentation fetch, and code-sample search.
-No fixed wrapper name or committed `.github/mcp.json` is required because this app runtime already
-supplies the MCP endpoint. Deployments that own MCP configuration may inject the same exact
-endpoint externally.
+No project extension, SDK package, local service, storage root, environment variable, or committed
+MCP configuration is required.
 
-## Configuration
+Copilot App inherits MCP servers configured for a repository or Copilot CLI and also supports
+managing servers in App settings. Configure the official Microsoft Learn endpoint there and name the
+server `microsoft-learn`, matching the agent allow-list. See
+[customizing Copilot App](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app)
+and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/support/mcp-get-started).
 
-| Variable | Default | Bound or purpose |
-| --- | --- | --- |
-| `COPILOT_LEARN_DRAFT_ROOT` | workspace-keyed Copilot home path | Draft bundles and fetched Markdown captures |
-| `COPILOT_LEARN_PUBLISHED_ROOT` | shared Copilot home path | Bounded published excerpts, hashes, handoffs, and acknowledgements |
-| `COPILOT_LEARN_MCP_ENDPOINT` | `https://learn.microsoft.com/api/mcp` | HTTPS exact `learn.microsoft.com` host only |
-| `COPILOT_LEARN_TIMEOUT_MS` | `30000` | 1,000 through 120,000 milliseconds per attempt |
-| `COPILOT_LEARN_RETRY_MAX_ATTEMPTS` | `3` | 1 through 5 attempts |
-| `COPILOT_LEARN_RETRY_BASE_DELAY_MS` | `100` | Up to 5,000 milliseconds |
-| `COPILOT_LEARN_RETRY_MAX_DELAY_MS` | `1000` | Up to 5,000 milliseconds |
-| `COPILOT_LEARN_RETRY_MAX_TOTAL_DELAY_MS` | `2000` | Up to 10,000 milliseconds |
-| `COPILOT_LEARN_RETRY_MAX_RETRY_AFTER_MS` | `2000` | Accept headers up to 10,000 milliseconds; effective sleep is still clamped by `MAX_DELAY_MS` |
-| `COPILOT_LEARN_RETRY_JITTER_RATIO` | `0.25` | 0 through 0.5; inject zero in deterministic tests |
-| `COPILOT_LEARN_METADATA_CACHE_TTL_MS` | `300000` | 1,000 through 3,600,000 milliseconds; validated tool schemas only |
-| `COPILOT_LEARN_REFERENCES_TELEMETRY` | disabled | Set to `1` to enable local structured telemetry |
-| `COPILOT_LEARN_REFERENCES_TELEMETRY_ROOT` | Copilot home telemetry path | Local telemetry root; must not be a symlink |
+Installed product skills may remain available elsewhere in Copilot App, but this project does not load
+them. `learn-researcher` uses direct Learn discovery in every mode, and fetched Learn pages are the only
+citation evidence.
 
-Invalid or excessive values fail startup. Full fetched pages are never persisted in the published
-store, telemetry, benchmark reports, handoffs, or acknowledgements.
+## Use
 
-## Workflows
+For a quick question, ask in the current project chat. The project instructions direct Copilot to
+use native Microsoft Learn tools and return clickable Markdown references.
 
-For a quick question, use **Refine here** in the current chat. Side Chat is user-initiated because
-the host does not expose a programmatic Quick Chat creation API; manually confirm the required
-project skills and tools are present.
+For focused learning, provide one objective, your current level, and a time budget. The coordinator
+asks one short diagnostic question unless you request an immediate lesson. It then launches:
 
-For deep research, start `start-learn-research`, create the coordinated child with the returned
-kickoff, and keep draft evidence and the draft canvas in that child. Publication requires a
-separate explicit **publish** turn. The child sends only the bounded published handoff. If session
-messaging is unavailable, copy the same envelope manually. The parent verifies stored publication,
-acknowledges the handoff, and only then opens the published canvas.
+- `Learning mode: focused`;
+- `Learning phase: lesson`;
+- `Learning objective`, `Learner level`, `Time budget`, and `Diagnostic response`;
+- the same callback envelope and default context tier used by research.
 
-The draft canvas may reflect workspace captures containing fetched Markdown. The published canvas
-contains only bounded excerpts and hashes.
+Answer the lesson's recall and application questions in the project chat. A fresh
+`Learning phase: feedback` child receives the exact lesson and your responses, reuses only the lesson's
+References, and returns targeted correction plus a learning ledger.
+
+For isolated research, invoke `/orchestrate` and request one callback-enabled child:
+
+- agent: `learn-researcher`;
+- kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
+  and the complete research question, version/platform scope, and constraints;
+- coordination: `coordinate_with_creator: true`;
+- notification: `notify_on_idle: always`, used only to diagnose missing callbacks;
+- context: `context_tier: default`. Use `long_context` only for a packet over 15,000 characters, more
+  than 30 fixed atoms, a multi-answer comparison, or a prior default run that reaches 120,000 input
+  tokens or exhibits context loss.
+
+Accept only `STARTED`, `COMPLETED`, or `FAILED` callbacks from the expected child with both exact
+identifiers. Verify a complete normalized answer before archiving the child. An idle child without a
+matching callback is a delivery failure and is not automatically retried. See the
+[built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
+
+When a child must test agent changes that are not on the default branch, commit and push the feature
+branch first, pass that branch as `base_branch`, and verify the child contains the expected commit.
+Native child-session creation resolves the pushed branch state; an unpushed local commit is not inherited.
+
+For evidence review, use `Research mode: evaluation`, save the returned coordinator-only packet as a
+session artifact, and give `citation-critic` that exact path. It independently fetches only the Learn
+URLs already in References. Give its repair brief and the prior answer to a fresh callback-enabled
+researcher in one repair-mode packet. Do not put a generated Markdown packet in kickoff attachments;
+those accept only app-staged creator images, and Git staging is unrelated.
+
+## Validate repository contracts
+
+```sh
+node --test
+```
+
+Project agent changes may require a new turn or session before they appear in the agent picker.

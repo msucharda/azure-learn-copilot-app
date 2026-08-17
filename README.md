@@ -1,37 +1,104 @@
-# azure-learn-copilot-app
+# Azure Learn Copilot agent system
 
-Foundation for a sourced Microsoft Learn research-agent system. The production pipeline implements deterministic validation, bounded Learn-result adaptation and retry, atomic published storage, compact official-skill routing, isolated nested research, verified publish-back, privacy-safe opt-in local telemetry, an offline release benchmark, and a read-only reference canvas.
+An agent-only Microsoft Learn research and focused-learning workflow for Copilot App. The repository
+contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
+Research and lessons use the Microsoft Learn tools configured in Copilot App, and references are
+returned as normal website links.
 
-## Retained spike scaffold
+## Components
 
-- `docs/spikes/000-capability-spikes.md` records observed contracts and fallbacks.
-- `.github/agents/learn-researcher.agent.md` is the production evidence researcher; `.github/agents/citation-critic.agent.md` performs bounded read-only support classification.
-- `.github/skills/publish-research-draft/SKILL.md` validates and publishes a reviewed Markdown draft when the user says **publish**.
-- `.github/extensions/learn-capability-spikes/` captures bounded diagnostic evidence and exposes canvas actions. Its fallback tool is named `record_learn_spike_evidence` so the production extension owns `record_learn_evidence`.
-- `test/contracts.test.mjs` validates evidence bounds and hashing with Node built-ins.
+| Path | Purpose |
+| --- | --- |
+| `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
+| `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
+| `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |
 
-The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoint remain external dependencies; nothing is vendored.
+## Flow
 
-See [setup](docs/setup.md), [architecture](docs/architecture.md),
-[operations](docs/operations.md), and [troubleshooting](docs/troubleshooting.md).
+1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
+2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
+   `learn-researcher` child with the complete frozen task and a task-hash-correlated callback envelope
+   in one kickoff. Idle notifications are diagnostic only. Standard research uses the default context
+   tier; long context is reserved for measured large-packet or context-pressure cases.
+3. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
+   product-skill catalogs are outside the research path.
+4. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
+   cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
+5. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
+   Evaluation mode appends a coordinator-only packet. A different-model critic reads that exact packet,
+   refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
+   A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
+   corrected user-facing answer.
 
-## Production evidence pipeline
+## Focused learning
 
-- `.github/extensions/learn-references/extension.mjs` registers bounded research preparation, evidence capture, draft persistence, validation, publication, immutable read-back, acknowledgement, and supersession tools.
-- The same extension registers the `learn-references` project canvas. Open it with `{ researchId, version?, view }`, where `view` is `draft` or `published`; omit `version` to read the latest complete version.
-- `.github/extensions/learn-references/lib/` contains dependency-free contract, hashing, MCP adapter, tool-handler, storage, canvas-provider, and DOM-renderer modules.
-- `.github/extensions/learn-references/fixtures/` contains bounded schema version 1 examples and rejection cases.
-- `test/` covers strict contracts, deterministic hashes, fetched-Markdown quote authority, short-fragment and decorated bundle/handoff retention, defensive MCP result adaptation, concurrent publication, lifecycle storage, tool failures, and reference-canvas security/lifecycle behavior.
-- `docs/architecture.md` records the component and trust boundaries.
-- `docs/operations.md` documents storage roots, layouts, retention, validation, and operational limitations.
+Focused learning uses the same direct Learn evidence and callback transport, but a smaller teaching
+contract:
 
-The official Microsoft Azure Agent Skills plugin and Microsoft Learn MCP endpoint remain external prerequisites. Production code discovers logical Learn operations from runtime tool schemas rather than compiling against a wrapper or legacy tool spelling.
+1. Establish one learning objective, learner level, time budget, and optional diagnostic response.
+2. Generate a 400-700-word lesson from at most five fetched Learn pages.
+3. Include one worked example, one recall question, and one application question without answers.
+4. After the learner responds, start a fresh feedback phase with the exact lesson and responses.
+5. Correct only missed concepts, ask one unanswered retry, and record `Mastered`, `Practicing`, and
+   `Next objective`.
 
-The generated `.github/skills/project-azure-learn-skill-router/SKILL.md` contains only repository routing context for `azure-functions` and `microsoft-foundry`. It invokes one exact external skill lazily; uncovered or excluded products remain unresolved and use lightweight Learn discovery. The invoked external skill, never the generated router, supplies `officialSkill` provenance.
+The current conversation carries the loop. The system does not create a learner database or schedule
+review unless the learner explicitly requests an App-native workflow.
 
-The reference canvas renders only bounded evidence fields already accepted by the draft or published stores. It never serves retained fetched Markdown, does not expose publishing controls, and does not bridge iframe input into an agent turn. Publishing remains the explicit `publish-research-draft` chat skill.
+No project skill router, installed product skill, or product-skill catalog is loaded into the
+researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole
+citation source.
 
-`start-learn-research` provides the two-speed **Refine here** or coordinated interactive child-session flow. `consume-research-handoff` verifies stored publication identity and parent binding, records an idempotent no-regression acknowledgement, and only then opens the published reference canvas. Side Chat remains a user-created UI option because the host has no programmatic Quick Chat creation API.
+## Routing decision
+
+Three frozen-task, same-model, blinded comparisons tested direct Learn discovery against one matching
+official product skill. Critical-defect precedence determined the winner before score totals.
+
+| Round | Product | Direct | Skill | Winner |
+| --- | --- | ---: | ---: | --- |
+| 16 | Service Bus | 26/35 | 26/35 | Direct, medium confidence |
+| 17 | Key Vault | 26/35 | 23/35 | Direct, medium confidence |
+| 18 | API Management | 28/35 | 24/35 | Direct, medium confidence |
+
+Direct discovery won all three rounds. The skill arms occasionally improved product-specific depth,
+but introduced more serious lead-path defects and more initialization complexity. Product-skill
+routing is therefore removed rather than retained as a standard or evaluation option.
+
+GitHub's standard deep-research workflow is designed to investigate repository code. This custom
+agent remains useful for external Microsoft Learn research because it enforces a Learn-only source
+and link contract. See GitHub's documentation for
+[repository deep research](https://docs.github.com/en/copilot/how-tos/copilot-on-github/use-copilot-agents/research-plan-iterate),
+[custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), and the
+[built-in `/orchestrate` skill](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
+
+## Improvement loop
+
+Each iteration runs a different Azure architecture scenario in a fresh coordinated
+`learn-researcher` session. Controlled experiments hold the task, model, and rubric fixed and anonymize
+answers before blind review. The core answer is bounded to
+1,500 words, or 2,000 evaluation words for more than 30 atoms. Atomization is fixed before search:
+each numbered item, bullet, or semicolon-delimited subtopic is one row, and a compound row receives the
+status of its least-supported dimension.
+
+The same preflight also checks interactions between individually supported controls, propagates source
+qualifiers through migration, backup, failover, sharing, monitoring, and cost, and derives pre-rollout
+commitments from every fetched one-way or irreversible qualifier. A compact interaction table checks
+protective controls against recovery and reconfiguration actions, including single-plane dependencies.
+Conditional lead choices require a fetched fallback or remain unresolved. The source budget reserves
+lead-mode capability, operations/reliability, network/management-plane, and limits/lifecycle pages
+before alternatives. Mandatory action verbs are checked against operations pages, and mutable facts
+without tool-exposed timestamps require deployment-time revalidation. Current-to-target decisions also
+surface lost capabilities, restart and cost consequences, permission scope, preview alternatives, and
+source conflicts. Requested runbooks include fetched executable operations rather than intentions alone,
+but fenced commands count toward the core ceiling. Assumptions and conditional numeric overrides
+reverse-map to compound audit rows; manifest values map to exact core headings and pivot-scoped links.
+
+Evaluation details live after References in a coordinator-only packet rather than the published answer.
+A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns
+a repair brief instead of another architecture. A fresh repair-mode researcher receives the prior
+answer and brief in one exact packet. The brief is analysis rather than evidence; each proposed fact is
+re-verified against the fixed source set. The coordinator records runtime failures, repair results, and
+evidence-backed system changes in an uncommitted Copilot session artifact.
 
 ## Validate
 
@@ -39,74 +106,6 @@ The reference canvas renders only bounded evidence fields already accepted by th
 node --test
 ```
 
-This command runs the retained PR 0 tests and all production contract tests with Node built-ins.
-
-Run the deterministic offline release gates separately:
-
-```sh
-node scripts/run-release-evaluation.mjs
-```
-
-The runner writes its bounded report only when an explicit output path is supplied and exits
-nonzero when any gate fails. Live Learn and citation URL checks are never part of the default
-test suite. Use the explicit bounded live command documented in
-[operations](docs/operations.md); it reports `PASS`, `FAIL`, or `SKIP` rather than turning a
-network outage into a flaky default test.
-
-Check every production extension module with:
-
-```sh
-find .github/extensions -name '*.mjs' -print0 | xargs -0 -n1 node --check
-```
-
-## Repository-specific Copilot skills
-
-This repository provides two repository-scoped [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills). No router service or separate policy configuration is required.
-
-- `repository-skill-generator` inspects a repository and the available skill catalog, then creates the smallest useful set of project skills.
-- `session-skill-improver` uses repository-scoped Copilot session evidence to improve generated project skills.
-
-## Install and use
-
-Copy both directories under `.github/skills/` into the target repository at the same path. Copilot discovers each `SKILL.md` automatically.
-
-Ask Copilot to **run `repository-skill-generator`** when initially setting up project skills or after material repository changes. Generated skills are written to `.github/skills/<skill-name>/SKILL.md`.
-
-Ask Copilot to **run `session-skill-improver`** after the repository has accumulated repeated workflows, failures, retries, or user corrections in Copilot sessions. The skill queries the available session-history interface, scopes evidence to the current repository, and updates only generated skills.
-
-## Generated artifacts
-
-Generated skills contain this metadata:
-
-```yaml
-metadata:
-  managed-by: repository-skill-generator
-  generated: "true"
-  format-version: "1"
-  kind: "project-skill"
-  provenance: "project-repository-context"
-```
-
-Compact official-skill routers use `kind: "official-skill-router"` instead. This marks project-owned routing context only: it does not represent official-skill provenance or an evidence source. Regeneration may replace or prune only skills carrying the ownership metadata. Hand-authored skills, including the two meta-skills, remain untouched. Repository analysis excludes skill bodies so generated output and the meta-skills do not become recursive input.
-
-Generated names must start with `project-` and must not match any non-generated catalog name supplied in the generation plan. A plan may contain at most 8 generated skills. Each file is at most 16 KiB; a compact router is at most 12 KiB and may route to at most 8 official skills, with at most 8 aliases and 4 exclusions per route. A resolved router emits:
-
-```json
-{"status":"resolved","primary_skill":"exact-skill-name","fallback_skill":null,"matched_alias":"matched phrase"}
-```
-
-An unresolved route uses `null` for the skill and alias fields. The router lazily invokes one exact official skill and at most one explicit fallback. It never copies official skill bodies, categories, Learn excerpts, or curated URLs.
-
-## Context measurement limitation
-
-A compact project router reduces decision material only if the Copilot host can avoid injecting the complete installed skill inventory. Skills alone cannot guarantee that behavior. Before claiming context savings, manually compare equivalent sessions for plugin-wide discovery versus compact-router-to-exact-skill invocation, using host-visible input-token and skill/tool-loading events. If the host always injects global descriptions, have the parent context preselect the exact official skill and, where the product supports it, start a restricted researcher context. Compact routing token savings remain unproven when the host injects all installed plugin
-descriptions. Do not claim savings without an out-of-band A/B observation.
-
-The generator's standard-library helper supports deterministic scanning, application, and validation:
-
-```bash
-python .github/skills/repository-skill-generator/scripts/manage_project_skills.py scan --repo .
-python .github/skills/repository-skill-generator/scripts/manage_project_skills.py apply --repo . --plan /path/to/plan.json --prune
-python .github/skills/repository-skill-generator/scripts/manage_project_skills.py validate --repo . --require-meta
-python -m unittest discover -s .github/skills/repository-skill-generator/tests -v
-```
+The tests enforce the agent-only file layout, native tool allow-lists, and linked-reference contract.
+See [architecture](docs/architecture.md), [setup](docs/setup.md), and
+[troubleshooting](docs/troubleshooting.md).
