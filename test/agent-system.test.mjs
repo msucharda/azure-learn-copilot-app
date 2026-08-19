@@ -76,14 +76,27 @@ test("repository exposes only the native agent system", async () => {
 });
 
 test("researcher enforces research-only behavior", async () => {
-    const researcher = await text(RESEARCHER_PATH);
+    const [researcher, architecture] = await Promise.all([
+        text(RESEARCHER_PATH),
+        text("docs/architecture.md"),
+    ]);
     const contract = compact(researcher);
+    const architectureContract = compact(architecture);
 
     assert.ok(researcher.split("\n").length <= 180, "researcher contract must stay compact");
     for (const mode of ["standard", "evaluation", "repair"]) {
         assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }
 
+    assert.match(contract, /The coordinator supplies one research mode/i);
+    assert.doesNotMatch(contract, /The coordinator supplies one mode family/i);
+    assert.match(contract, /Use `read` only for an exact coordinator-supplied repair-packet path/i);
+    assert.match(contract, /exact path returned by a Microsoft Learn tool when it spools output/i);
+    assert.match(contract, /Do not read any unrelated workspace or user file/i);
+    assert.match(architectureContract, /`read` only for an exact coordinator-supplied repair-packet path/i);
+    assert.match(architectureContract, /exact file path returned when a Learn tool spools output/i);
+    assert.match(architectureContract, /unrelated workspace and user files remain forbidden/i);
+    assert.doesNotMatch(researcher, /[^\r\n]\r?\n## /);
     assert.match(contract, /All discovery uses Microsoft Learn directly/i);
     assert.match(contract, /Do not invoke or request installed product skills/i);
     assert.match(contract, /original request and selected refinement as authoritative.*do not reinterpret or broaden/i);
