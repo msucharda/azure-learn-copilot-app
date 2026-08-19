@@ -60,6 +60,9 @@ another negative; preserve a gap unless the selected section states the negative
 ## Output
 
 Return one minified JSON line:
+Use the lower of the supplied cap and 8,000 characters. Per verb, use at most three sources and four
+entries in each fact array; keep each fact entry at most 240 characters. Merge same-field facts without
+dropping actor, variant, default, destructive, data-loss, or unresolved qualifiers.
 
 {
   "task_sha256": "<exact hash>",

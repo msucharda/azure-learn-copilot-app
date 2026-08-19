@@ -133,6 +133,9 @@ test("MAI evaluation agents keep bounded single-purpose contracts", async () => 
     assert.match(compact(operations), /fragment or query pivot restricts evidence to that selected section/i);
     assert.match(compact(operations), /Absence is not evidence of "no rollback," "read-only," "destructive," or another negative/i);
     assert.match(compact(operations), /field-level source attribution/i);
+    assert.match(compact(operations), /lower of the supplied cap and 8,000 characters/i);
+    assert.match(compact(operations), /at most three sources and four entries in each fact array/i);
+    assert.match(compact(operations), /Merge same-field facts without dropping actor, variant, default, destructive, data-loss, or unresolved qualifiers/i);
     assert.match(compact(operations), /OPERATIONS_PAYLOAD_LIMIT/i);
 
     assert.match(compact(preflight), /Audit mode: preflight/i);
