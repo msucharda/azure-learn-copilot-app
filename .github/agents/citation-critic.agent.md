@@ -67,7 +67,9 @@ website link. Check:
     prerequisites, and join cardinality; and identity attribution preserves provenance across telemetry planes; and
 13. whether a discovery ranker filled strong-model protected evidence slots without deriving, merging, or
     dropping them; whether actor, action, target service/plane, and adjacent-candidate exclusions match;
-    and whether the final evidence set—not the discovery pool—alone supports claims.
+    whether the final evidence set—not the discovery pool—alone supports claims; and
+14. whether the answer follows the supplied selected refinement without broadening, narrowing, or replacing
+    the user's frozen intent.
 
 For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
 usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one

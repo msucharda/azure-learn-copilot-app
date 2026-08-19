@@ -80,6 +80,8 @@ test("researcher separates research and focused learning behavior", async () => 
 
     assert.match(contract, /All discovery uses Microsoft Learn directly/i);
     assert.match(contract, /Do not invoke or request installed product skills/i);
+    assert.match(contract, /original request and selected refinement as authoritative.*do not reinterpret or broaden/i);
+    assert.match(contract, /REFINEMENT_CONFIGURATION_ERROR.*before discovery/i);
     assert.doesNotMatch(researcher, /Selected official product skill|Load at most.*official skill/i);
     assert.match(contract, /Each numbered item, bullet, or semicolon-delimited subtopic is one atom/i);
     assert.match(contract, /least-supported dimension determines that atom's final status/i);
@@ -199,6 +201,7 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /discovery ranker filled strong-model protected evidence slots/i);
     assert.match(contract, /actor, action, target service\/plane, and adjacent-candidate exclusions match/i);
     assert.match(contract, /final evidence set.*discovery pool.*supports claims/i);
+    assert.match(contract, /answer follows the supplied selected refinement without broadening, narrowing, or replacing/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
