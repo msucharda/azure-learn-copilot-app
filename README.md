@@ -97,8 +97,9 @@ be paraphrased as load-sharing without preserving symmetry and traffic-steering 
 queries map each table to its telemetry producer and configuration, establish join cardinality, and keep
 credential, principal, telemetry-field, and aggregation-key provenance distinct across identity planes.
 Discovery may consider more than 15 candidate pages, but the strong intent stage fixes protected evidence
-slots before ranking. A weak ranker can fill those slots but cannot derive or remove them; only the final
-set of at most 15 fetched pages supports claims.
+slots before ranking. Each slot fixes the actor, action, target service or plane, and the decisive reason
+to reject the closest adjacent candidate. A weak ranker can fill but cannot derive or remove slots; only
+the final set of at most 15 fetched pages supports claims.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns

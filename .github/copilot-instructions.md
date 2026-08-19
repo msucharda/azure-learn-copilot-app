@@ -67,7 +67,8 @@ review packet in the session artifact directory and give a read-enabled reviewer
 ## Research and publication
 
 - A discovery-only candidate pool may exceed 15 pages, but Sol fixes protected evidence slots before
-  ranking. An advisory weak ranker may fill those slots; it cannot derive, merge, drop, or support claims.
+  ranking. Each slot fixes actor, action, target service/plane, and an adjacent-candidate exclusion.
+  An advisory weak ranker may fill those slots; it cannot derive, merge, drop, or support claims.
 - Limit the final evidence set to 15 authoritative pages and fetch every cited page. Exact operations,
   schemas, identity, limits, and qualifier-bearing pages precede generic or adjacent-product pages.
 - Preserve actor/action boundaries, mutable status, numeric conditions, and successful fetch URLs. When
