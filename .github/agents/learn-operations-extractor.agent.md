@@ -41,6 +41,12 @@ Creation-time constraints are not deletion prerequisites. If no fetched page sup
 operation, mark only that verb unresolved. If pages expose incompatible operations or numeric limits
 after their scopes are normalized, set the verb status to `conflicting` and preserve both values.
 
+Every `sources[].url` must be byte-for-byte identical to one supplied URL. A supplied fragment or query
+pivot restricts evidence to that selected section: a full-page fetch does not authorize a sibling
+heading, a different fragment, or a rewritten URL. Omit an out-of-scope fact and record the affected
+field as unresolved instead. Absence is not evidence of "no rollback," "read-only," "destructive," or
+another negative; preserve a gap unless the selected section states the negative explicitly.
+
 ## Output
 
 Return one minified JSON line:
@@ -72,7 +78,7 @@ Return one minified JSON line:
   ]
 }
 
-Validate JSON parsing, verb count and order, source URL membership, field-level source attribution,
-non-inferred selectors, operation-kind fidelity, and the serialized cap. If the minified output exceeds
-the cap, send `FAILED` with
+Validate JSON parsing, verb count and order, byte-for-byte source URL membership, fragment and pivot
+scope, field-level source attribution, non-inferred selectors and negatives, operation-kind fidelity,
+and the serialized cap. If the minified output exceeds the cap, send `FAILED` with
 `OPERATIONS_PAYLOAD_LIMIT`. This packet is evidence input, not a user-facing runbook.

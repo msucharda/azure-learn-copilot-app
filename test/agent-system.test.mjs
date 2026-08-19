@@ -119,6 +119,9 @@ test("MAI evaluation agents keep bounded single-purpose contracts", async () => 
     assert.match(compact(operations), /API display name is not executable syntax/i);
     assert.match(compact(operations), /Creation-time constraints are not deletion prerequisites/i);
     assert.match(compact(operations), /operation_kind/i);
+    assert.match(compact(operations), /byte-for-byte identical to one supplied URL/i);
+    assert.match(compact(operations), /fragment or query pivot restricts evidence to that selected section/i);
+    assert.match(compact(operations), /Absence is not evidence of "no rollback," "read-only," "destructive," or another negative/i);
     assert.match(compact(operations), /field-level source attribution/i);
     assert.match(compact(operations), /OPERATIONS_PAYLOAD_LIMIT/i);
 
