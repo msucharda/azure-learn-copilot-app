@@ -119,9 +119,14 @@ test("MAI evaluation agents keep bounded single-purpose contracts", async () => 
     assert.match(compact(operations), /API display name is not executable syntax/i);
     assert.match(compact(operations), /complete executable sequence/i);
     assert.match(compact(operations), /Do not shorten example syntax into a generic signature/i);
+    assert.match(compact(operations), /if its block has multiple commands, include all in order or fail/i);
     assert.match(compact(operations), /Preserve every documented default and optionality qualifier explicitly/i);
+    assert.match(compact(operations), /Response fields are not selectors/i);
+    assert.match(compact(operations), /alternative switch absent from the invocation in `safety`, not `selectors`/i);
     assert.match(compact(operations), /Never flatten a transition.*across resource variants/i);
     assert.match(compact(operations), /narrowest section locator/i);
+    assert.match(compact(operations), /For every input `In scope` or `Unresolved` dimension/i);
+    assert.match(compact(operations), /Route documented recovery limits to `rollback_limits`/i);
     assert.match(compact(operations), /Creation-time constraints are not deletion prerequisites/i);
     assert.match(compact(operations), /operation_kind/i);
     assert.match(compact(operations), /byte-for-byte identical to one supplied URL/i);
