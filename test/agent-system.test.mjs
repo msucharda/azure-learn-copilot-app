@@ -86,7 +86,11 @@ test("source triage is bounded discovery advice", async () => {
     assert.match(contract, /at most six exact protected slots/i);
     assert.match(contract, /4,000-character callback-payload cap/i);
     assert.match(contract, /complete JSON message the final tool call/i);
-    assert.match(contract, /serialized JSON must be at most 4,000 characters/i);
+    assert.match(contract, /Serialize the JSON as one minified line with no insignificant whitespace/i);
+    assert.match(contract, /count that exact string.*at most 4,000 characters/i);
+    assert.match(contract, /TRIAGE_PAYLOAD_LIMIT/i);
+    assert.match(contract, /URL query pivot or fragment narrows evidence scope/i);
+    assert.match(contract, /operations slot requires a dedicated operation or procedure candidate/i);
     assert.match(contract, /status: "unresolved".*confidence: "low".*rather than guessing/i);
     assert.match(contract, /strict JSON only/i);
     assert.match(contract, /advisory navigation data and cannot support a factual claim/i);

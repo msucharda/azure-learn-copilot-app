@@ -34,6 +34,8 @@ renderer. Copilot App owns tool execution and session coordination.
 The evaluation-only triage agent runs on MAI Code 1.1 Flash when selected by the coordinator. It
 searches Microsoft Learn for candidates that fill Sol-defined protected slots and returns strict JSON.
 It cannot change intent or slots, fetch citation evidence, write an answer, or support a factual claim.
+The callback JSON is minified before its hard character check. URL pivots and fragments narrow candidate
+scope, and an operations slot prefers a dedicated procedure over a generic concept page.
 The final researcher validates the packet, fetches every selected page, and falls back to direct
 discovery only for affected slots. Sol remains the production author; frozen comparison arms may use
 Terra. Standard production research remains unchanged until promotion.

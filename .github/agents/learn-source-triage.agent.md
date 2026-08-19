@@ -41,10 +41,12 @@ Only after successful delivery, return the same complete result in the child ses
    stop when the slot can be decided. Use `read` only if a Learn tool spools its own output, and only
    for the exact returned path and required range.
 4. Select one primary candidate only when its returned metadata covers the supplied actor, action,
-   target service or plane, and evidence type. Select the closest adjacent candidate whose mismatch
-   demonstrates the supplied exclusion.
+   target service or plane, and evidence type. A URL query pivot or fragment narrows evidence scope;
+   metadata from another pivot or section cannot fill the slot. Select the closest adjacent candidate
+   whose mismatch demonstrates the supplied exclusion.
 5. Prefer exact operations, schema, lifecycle, tier, mode, and qualifier-bearing pages over generic
-   overviews. Do not infer page scope from generic usefulness or from a URL slug alone.
+   overviews. An operations slot requires a dedicated operation or procedure candidate when search
+   exposes one. Do not infer page scope from generic usefulness or from a URL slug alone.
 6. Use `status: "unresolved"` and `confidence: "low"` rather than guessing. A candidate URL must come
    from the current Learn search results and use HTTPS on exactly `learn.microsoft.com`.
 7. Recheck the exact slot count, names, order, URL host, source budget, and word caps before callback.
@@ -69,7 +71,8 @@ Return strict JSON only, with no Markdown, model metadata, scores, factual answe
   ]
 }
 
-The serialized JSON must be at most 4,000 characters. Include exactly one object per supplied slot in
-the supplied order. `selected` requires non-null
+Serialize the JSON as one minified line with no insignificant whitespace, then count that exact string.
+It must be at most 4,000 characters; otherwise send `FAILED` with `TRIAGE_PAYLOAD_LIMIT` and stop.
+Include exactly one object per supplied slot in the supplied order. `selected` requires non-null
 selected and rejected URLs. `unresolved` requires `selected_url`, `selected_title`, and `rejected_url`
 to be null. This packet is advisory navigation data and cannot support a factual claim.
