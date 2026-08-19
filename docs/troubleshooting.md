@@ -74,6 +74,7 @@
 | A recall question cues the answer | Remove distinctive role, option, or discriminator wording from the stem so the learner must retrieve it |
 | A lesson uses an unsupported portal label | Prefer conceptual action wording unless exact fetched page text contains the UI label |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
+| A triage child returns a result before sending `COMPLETED` | Reject the run as a delivery failure; require the bounded complete callback as the child's final tool call and do not reconstruct the transcript |
 | A triage packet is malformed, incomplete, low-confidence, or selects the wrong scope | Do not retry MAI or treat the packet as evidence; run direct Sol discovery only for each affected protected slot |
 | Feedback introduces new sources, facts, or concepts | Treat the exact lesson as the teaching boundary; References verify its claims, and learner responses are evidence of understanding rather than factual sources |
 | Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; write `Mastered: None yet` instead of narrowing mastery to the recall scenario |

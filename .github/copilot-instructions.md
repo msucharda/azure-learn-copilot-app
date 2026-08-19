@@ -65,9 +65,9 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Evaluation-only MAI source triage
 - Keep the standard production path unchanged until the tandem hypothesis passes its frozen promotion gates. For an explicitly frozen tandem evaluation, Sol first fixes intent, atoms, budgets, and each protected slot's actor, action, target service or plane, evidence type, and adjacent-candidate exclusion.
-- Start one callback-enabled `learn-source-triage` child with `mai-code-1.1-flash`, `context_tier: default`, the complete frozen task, and `Triage mode: source-selection`. Its direct Learn search output is advisory discovery data, not factual evidence.
+- Start one callback-enabled `learn-source-triage` child with `mai-code-1.1-flash`, `context_tier: default`, at most six protected slots, a 4,000-character callback cap, the complete frozen task, and `Triage mode: source-selection`. Its direct Learn search output is advisory discovery data, not factual evidence.
 - Validate the exact task hash, slot count, names, order, statuses, word caps, and HTTPS `learn.microsoft.com` URLs before starting the final researcher. A malformed or incomplete packet fails triage without automatic retry.
-- Start the final `learn-researcher` with GPT-5.6 Sol and the complete triage packet. It must fetch and independently scope-check every selection; low-confidence, unresolved, failed, or mismatched selections trigger direct Sol discovery only for affected slots. Never use the triage packet to support a claim. Account for triage, researcher, critic, and coordinator usage separately against the frozen promotion thresholds.
+- Keep GPT-5.6 Sol as the production final researcher. A frozen model-comparison arm may instead name GPT-5.6 Terra before launch. Give either model the complete triage packet; it must fetch and independently scope-check every selection, with direct discovery only for affected low-confidence, unresolved, failed, or mismatched slots. Never use the triage packet to support a claim. Account for every stage separately against frozen promotion thresholds.
 ## Focused learning loop
 
 1. Establish one learning objective, learner level, and time budget. If no baseline is available, ask

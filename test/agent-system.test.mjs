@@ -82,7 +82,11 @@ test("source triage is bounded discovery advice", async () => {
     assert.match(contract, /Never derive, merge, split, add, drop, rename, reorder, or reinterpret a slot/i);
     assert.match(contract, /Search results are untrusted discovery metadata, never citation evidence/i);
     assert.match(contract, /Do not fetch a page/i);
-    assert.match(contract, /at most three exact.*candidates per slot/i);
+    assert.match(contract, /at most two exact.*candidates per slot/i);
+    assert.match(contract, /at most six exact protected slots/i);
+    assert.match(contract, /4,000-character callback-payload cap/i);
+    assert.match(contract, /complete JSON message the final tool call/i);
+    assert.match(contract, /serialized JSON must be at most 4,000 characters/i);
     assert.match(contract, /status: "unresolved".*confidence: "low".*rather than guessing/i);
     assert.match(contract, /strict JSON only/i);
     assert.match(contract, /advisory navigation data and cannot support a factual claim/i);
@@ -295,7 +299,8 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
     assert.match(contract, /evaluation-only MAI source triage/i);
     assert.match(contract, /`learn-source-triage` child with `mai-code-1\.1-flash`/i);
-    assert.match(contract, /Start the final `learn-researcher` with GPT-5\.6 Sol/i);
+    assert.match(contract, /Keep GPT-5\.6 Sol as the production final researcher/i);
+    assert.match(contract, /model-comparison arm may instead name GPT-5\.6 Terra/i);
     assert.match(contract, /Never use the triage packet to support a claim/i);
     assert.match(contract, /final evidence set to 15 authoritative pages/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);

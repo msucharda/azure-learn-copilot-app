@@ -26,8 +26,9 @@ returned as normal website links.
    in one kickoff. Idle notifications are diagnostic only. Standard research uses the default context
    tier; long context is reserved for measured large-packet or context-pressure cases.
 4. In an explicitly frozen tandem evaluation, a separate `learn-source-triage` child running MAI Code
-   1.1 Flash may search and rank pages for Sol-defined protected slots. Its strict JSON is advisory only;
-   standard production research remains unchanged until the hypothesis passes its promotion gates.
+   1.1 Flash may search and rank pages for at most six Sol-defined protected slots. Its callback is a
+   bounded strict-JSON packet and is advisory only; standard production research remains unchanged until
+   the hypothesis passes its promotion gates.
 5. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
    product-skill catalogs are outside the research path.
 6. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
@@ -108,10 +109,10 @@ Discovery may consider more than 15 candidate pages, but the strong intent stage
 slots before ranking. Each slot fixes the actor, action, target service or plane, and the decisive reason
 to reject the closest adjacent candidate. A weak ranker can fill but cannot derive or remove slots; only
 the final set of at most 15 fetched pages supports claims.
-The evaluation-only tandem path assigns that bounded ranking task to MAI Code 1.1 Flash. The final Sol
+The evaluation-only tandem path assigns that bounded ranking task to MAI Code 1.1 Flash. The final
 researcher validates the packet structurally, fetches and scope-checks every selected page, and falls back
-to direct discovery only for an affected slot. Triage text never becomes evidence and is never retried
-automatically.
+to direct discovery only for an affected slot. Sol remains the production author; a frozen comparison may
+substitute Terra. Triage text never becomes evidence and is never retried automatically.
 The coordinator keeps useful exploratory ambiguity, but materially different interpretations are resolved
 before orchestration. Research receives both the original request and the frozen selected interpretation;
 MAI never decides user intent.
