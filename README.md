@@ -9,6 +9,7 @@ returned as normal website links.
 
 | Path | Purpose |
 | --- | --- |
+| `.github/agents/learn-source-triage.agent.md` | Evaluation-only MAI discovery and ranking for Sol-defined evidence slots |
 | `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
 | `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
 | `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |
@@ -24,11 +25,14 @@ returned as normal website links.
    `learn-researcher` child with the complete frozen task and a task-hash-correlated callback envelope
    in one kickoff. Idle notifications are diagnostic only. Standard research uses the default context
    tier; long context is reserved for measured large-packet or context-pressure cases.
-4. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
+4. In an explicitly frozen tandem evaluation, a separate `learn-source-triage` child running MAI Code
+   1.1 Flash may search and rank pages for Sol-defined protected slots. Its strict JSON is advisory only;
+   standard production research remains unchanged until the hypothesis passes its promotion gates.
+5. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
    product-skill catalogs are outside the research path.
-5. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
+6. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
    cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
-6. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
+7. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
    Evaluation mode appends a coordinator-only packet. A cold-context, strong different-family critic reads
    that exact packet, refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
@@ -104,6 +108,10 @@ Discovery may consider more than 15 candidate pages, but the strong intent stage
 slots before ranking. Each slot fixes the actor, action, target service or plane, and the decisive reason
 to reject the closest adjacent candidate. A weak ranker can fill but cannot derive or remove slots; only
 the final set of at most 15 fetched pages supports claims.
+The evaluation-only tandem path assigns that bounded ranking task to MAI Code 1.1 Flash. The final Sol
+researcher validates the packet structurally, fetches and scope-checks every selected page, and falls back
+to direct discovery only for an affected slot. Triage text never becomes evidence and is never retried
+automatically.
 The coordinator keeps useful exploratory ambiguity, but materially different interpretations are resolved
 before orchestration. Research receives both the original request and the frozen selected interpretation;
 MAI never decides user intent.

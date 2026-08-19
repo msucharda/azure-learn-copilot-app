@@ -53,7 +53,6 @@ Use one kickoff and an explicit agent callback for every deep child:
 Coordinator-generated Markdown is not a valid kickoff attachment; the App attachment field accepts
 only app-staged image attachments from the creator message. Git staging does not change that. Put a
 review packet in the session artifact directory and give a read-enabled reviewer its exact path.
-
 ## Modes and direct discovery
 
 - Put `Research mode: standard`, `evaluation`, or `repair` in the kickoff. Standard is the normal path.
@@ -64,6 +63,11 @@ review packet in the session artifact directory and give a read-enabled reviewer
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
   startup complexity; factual premises come only from successfully fetched Learn pages.
 
+## Evaluation-only MAI source triage
+- Keep the standard production path unchanged until the tandem hypothesis passes its frozen promotion gates. For an explicitly frozen tandem evaluation, Sol first fixes intent, atoms, budgets, and each protected slot's actor, action, target service or plane, evidence type, and adjacent-candidate exclusion.
+- Start one callback-enabled `learn-source-triage` child with `mai-code-1.1-flash`, `context_tier: default`, the complete frozen task, and `Triage mode: source-selection`. Its direct Learn search output is advisory discovery data, not factual evidence.
+- Validate the exact task hash, slot count, names, order, statuses, word caps, and HTTPS `learn.microsoft.com` URLs before starting the final researcher. A malformed or incomplete packet fails triage without automatic retry.
+- Start the final `learn-researcher` with GPT-5.6 Sol and the complete triage packet. It must fetch and independently scope-check every selection; low-confidence, unresolved, failed, or mismatched selections trigger direct Sol discovery only for affected slots. Never use the triage packet to support a claim. Account for triage, researcher, critic, and coordinator usage separately against the frozen promotion thresholds.
 ## Focused learning loop
 
 1. Establish one learning objective, learner level, and time budget. If no baseline is available, ask

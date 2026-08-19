@@ -55,6 +55,12 @@ When a child must test agent changes that are not on the default branch, commit 
 branch first, pass that branch as `base_branch`, and verify the child contains the expected commit.
 Native child-session creation resolves the pushed branch state; an unpushed local commit is not inherited.
 
+For a frozen tandem evaluation, first start `learn-source-triage` with `mai-code-1.1-flash`, `Triage
+mode: source-selection`, the complete protected-slot task, and the same callback envelope. Validate its
+strict JSON before giving the complete advisory packet to a `learn-researcher` child running GPT-5.6 Sol.
+The researcher must fetch and scope-check every selected page; triage output is not citation evidence.
+Do not retry a failed triage session. Use direct Sol discovery only for affected slots.
+
 For evidence review, use `Research mode: evaluation`, save the returned coordinator-only packet as a
 session artifact, and give `citation-critic` that exact path. It independently fetches only the Learn
 URLs already in References. Give its repair brief and the prior answer to a fresh callback-enabled

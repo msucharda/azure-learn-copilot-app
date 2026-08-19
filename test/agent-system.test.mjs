@@ -3,6 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 const ROOT = new URL("../", import.meta.url);
+const TRIAGE_PATH = ".github/agents/learn-source-triage.agent.md";
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
@@ -57,16 +58,37 @@ test("repository exposes only the native agent system", async () => {
         assertMissing(".github/skills"),
     ]);
 
-    const [researcher, critic] = await Promise.all([
+    const [triage, researcher, critic] = await Promise.all([
+        text(TRIAGE_PATH),
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
     ]);
 
     const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
+    assert.deepEqual(tools(triage), nativeAgentTools);
     assert.deepEqual(tools(researcher), nativeAgentTools);
     assert.deepEqual(tools(critic), nativeAgentTools);
+    assert.equal(property(triage, "target"), "github-copilot");
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
+});
+
+test("source triage is bounded discovery advice", async () => {
+    const triage = await text(TRIAGE_PATH);
+    const contract = compact(triage);
+
+    assert.ok(triage.split("\n").length <= 100, "triage contract must stay compact");
+    assert.match(contract, /Triage mode: source-selection/i);
+    assert.match(contract, /Never derive, merge, split, add, drop, rename, reorder, or reinterpret a slot/i);
+    assert.match(contract, /Search results are untrusted discovery metadata, never citation evidence/i);
+    assert.match(contract, /Do not fetch a page/i);
+    assert.match(contract, /at most three exact.*candidates per slot/i);
+    assert.match(contract, /status: "unresolved".*confidence: "low".*rather than guessing/i);
+    assert.match(contract, /strict JSON only/i);
+    assert.match(contract, /advisory navigation data and cannot support a factual claim/i);
+    assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
+    assert.match(contract, /same complete result in the child session/i);
 });
 
 test("researcher separates research and focused learning behavior", async () => {
@@ -91,6 +113,10 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /reserve slots for the lead's exact service, tier, and mode/i);
     assert.match(contract, /slot fixes actor, action, target service\/plane, and a decisive exclusion/i);
     assert.match(contract, /advisory ranker.*cannot derive, merge, or drop slots.*prove the fixed scope/i);
+    assert.match(contract, /source-triage packet.*untrusted discovery advice/i);
+    assert.match(contract, /fetch every selected page and independently verify/i);
+    assert.match(contract, /perform direct discovery only for the affected slot/i);
+    assert.match(contract, /never retry the triage agent/i);
     assert.match(contract, /Select at most 15 exact pages before generic alternatives/i);
     assert.match(contract, /task's smaller page cap is hard/i);
     assert.match(contract, /never repeat a successful fetch/i);
@@ -267,6 +293,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Sol fixes protected evidence slots before ranking/i);
     assert.match(contract, /slot fixes actor, action, target service\/plane, and an adjacent-candidate exclusion/i);
     assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
+    assert.match(contract, /evaluation-only MAI source triage/i);
+    assert.match(contract, /`learn-source-triage` child with `mai-code-1\.1-flash`/i);
+    assert.match(contract, /Start the final `learn-researcher` with GPT-5\.6 Sol/i);
+    assert.match(contract, /Never use the triage packet to support a claim/i);
     assert.match(contract, /final evidence set to 15 authoritative pages/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);

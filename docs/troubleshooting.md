@@ -3,6 +3,7 @@
 | Symptom | Response |
 | --- | --- |
 | `learn-researcher` is not available | Start a new project turn or session so Copilot reloads project agents |
+| `learn-source-triage` is not available | Confirm the feature branch containing the agent was pushed, then start a fresh child session from that branch |
 | `microsoft-learn/*` is unavailable | Configure the Learn MCP server in App settings under the exact `microsoft-learn` name, then start a fresh session |
 | Learn output is saved to a temporary file | Use `read` only on the exact path returned by that tool and inspect only the necessary ranges |
 | The answer cites a search result without fetching it | Treat the citation as unverified and rerun with a fetched source; search chunks are discovery only |
@@ -73,6 +74,7 @@
 | A recall question cues the answer | Remove distinctive role, option, or discriminator wording from the stem so the learner must retrieve it |
 | A lesson uses an unsupported portal label | Prefer conceptual action wording unless exact fetched page text contains the UI label |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
+| A triage packet is malformed, incomplete, low-confidence, or selects the wrong scope | Do not retry MAI or treat the packet as evidence; run direct Sol discovery only for each affected protected slot |
 | Feedback introduces new sources, facts, or concepts | Treat the exact lesson as the teaching boundary; References verify its claims, and learner responses are evidence of understanding rather than factual sources |
 | Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; write `Mastered: None yet` instead of narrowing mastery to the recall scenario |
 | The retry repeats the targeted correction | Change or invert the actor/action scenario; do not ask for the same entities, options, checklist, or sequence |

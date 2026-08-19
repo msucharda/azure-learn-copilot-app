@@ -9,8 +9,11 @@ flowchart LR
     U[User or parent session] --> P[Sol prompt-refinement gate]
     P -->|One ask_user choice when materially ambiguous| U
     P -->|Frozen original plus selected interpretation| O[Built-in orchestrate skill]
+    O -->|Optional frozen evaluation triage| T[learn-source-triage on MAI]
+    T --> L[Native Microsoft Learn tools]
+    T -->|Discovery-only packet| O
     O -->|One kickoff: task plus callback envelope| R[learn-researcher]
-    R --> L[Native Microsoft Learn tools]
+    R --> L
     L --> R
     R -->|Correlated callback| A[Research answer or focused lesson]
     A --> C[citation-critic on request]
@@ -25,6 +28,14 @@ There is no project runtime, custom tool server, durable evidence store, or sepa
 renderer. Copilot App owns tool execution and session coordination.
 
 ## Agents
+
+### `learn-source-triage`
+
+The evaluation-only triage agent runs on MAI Code 1.1 Flash when selected by the coordinator. It
+searches Microsoft Learn for candidates that fill Sol-defined protected slots and returns strict JSON.
+It cannot change intent or slots, fetch citation evidence, write an answer, or support a factual claim.
+The final Sol researcher validates the packet, fetches every selected page, and falls back to direct
+discovery only for affected slots. Standard production research remains unchanged until promotion.
 
 ### `learn-researcher`
 
