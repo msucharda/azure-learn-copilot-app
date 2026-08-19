@@ -29,8 +29,8 @@ returned as normal website links.
 5. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
    cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
 6. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
-   Evaluation mode appends a coordinator-only packet. A different-model critic reads that exact packet,
-   refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
+   Evaluation mode appends a coordinator-only packet. A cold-context, strong different-family critic reads
+   that exact packet, refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
    corrected user-facing answer.
 
@@ -108,8 +108,13 @@ The coordinator keeps useful exploratory ambiguity, but materially different int
 before orchestration. Research receives both the original request and the frozen selected interpretation;
 MAI never decides user intent.
 
+For a parallel verification suite, the coordinator freezes every prompt, atom, rubric, budget, threshold,
+and hash before launching any case, launches all cases before inspecting an answer, and makes no prompt
+change until every strong-critic verdict completes. Researcher, critic, and coordinator usage is recorded
+separately so parent deliberation cannot be mistaken for Learn-answer cost.
+
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
-A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns
+A cold-context, strong different-family critic reads that exact artifact, verifies only its existing Learn links, and returns
 a repair brief instead of another architecture. A fresh repair-mode researcher receives the prior
 answer and brief in one exact packet. The brief is analysis rather than evidence; each proposed fact is
 re-verified against the fixed source set. The coordinator records runtime failures, repair results, and

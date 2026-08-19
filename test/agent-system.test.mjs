@@ -253,6 +253,8 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Accept a callback only from the expected child project-session ID/i);
     assert.match(contract, /Treat idle notifications as diagnostics, never completion/i);
     assert.match(contract, /do not automatically resend the task/i);
+    assert.match(contract, /`COMPLETED` payload missing the full required result.*delivery failure/i);
+    assert.match(contract, /never reconstruct, resend, or retry it automatically/i);
     assert.match(contract, /Use `context_tier: default`/i);
     assert.match(contract, /packets? over 15,000 characters/i);
     assert.match(contract, /more than 30 fixed atoms/i);
@@ -276,6 +278,13 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Do not create a learner database or schedule review automatically/i);
     assert.match(contract, /do not forward that packet as user-facing output/i);
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
+    assert.match(contract, /cold-context, strong frontier-class, different-family.*`citation-critic`/i);
+    assert.match(contract, /never use a mini or economy model for a promotion verdict/i);
+    assert.match(contract, /freeze every prompt, atom, rubric, budget, threshold, and hash/i);
+    assert.match(contract, /launch all parallel cases before inspecting results/i);
+    assert.match(contract, /make no contract edit until every strong-critic verdict completes/i);
+    assert.match(contract, /Sol is the control plane and cannot override a critical defect/i);
+    assert.match(contract, /researcher, critic, and coordinator usage separately by session/i);
     assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
     assert.match(contract, /publish only its user-facing portion/i);
     assert.match(contract, /critic brief is analysis, not evidence/i);

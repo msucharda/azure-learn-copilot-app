@@ -43,7 +43,8 @@ Use one kickoff and an explicit agent callback for every deep child:
    when both identifiers match.
 6. Treat idle notifications as diagnostics, never completion. If the child becomes idle without the
    required callback, inspect its transcript once, record a delivery failure, and do not automatically
-   resend the task.
+   resend the task. A `COMPLETED` payload missing the full required result is also a delivery failure;
+   never reconstruct, resend, or retry it automatically.
 7. Ignore duplicate or stale callbacks. Validate the complete normalized result before archiving.
 8. Use `context_tier: default`. Escalate to `long_context` only for evaluation/A-B packets over 15,000
    characters, more than 30 fixed atoms, multi-answer comparison, or a recorded default-context run that
@@ -121,13 +122,15 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Formal review and repair
 
-- When evidence review is requested, create a different-model `citation-critic` child with the callback
-  envelope. Supply the exact original task, complete answer, evaluation packet, and delivery channel in
-  one session-artifact packet. The critic may read only that packet and review-fetch only the exact
-  Learn URLs already in References; it cannot search, add sources, invoke skills, or propose another
-  architecture.
-- For controlled A/B experiments, anonymize arm metadata before review, fix the scoring rubric and task
-  hash before either answer is inspected, and decode the arms only after the verdict.
+- When evidence review is requested, create a cold-context, strong frontier-class, different-family
+  `citation-critic`; never use a mini or economy model for a promotion verdict. Supply the exact original
+  task, complete answer, evaluation packet, and delivery channel in one session artifact. It may read only
+  that packet and review-fetch only the exact Learn URLs already in References; it cannot search, add sources, or redesign.
+- Before an evaluation suite, freeze every prompt, atom, rubric, budget, threshold, and hash in one artifact;
+  launch all parallel cases before inspecting results, and make no contract edit until every strong-critic
+  verdict completes. Blind A/B arms until verdict. Sol is the control plane and cannot override a critical defect.
+- Record researcher, critic, and coordinator usage separately by session: model, input/output tokens,
+  available AIU, runtime, Learn-tool volume, references, fetched pages, and delivered core words.
 - Start a fresh callback-enabled `learn-researcher` child with `Research mode: repair` and one exact
   packet containing the prior answer and critic brief. Unless explicitly authorized, repair reuses the
   existing source set. A critic brief is analysis, not evidence: verify every proposed fact against an

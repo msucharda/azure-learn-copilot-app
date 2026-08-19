@@ -66,9 +66,14 @@ preprocessing starts only after Sol has fixed the interpretation.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a
-different-model critic review it, starts a fresh repair-mode researcher with the exact prior answer and
+strong different-family, cold-context critic review it, starts a fresh repair-mode researcher with the exact prior answer and
 repair brief, and publishes only the corrected user-facing portion. Markdown artifacts are read by
 exact path rather than passed as kickoff attachments, which accept only app-staged creator images.
+
+Evaluation suites freeze prompts, atoms, rubrics, budgets, thresholds, and hashes before the first launch.
+All parallel cases start before results are inspected; no contract change lands until every critic verdict
+completes. Sol coordinates but cannot override critical-defect precedence, and usage is recorded separately
+for researcher, critic, and coordinator sessions.
 
 Focused learning has two fresh-child phases. A lesson receives one objective, learner level, time
 budget, and optional diagnostic response; it uses at most five fetched pages and stops after one recall
