@@ -4,6 +4,10 @@ import test from "node:test";
 
 const ROOT = new URL("../", import.meta.url);
 const TRIAGE_PATH = ".github/agents/learn-source-triage.agent.md";
+const EVIDENCE_PATH = ".github/agents/learn-evidence-extractor.agent.md";
+const OPERATIONS_PATH = ".github/agents/learn-operations-extractor.agent.md";
+const PREFLIGHT_PATH = ".github/agents/learn-preflight-auditor.agent.md";
+const WRITER_PATH = ".github/agents/learn-bounded-writer.agent.md";
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
@@ -58,19 +62,69 @@ test("repository exposes only the native agent system", async () => {
         assertMissing(".github/skills"),
     ]);
 
-    const [triage, researcher, critic] = await Promise.all([
+    const [triage, evidence, operations, preflight, writer, researcher, critic] = await Promise.all([
         text(TRIAGE_PATH),
+        text(EVIDENCE_PATH),
+        text(OPERATIONS_PATH),
+        text(PREFLIGHT_PATH),
+        text(WRITER_PATH),
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
     ]);
 
     const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
     assert.deepEqual(tools(triage), nativeAgentTools);
+    assert.deepEqual(tools(evidence), nativeAgentTools);
+    assert.deepEqual(tools(operations), nativeAgentTools);
+    assert.deepEqual(tools(preflight), nativeAgentTools);
+    assert.deepEqual(tools(writer), ["read", "send_session_message"]);
     assert.deepEqual(tools(researcher), nativeAgentTools);
     assert.deepEqual(tools(critic), nativeAgentTools);
     assert.equal(property(triage, "target"), "github-copilot");
+    assert.equal(property(evidence, "target"), "github-copilot");
+    assert.equal(property(operations, "target"), "github-copilot");
+    assert.equal(property(preflight, "target"), "github-copilot");
+    assert.equal(property(writer, "target"), "github-copilot");
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
+});
+
+test("MAI evaluation agents keep bounded single-purpose contracts", async () => {
+    const [evidence, operations, preflight, writer] = await Promise.all([
+        text(EVIDENCE_PATH),
+        text(OPERATIONS_PATH),
+        text(PREFLIGHT_PATH),
+        text(WRITER_PATH),
+    ]);
+
+    for (const agent of [evidence, operations, preflight, writer]) {
+        assert.ok(agent.split("\n").length <= 100, "MAI evaluation agent must stay compact");
+        assert.match(agent, /evaluation-only/i);
+        assert.match(agent, /STARTED <task-sha-256> <callback-nonce>/i);
+        assert.match(agent, /COMPLETED <task-sha-256> <callback-nonce>/i);
+        assert.match(agent, /final tool call/i);
+        assert.match(agent, /identical complete result/i);
+    }
+
+    assert.match(compact(evidence), /Evidence mode: claim-extraction/i);
+    assert.match(compact(evidence), /do not search, follow links, replace URLs, or add sources/i);
+    assert.match(compact(evidence), /URL fragments, query pivots, parent headings/i);
+    assert.match(compact(evidence), /EVIDENCE_PAYLOAD_LIMIT/i);
+
+    assert.match(compact(operations), /Evidence mode: operation-extraction/i);
+    assert.match(compact(operations), /scan every fetched page/i);
+    assert.match(compact(operations), /Never infer a command, selector, API version, or safety condition/i);
+    assert.match(compact(operations), /OPERATIONS_PAYLOAD_LIMIT/i);
+
+    assert.match(compact(preflight), /Audit mode: preflight/i);
+    assert.match(compact(preflight), /Review-fetch only the exact.*URLs already in its References/i);
+    assert.match(compact(preflight), /manufactured gap/i);
+    assert.match(compact(preflight), /cannot authorize publication/i);
+
+    assert.match(compact(writer), /Writing mode: bounded-synthesis/i);
+    assert.match(compact(writer), /cannot search, fetch, browse, invoke skills, or add facts/i);
+    assert.match(compact(writer), /target at most 85%/i);
+    assert.match(compact(writer), /Send `FAILED` rather than an over-cap, malformed, optimistic, or unsupported result/i);
 });
 
 test("source triage is bounded discovery advice", async () => {
@@ -311,6 +365,16 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
     assert.match(contract, /evaluation-only MAI source triage/i);
     assert.match(contract, /`learn-source-triage` child with `mai-code-1\.1-flash`/i);
+    for (const agent of [
+        "learn-evidence-extractor",
+        "learn-operations-extractor",
+        "learn-preflight-auditor",
+        "learn-bounded-writer",
+    ]) {
+        assert.match(contract, new RegExp(agent));
+    }
+    assert.match(contract, /bounded writer reads one exact normalized packet and has no Learn tools/i);
+    assert.match(contract, /untouched, blinded quality non-inferiority plus end-to-end cost savings/i);
     assert.match(contract, /Keep GPT-5\.6 Sol as the production final researcher/i);
     assert.match(contract, /model-comparison arm may instead name GPT-5\.6 Terra/i);
     assert.match(contract, /Never use the triage packet to support a claim/i);

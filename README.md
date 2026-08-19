@@ -10,6 +10,10 @@ returned as normal website links.
 | Path | Purpose |
 | --- | --- |
 | `.github/agents/learn-source-triage.agent.md` | Evaluation-only MAI discovery and ranking for Sol-defined evidence slots |
+| `.github/agents/learn-evidence-extractor.agent.md` | Evaluation-only MAI claim-ledger extraction from exact Learn pages |
+| `.github/agents/learn-operations-extractor.agent.md` | Evaluation-only MAI operation and safety-qualifier extraction |
+| `.github/agents/learn-preflight-auditor.agent.md` | Evaluation-only MAI adversarial answer preflight |
+| `.github/agents/learn-bounded-writer.agent.md` | Evaluation-only MAI synthesis from a frozen evidence packet |
 | `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
 | `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
 | `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |

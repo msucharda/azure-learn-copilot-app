@@ -63,11 +63,11 @@ review packet in the session artifact directory and give a read-enabled reviewer
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
   startup complexity; factual premises come only from successfully fetched Learn pages.
 
-## Evaluation-only MAI source triage
-- Keep the standard production path unchanged until the tandem hypothesis passes its frozen promotion gates. For an explicitly frozen tandem evaluation, Sol first fixes intent, atoms, budgets, and each protected slot's actor, action, target service or plane, evidence type, and adjacent-candidate exclusion.
-- Start one callback-enabled `learn-source-triage` child with `mai-code-1.1-flash`, `context_tier: default`, at most six protected slots, a 4,000-character callback cap, the complete frozen task, and `Triage mode: source-selection`. Its direct Learn search output is advisory discovery data, not factual evidence.
-- Validate the exact task hash, slot count, names, order, statuses, word caps, and HTTPS `learn.microsoft.com` URLs before starting the final researcher. A malformed or incomplete packet fails triage without automatic retry.
-- Keep GPT-5.6 Sol as the production final researcher. A frozen model-comparison arm may instead name GPT-5.6 Terra before launch. Give either model the complete triage packet; it must fetch and independently scope-check every selection, with direct discovery only for affected low-confidence, unresolved, failed, or mismatched slots. Never use the triage packet to support a claim. Account for every stage separately against frozen promotion thresholds.
+## Evaluation-only MAI routes
+- Keep the standard production path unchanged until a frozen route passes every gate. Sol fixes intent, atoms, budgets, and evidence slots before any MAI work. The five roles are evaluation-only MAI source triage, `learn-evidence-extractor`, `learn-operations-extractor`, `learn-preflight-auditor`, and `learn-bounded-writer`.
+- Start one callback-enabled `learn-source-triage` child with `mai-code-1.1-flash`, default context, at most six protected slots, a 4,000-character minified callback cap, the complete task, and `Triage mode: source-selection`; its search output is advisory discovery data, not evidence.
+- Evidence and operations extractors fetch only exact frozen Learn URLs; the preflight auditor may review-fetch only existing References; the bounded writer reads one exact normalized packet and has no Learn tools. Every output is correlated, bounded, structurally validated, and isolated from user intent.
+- Keep GPT-5.6 Sol as the production final researcher. A frozen model-comparison arm may instead name GPT-5.6 Terra. Never use the triage packet to support a claim, and never treat an audit as evidence; account for every stage separately and promote only after untouched, blinded quality non-inferiority plus end-to-end cost savings.
 ## Focused learning loop
 
 1. Establish one learning objective, learner level, and time budget. If no baseline is available, ask
