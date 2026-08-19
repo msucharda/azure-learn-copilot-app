@@ -28,28 +28,28 @@ a terminal error.
 ## Extraction
 
 For every mandatory verb, scan every fetched page rather than only the page expected to contain it.
-Preserve URL fragment or query-pivot scope, section, API version, actor and permission scope, management
-or data plane, method or command, target resource, selectors, prerequisites, defaults, side effects,
-connection effects, safety conditions, rollback limits, and destructive or data-loss flags.
+Preserve URL fragment or query-pivot scope, section, API version, actor and permission scope, plane,
+operation, target, selectors, prerequisites, defaults, effects, safety, rollback, and data-loss flags.
+Set `plane` only from explicit source wording or permission classification, never from command style.
 
 Never infer a command, selector, API version, permission, prerequisite, or safety condition. A permission
 action segment is not an operation name, an API display name is not executable syntax, and selectors or
 defaults from create or update do not transfer to failover, delete, or another action. Record
-`operation_kind` so a fetched API display name cannot masquerade as a command. Include selectors only
-when the cited source prints them in the emitted invocation, with values when printed. Response fields
-are not selectors. Put an alternative switch absent from the invocation in `safety`, not `selectors`.
+`operation_kind` so a fetched API display name cannot masquerade as a command. Selectors must mirror
+only the emitted invocation's exact aliases and values; do not normalize `-s value` to `--name` or drop
+its value. Response fields are not selectors. Put absent alternative switches in `safety`.
 When citing an example, reproduce its complete executable sequence, including assignments, projections,
 confirmation switches, background-job switches, and wait or result commands. Do not shorten example
 syntax into a generic signature; if its block has multiple commands, include all in order or fail.
 Preserve every documented default and optionality qualifier explicitly.
 Never flatten a transition, effect, or safety condition across resource variants; preserve each named
 variant and its distinct before/after state. Use the narrowest section locator that supports each fact.
-For every input `In scope` or `Unresolved` dimension, emit a supported fact or an explicit
-`Unresolved: <dimension>` in the relevant field. Route documented recovery limits to `rollback_limits`;
-an empty array is valid only after the cited sections were checked and contain no such fact.
-Creation-time constraints are not deletion prerequisites. If no fetched page supplies the exact
-operation, mark only that verb unresolved. If pages expose incompatible operations or numeric limits
-after their scopes are normalized, set the verb status to `conflicting` and preserve both values.
+For every input `In scope` or `Unresolved` dimension, emit a fact or `Unresolved: <dimension>` in the
+relevant field. Put every documented action, role, and authentication alternative in `actor_permissions`.
+Route recovery limits to `rollback_limits`; leave it empty only when cited sections contain none.
+Creation-time constraints are not deletion prerequisites. If no page supplies the operation, mark only
+that verb unresolved. Compare every default and numeric claim across every page, including generic
+versus tier-specific values; set `conflicting` and preserve both rather than inferring applicability.
 
 Every `sources[].url` must be byte-for-byte identical to one supplied URL. A supplied fragment or query
 pivot restricts evidence to that selected section: a full-page fetch does not authorize a sibling
