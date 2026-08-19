@@ -12,6 +12,12 @@ const DOCUMENTATION_PATHS = [
     "docs/setup.md",
     "docs/troubleshooting.md",
 ];
+const AGENT_SYSTEM_PATHS = [
+    RESEARCHER_PATH,
+    CRITIC_PATH,
+    INSTRUCTIONS_PATH,
+    ...DOCUMENTATION_PATHS,
+];
 
 function at(path) {
     return new URL(path, ROOT);
@@ -26,7 +32,7 @@ function compact(markdown) {
 }
 
 function frontmatter(markdown) {
-    const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
     assert.ok(match, "agent frontmatter is required");
     return match[1];
 }
@@ -69,15 +75,28 @@ test("repository exposes only the native agent system", async () => {
     assert.equal(property(critic, "target"), "github-copilot");
 });
 
-test("researcher separates research and focused learning behavior", async () => {
-    const researcher = await text(RESEARCHER_PATH);
+test("researcher enforces research-only behavior", async () => {
+    const [researcher, architecture] = await Promise.all([
+        text(RESEARCHER_PATH),
+        text("docs/architecture.md"),
+    ]);
     const contract = compact(researcher);
+    const architectureContract = compact(architecture);
 
     assert.ok(researcher.split("\n").length <= 180, "researcher contract must stay compact");
     for (const mode of ["standard", "evaluation", "repair"]) {
         assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }
 
+    assert.match(contract, /The coordinator supplies one research mode/i);
+    assert.doesNotMatch(contract, /The coordinator supplies one mode family/i);
+    assert.match(contract, /Use `read` only for an exact coordinator-supplied repair-packet path/i);
+    assert.match(contract, /exact path returned by a Microsoft Learn tool when it spools output/i);
+    assert.match(contract, /Do not read any unrelated workspace or user file/i);
+    assert.match(architectureContract, /`read` only for an exact coordinator-supplied repair-packet path/i);
+    assert.match(architectureContract, /exact file path returned when a Learn tool spools output/i);
+    assert.match(architectureContract, /unrelated workspace and user files remain forbidden/i);
+    assert.doesNotMatch(researcher, /[^\r\n]\r?\n## /);
     assert.match(contract, /All discovery uses Microsoft Learn directly/i);
     assert.match(contract, /Do not invoke or request installed product skills/i);
     assert.match(contract, /original request and selected refinement as authoritative.*do not reinterpret or broaden/i);
@@ -136,42 +155,6 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /Send each callback at most once/i);
     assert.match(contract, /return `CALLBACK_CONFIGURATION_ERROR` and do not research/i);
-    assert.match(contract, /Learning mode: focused/i);
-    for (const phase of ["lesson", "feedback"]) {
-        assert.match(contract, new RegExp(`Learning phase: ${phase}`, "i"));
-    }
-    assert.match(contract, /select exactly one mode branch/i);
-    assert.match(contract, /A task containing `Learning mode: focused` is learning-only/i);
-    assert.match(contract, /Do not apply `Research-only workflow`.*`Research-only answer contract`/i);
-    assert.match(contract, /Research headings such as `Conclusion`.*are forbidden in learning output/i);
-    assert.match(contract, /select at most five authoritative pages/i);
-    assert.match(contract, /Return 400-700 words/i);
-    for (const heading of [
-        "# Learning objective",
-        "## Core idea",
-        "## Worked example",
-        "## Check yourself",
-        "## References",
-    ]) {
-        assert.match(researcher, new RegExp(heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    }
-    assert.match(contract, /exactly one recall question and one application question/i);
-    assert.match(contract, /recall stem must not name or paraphrase the correct answer/i);
-    assert.match(contract, /Do not include their answers, answer keys, hints/i);
-    assert.match(contract, /include a portal or UI label only when exact fetched page text supports it/i);
-    assert.match(contract, /After the application question, write only `## References`/i);
-    assert.match(contract, /count five headings, two unanswered questions, 400-700 words/i);
-    assert.match(contract, /Do not search or add pages/i);
-    assert.match(contract, /Correct.*Partly correct.*Not yet/i);
-    assert.match(contract, /Mastered.*Practicing.*Next objective/i);
-    assert.match(contract, /concept is `Mastered` only when every supplied response that exercises it is correct/i);
-    assert.match(contract, /If application contradicts recall, write `Mastered: None yet`/i);
-    assert.match(contract, /never narrow the claim to the recall scenario/i);
-    assert.match(contract, /unanswered transfer question that changes or inverts the actor\/action scenario/i);
-    assert.match(contract, /must not repeat the corrected entities, options, checklist, sequence, or be answerable by copying/i);
-    assert.match(contract, /exact lesson is the complete teaching scope/i);
-    assert.match(contract, /do not add a factual claim absent from it, even when that claim appears in a Reference or learner response/i);
-    assert.match(contract, /learner responses are evidence of understanding, not factual sources/i);
     assert.doesNotMatch(researcher, /create_session/);
 });
 
@@ -207,9 +190,6 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
-    assert.match(contract, /For a focused-learning packet, score factual fidelity, focus, teaching clarity/i);
-    assert.match(contract, /exactly one recall and one application question/i);
-    assert.match(contract, /unsupported load-bearing fact, leaked answer, false mastery claim/i);
 });
 
 test("project instructions enforce a verified native-session pipeline", async () => {
@@ -255,12 +235,6 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /final evidence set to 15 authoritative pages/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
-    assert.match(contract, /Learning mode: focused.*Learning phase: lesson.*feedback/i);
-    assert.match(contract, /Establish one learning objective, learner level, and time budget/i);
-    assert.match(contract, /400-700 words, at most five fetched Learn pages/i);
-    assert.match(contract, /Publish the lesson and stop for the learner's responses/i);
-    assert.match(contract, /Feedback reuses only those References/i);
-    assert.match(contract, /Do not create a learner database or schedule review automatically/i);
     assert.match(contract, /do not forward that packet as user-facing output/i);
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
     assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
@@ -285,6 +259,35 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Sweep each recommended numeric\/default value for conditional overrides/i);
     assert.match(contract, /manifest `Core location` headings/i);
     assert.doesNotMatch(instructions, /create_session/);
+});
+
+test("agent system rejects obsolete teaching-mode markers", async () => {
+    const documents = await Promise.all(AGENT_SYSTEM_PATHS.map(text));
+    const markers = [
+        "learning " + "mode",
+        "learning " + "phase",
+        "focused " + "learning",
+        "learn" + "er",
+        "less" + "on",
+        "diagnostic " + "response",
+        "re" + "call",
+        "application " + "question",
+        "transfer " + "retry",
+        "master" + "y",
+        "master" + "ed",
+        "practic" + "ing",
+        "next " + "objective",
+    ];
+
+    for (const [index, document] of documents.entries()) {
+        for (const marker of markers) {
+            assert.doesNotMatch(
+                document,
+                new RegExp(`\\b${marker.split(" ").join("[\\s-]+")}\\b`, "i"),
+                `${AGENT_SYSTEM_PATHS[index]} contains obsolete marker: ${marker}`,
+            );
+        }
+    }
 });
 
 test("documentation links are safe websites", async () => {
