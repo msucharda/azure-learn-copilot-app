@@ -6,7 +6,9 @@ The system is prompt-defined and agent-only:
 
 ```mermaid
 flowchart LR
-    U[User or parent session] --> O[Built-in orchestrate skill]
+    U[User or parent session] --> P[Sol prompt-refinement gate]
+    P -->|One ask_user choice when materially ambiguous| U
+    P -->|Frozen original plus selected interpretation| O[Built-in orchestrate skill]
     O -->|One kickoff: task plus callback envelope| R[learn-researcher]
     R --> L[Native Microsoft Learn tools]
     L --> R
@@ -46,12 +48,21 @@ claims without being misrepresented as the researcher's original tool trace.
 
 ## Quick and deep paths
 
-A quick question stays in the current chat. Deep research invokes Copilot App's built-in
-`/orchestrate` skill with one kickoff containing the mode, complete frozen task, task hash, callback
+A quick question stays in the current chat. Before either path, Sol classifies the request as clear,
+exploratory, or materially ambiguous. Exploratory breadth is preserved; material ambiguity triggers one
+`ask_user` choice among two or three interpretations that would produce different evidence or decisions.
+The refinement record keeps the original request, selected interpretation, objective, scope, assumptions,
+exclusions, and unresolved items. Only then is the task hashed.
+
+Deep research invokes Copilot App's built-in `/orchestrate` skill with one kickoff containing the mode,
+original and refined request, complete frozen task, task hash, callback
 nonce, and coordinator session ID. The child sends correlated `STARTED` and `COMPLETED` or `FAILED`
 messages. Idle notifications are diagnostic only. Direct discovery is the only research path. The
 default context tier is sufficient for standard research; long context is an explicit escalation for
 large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
+
+The coordinator owns intent. The research child does not reinterpret the frozen task, and weak-model
+preprocessing starts only after Sol has fixed the interpretation.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a

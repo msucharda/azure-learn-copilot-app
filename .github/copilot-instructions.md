@@ -9,6 +9,24 @@
 - For deep work, invoke the built-in `/orchestrate` skill and use one `learn-researcher` child. Do not
   recreate orchestration or handoff logic in project code.
 
+## Pre-research prompt refinement
+
+Before Learn discovery, task hashing, or launching a research child, Sol evaluates the original request
+and classifies it as exactly one of:
+
+- `clear`: one plausible product, goal, and scope; proceed without asking.
+- `exploratory`: breadth or uncertainty is the user's goal; preserve it, state assumptions, and do not ask.
+- `materially ambiguous`: two or three interpretations would change the product, evidence plan, decision,
+  or risk. Generate 2-3 concise interpretations, each with its goal and decisive differentiator, then use
+  `ask_user` once with one focused question. Put a recommended choice first only when context supports it;
+  do not add an `Other` choice because the UI supplies freeform input.
+
+Do not ask merely because details are missing when explicit assumptions or conditional branches preserve
+intent safely. After selection, freeze one refinement record containing `Original request`, `Selected
+interpretation`, `Objective`, `In scope`, `Assumptions`, `Exclusions`, and `Unresolved`. Compute the task
+SHA-256 only after that record is final. Give the research child the original and refined request; it must
+not reinterpret them. MAI preprocessing can begin only after Sol fixes intent.
+
 ## Correlated child execution
 
 Use one kickoff and an explicit agent callback for every deep child:

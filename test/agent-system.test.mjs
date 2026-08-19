@@ -213,7 +213,18 @@ test("project instructions enforce a verified native-session pipeline", async ()
     const instructions = await text(INSTRUCTIONS_PATH);
     const contract = compact(instructions);
 
-    assert.ok(instructions.split("\n").length <= 120, "project instructions must stay compact");
+    assert.ok(instructions.split("\n").length <= 145, "project instructions must stay compact");
+    assert.match(contract, /Before Learn discovery, task hashing, or launching a research child/i);
+    assert.match(contract, /`clear`.*`exploratory`.*`materially ambiguous`/i);
+    assert.match(contract, /interpretations would change the product, evidence plan, decision, or risk/i);
+    assert.match(contract, /Generate 2-3 concise interpretations.*use `ask_user` once/i);
+    assert.match(contract, /recommended choice first only when context supports it/i);
+    assert.match(contract, /Do not ask merely because details are missing/i);
+    assert.match(contract, /`Original request`.*`Selected interpretation`.*`Objective`.*`In scope`/i);
+    assert.match(contract, /`Assumptions`.*`Exclusions`.*`Unresolved`/i);
+    assert.match(contract, /Compute the task SHA-256 only after that record is final/i);
+    assert.match(contract, /research child.*must not reinterpret/i);
+    assert.match(contract, /MAI preprocessing can begin only after Sol fixes intent/i);
     assert.match(contract, /built-in `\/orchestrate` skill/i);
     assert.match(contract, /freeze the complete task and compute its SHA-256/i);
     assert.match(contract, /generate a unique callback nonce/i);
