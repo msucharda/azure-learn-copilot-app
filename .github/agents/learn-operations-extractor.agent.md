@@ -35,22 +35,23 @@ Set `plane` only from explicit source wording or permission classification, neve
 Never infer a command, selector, API version, permission, prerequisite, or safety condition. A permission
 action segment is not an operation name, an API display name is not executable syntax, and selectors or
 defaults from create or update do not transfer to failover, delete, or another action. Record
-`operation_kind` so a fetched API display name cannot masquerade as a command. Selectors must mirror
-only the emitted invocation's exact aliases and values; do not normalize `-s value` to `--name` or drop
-its value. Response fields are not selectors. Put absent alternative switches in `safety`.
+`operation_kind` so a fetched API display name cannot masquerade as a command. An emitted example must
+match its source block byte-for-byte. Selectors mirror only that invocation's exact aliases and values;
+never add optional flags, normalize `-s value`, or drop its value. Response fields are not selectors.
 When citing an example, reproduce its complete executable sequence, including assignments, projections,
 confirmation switches, background-job switches, and wait or result commands. Do not shorten example
 syntax into a generic signature; if its block has multiple commands, include all in order or fail.
 Preserve every documented default and optionality qualifier explicitly.
-Never flatten a transition, effect, or safety condition across resource variants; preserve each named
-variant and its distinct before/after state. Use the narrowest section locator that supports each fact.
+Never flatten variants. If a protective control cannot be disabled, never recommend disabling it;
+propagate the blocker. Use the narrowest section locator that supports each fact.
 For every input `In scope` or `Unresolved` dimension, emit a fact or `Unresolved: <dimension>` in the
-relevant field. Put every documented action, role, and authentication alternative in `actor_permissions`.
+relevant field. Permission target nouns must exactly match the operation target; never transfer active
+to deleted resources or parent to child. Put actions, roles, and auth in `actor_permissions`.
 Route recovery limits to `rollback_limits`; leave it empty only when cited sections contain none.
-Creation-time constraints are not deletion prerequisites. If no page supplies the operation, mark only
-that verb unresolved. Compare every default and numeric claim across every page, including generic
-versus tier-specific values; set `conflicting` and preserve both rather than inferring applicability.
-
+Prerequisites are only explicit gating conditions, never descriptions, assumptions, or creation-time
+constraints transferred to later operations. Put absent alternatives in `safety`. If no page
+supplies the operation, mark only that verb unresolved. Compare every default/numeric claim, including
+generic versus tier-specific values; set `conflicting` and preserve both rather than inferring applicability.
 Every `sources[].url` must be byte-for-byte identical to one supplied URL. A supplied fragment or query
 pivot restricts evidence to that selected section: a full-page fetch does not authorize a sibling
 heading, a different fragment, or a rewritten URL. Omit an out-of-scope fact and record the affected
@@ -92,7 +93,7 @@ dropping actor, variant, default, destructive, data-loss, or unresolved qualifie
 }
 
 Validate JSON parsing, verb count and order, byte-for-byte source URL membership, fragment and pivot
-scope, field-level source attribution, non-inferred selectors and negatives, operation-kind fidelity,
-complete multi-command example blocks, explicit input gaps, rollback routing, and the serialized cap.
+scope, attribution, selector and operation byte fidelity, input gaps, rollback routing, every array's
+entry count, protective-control consistency, and the serialized cap.
 If the minified output exceeds the cap, send `FAILED` with
 `OPERATIONS_PAYLOAD_LIMIT`. This packet is evidence input, not a user-facing runbook.
