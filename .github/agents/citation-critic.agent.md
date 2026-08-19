@@ -64,7 +64,12 @@ website link. Check:
     conditional override and creation-time toggle; and
 12. whether negative/exclusive claims have explicit support or are labeled synthesis; topology coexistence
     preserves routing qualifiers; multi-table queries map producers, diagnostic categories, destinations,
-    prerequisites, and join cardinality; and identity attribution preserves provenance across telemetry planes.
+    prerequisites, and join cardinality; and identity attribution preserves provenance across telemetry planes; and
+13. whether a discovery ranker filled strong-model protected evidence slots without deriving, merging, or
+    dropping them; whether actor, action, target service/plane, and adjacent-candidate exclusions match;
+    whether the final evidence set—not the discovery pool—alone supports claims; and
+14. whether the answer follows the supplied selected refinement without broadening, narrowing, or replacing
+    the user's frozen intent.
 
 For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
 usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one

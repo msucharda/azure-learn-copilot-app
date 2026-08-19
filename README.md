@@ -15,16 +15,20 @@ returned as normal website links.
 
 ## Flow
 
-1. Answer a narrow question in the current chat with the native Microsoft Learn tools.
-2. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
+1. Before research, Sol classifies the request as clear, exploratory, or materially ambiguous. It preserves
+   useful breadth, but when interpretations would change the product, evidence, decision, or risk, it uses
+   one `ask_user` question with two or three differentiated choices.
+2. Freeze the selected interpretation with the original request, objective, scope, assumptions, exclusions,
+   and unresolved items. Only then hash the task. Answer a narrow request in the current chat.
+3. For deeper work, invoke Copilot App's built-in `/orchestrate` skill and start one
    `learn-researcher` child with the complete frozen task and a task-hash-correlated callback envelope
    in one kickoff. Idle notifications are diagnostic only. Standard research uses the default context
    tier; long context is reserved for measured large-packet or context-pressure cases.
-3. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
+4. The researcher uses direct Microsoft Learn discovery in every mode. Installed product skills and
    product-skill catalogs are outside the research path.
-4. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
+5. The child deterministically atomizes the task, selects at most 15 authoritative pages, fetches every
    cited page, and runs coverage, contradiction, interaction, claim-ledger, and link preflights.
-5. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
+6. Standard mode returns concise Markdown with claim-adjacent links and a unique `References` list.
    Evaluation mode appends a coordinator-only packet. A different-model critic reads that exact packet,
    refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
@@ -96,6 +100,13 @@ Negative or exclusive claims require explicit support or a synthesis label, and 
 be paraphrased as load-sharing without preserving symmetry and traffic-steering qualifiers. Multi-table
 queries map each table to its telemetry producer and configuration, establish join cardinality, and keep
 credential, principal, telemetry-field, and aggregation-key provenance distinct across identity planes.
+Discovery may consider more than 15 candidate pages, but the strong intent stage fixes protected evidence
+slots before ranking. Each slot fixes the actor, action, target service or plane, and the decisive reason
+to reject the closest adjacent candidate. A weak ranker can fill but cannot derive or remove slots; only
+the final set of at most 15 fetched pages supports claims.
+The coordinator keeps useful exploratory ambiguity, but materially different interpretations are resolved
+before orchestration. Research receives both the original request and the frozen selected interpretation;
+MAI never decides user intent.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns
