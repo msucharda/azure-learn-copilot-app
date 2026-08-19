@@ -12,6 +12,12 @@ const DOCUMENTATION_PATHS = [
     "docs/setup.md",
     "docs/troubleshooting.md",
 ];
+const AGENT_SYSTEM_PATHS = [
+    RESEARCHER_PATH,
+    CRITIC_PATH,
+    INSTRUCTIONS_PATH,
+    ...DOCUMENTATION_PATHS,
+];
 
 function at(path) {
     return new URL(path, ROOT);
@@ -216,12 +222,6 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /final evidence set to 15 authoritative pages/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
-    assert.match(contract, /Learning mode: focused.*Learning phase: lesson.*feedback/i);
-    assert.match(contract, /Establish one learning objective, learner level, and time budget/i);
-    assert.match(contract, /400-700 words, at most five fetched Learn pages/i);
-    assert.match(contract, /Publish the lesson and stop for the learner's responses/i);
-    assert.match(contract, /Feedback reuses only those References/i);
-    assert.match(contract, /Do not create a learner database or schedule review automatically/i);
     assert.match(contract, /do not forward that packet as user-facing output/i);
     assert.match(contract, /review-fetch only the exact Learn URLs already in References/i);
     assert.match(contract, /Start a fresh callback-enabled `learn-researcher` child/i);
@@ -246,6 +246,35 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Sweep each recommended numeric\/default value for conditional overrides/i);
     assert.match(contract, /manifest `Core location` headings/i);
     assert.doesNotMatch(instructions, /create_session/);
+});
+
+test("agent system rejects obsolete teaching-mode markers", async () => {
+    const documents = await Promise.all(AGENT_SYSTEM_PATHS.map(text));
+    const markers = [
+        "learning " + "mode",
+        "learning " + "phase",
+        "focused " + "learning",
+        "learn" + "er",
+        "less" + "on",
+        "diagnostic " + "response",
+        "re" + "call",
+        "application " + "question",
+        "transfer " + "retry",
+        "master" + "y",
+        "master" + "ed",
+        "practic" + "ing",
+        "next " + "objective",
+    ];
+
+    for (const [index, document] of documents.entries()) {
+        for (const marker of markers) {
+            assert.doesNotMatch(
+                document,
+                new RegExp(`\\b${marker.split(" ").join("[\\s-]+")}\\b`, "i"),
+                `${AGENT_SYSTEM_PATHS[index]} contains obsolete marker: ${marker}`,
+            );
+        }
+    }
 });
 
 test("documentation links are safe websites", async () => {

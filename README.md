@@ -1,17 +1,17 @@
 # Azure Learn Copilot agent system
 
-An agent-only Microsoft Learn research and focused-learning workflow for Copilot App. The repository
+An agent-only Microsoft Learn research workflow for Copilot App. The repository
 contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
-Research and lessons use the Microsoft Learn tools configured in Copilot App, and references are
-returned as normal website links.
+Research uses the Microsoft Learn tools configured in Copilot App, and references are returned as
+normal website links.
 
 ## Components
 
 | Path | Purpose |
 | --- | --- |
-| `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
-| `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
-| `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |
+| `.github/agents/learn-researcher.agent.md` | Produces evidence-backed standard, evaluation, and repair answers |
+| `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research contracts |
+| `.github/copilot-instructions.md` | Coordinates prompt refinement, research, source triage, and citation review through native orchestration |
 
 ## Flow
 
@@ -33,21 +33,6 @@ returned as normal website links.
    refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
    corrected user-facing answer.
-
-## Focused learning
-
-Focused learning uses the same direct Learn evidence and callback transport, but a smaller teaching
-contract:
-
-1. Establish one learning objective, learner level, time budget, and optional diagnostic response.
-2. Generate a 400-700-word lesson from at most five fetched Learn pages.
-3. Include one worked example, one recall question, and one application question without answers.
-4. After the learner responds, start a fresh feedback phase with the exact lesson and responses.
-5. Correct only missed concepts, ask one unanswered retry, and record `Mastered`, `Practicing`, and
-   `Next objective`.
-
-The current conversation carries the loop. The system does not create a learner database or schedule
-review unless the learner explicitly requests an App-native workflow.
 
 No project skill router, installed product skill, or product-skill catalog is loaded into the
 researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole

@@ -23,18 +23,6 @@ citation evidence.
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
 
-For focused learning, provide one objective, your current level, and a time budget. The coordinator
-asks one short diagnostic question unless you request an immediate lesson. It then launches:
-
-- `Learning mode: focused`;
-- `Learning phase: lesson`;
-- `Learning objective`, `Learner level`, `Time budget`, and `Diagnostic response`;
-- the same callback envelope and default context tier used by research.
-
-Answer the lesson's recall and application questions in the project chat. A fresh
-`Learning phase: feedback` child receives the exact lesson and your responses, reuses only the lesson's
-References, and returns targeted correction plus a learning ledger.
-
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
