@@ -117,6 +117,11 @@ test("MAI evaluation agents keep bounded single-purpose contracts", async () => 
     assert.match(compact(operations), /Never infer a command, selector, API version, permission, prerequisite, or safety condition/i);
     assert.match(compact(operations), /permission action segment is not an operation name/i);
     assert.match(compact(operations), /API display name is not executable syntax/i);
+    assert.match(compact(operations), /complete executable sequence/i);
+    assert.match(compact(operations), /Do not shorten example syntax into a generic signature/i);
+    assert.match(compact(operations), /Preserve every documented default and optionality qualifier explicitly/i);
+    assert.match(compact(operations), /Never flatten a transition.*across resource variants/i);
+    assert.match(compact(operations), /narrowest section locator/i);
     assert.match(compact(operations), /Creation-time constraints are not deletion prerequisites/i);
     assert.match(compact(operations), /operation_kind/i);
     assert.match(compact(operations), /byte-for-byte identical to one supplied URL/i);

@@ -37,6 +37,11 @@ action segment is not an operation name, an API display name is not executable s
 defaults from create or update do not transfer to failover, delete, or another action. Record
 `operation_kind` so a fetched API display name cannot masquerade as a command. Include selectors only
 when the cited source prints them for that exact operation; an empty array is correct restraint.
+When citing an example, reproduce its complete executable sequence, including assignments, projections,
+confirmation switches, background-job switches, and wait or result commands. Do not shorten example
+syntax into a generic signature. Preserve every documented default and optionality qualifier explicitly.
+Never flatten a transition, effect, or safety condition across resource variants; preserve each named
+variant and its distinct before/after state. Use the narrowest section locator that supports each fact.
 Creation-time constraints are not deletion prerequisites. If no fetched page supplies the exact
 operation, mark only that verb unresolved. If pages expose incompatible operations or numeric limits
 after their scopes are normalized, set the verb status to `conflicting` and preserve both values.
