@@ -393,6 +393,8 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /slot fixes actor, action, target service\/plane, and an adjacent-candidate exclusion/i);
     assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
     assert.match(contract, /evaluation-only MAI source triage/i);
+    assert.match(contract, /five-route MAI Code 1\.1 Flash viability program produced no passing screen/i);
+    assert.match(contract, /standard production path Sol-only/i);
     assert.match(contract, /`learn-source-triage` child with `mai-code-1\.1-flash`/i);
     for (const agent of [
         "learn-evidence-extractor",

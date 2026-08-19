@@ -37,8 +37,9 @@ It cannot change intent or slots, fetch citation evidence, write an answer, or s
 The callback JSON is minified before its hard character check. URL pivots and fragments narrow candidate
 scope, and an operations slot prefers a dedicated procedure over a generic concept page.
 The final researcher validates the packet, fetches every selected page, and falls back to direct
-discovery only for affected slots. Sol remains the production author; frozen comparison arms may use
-Terra. Standard production research remains unchanged until promotion.
+discovery only for affected slots. The completed five-route MAI program produced no passing screen, so
+Sol remains the production author and MAI stays evaluation-only. Newly frozen comparison arms may use
+Terra.
 
 ### `learn-researcher`
 
