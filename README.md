@@ -12,6 +12,7 @@ returned as normal website links.
 | `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
 | `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
 | `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |
+| `docs/improvement-loop.md` | Defines the public, human-governed evaluation, repair, and release loop |
 
 ## Flow
 
@@ -122,5 +123,5 @@ node --test
 ```
 
 The tests enforce the agent-only file layout, native tool allow-lists, and linked-reference contract.
-See [architecture](docs/architecture.md), [setup](docs/setup.md), and
-[troubleshooting](docs/troubleshooting.md).
+See [architecture](docs/architecture.md), [public improvement loop](docs/improvement-loop.md),
+[setup](docs/setup.md), and [troubleshooting](docs/troubleshooting.md).

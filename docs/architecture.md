@@ -24,6 +24,11 @@ flowchart LR
 There is no project runtime, custom tool server, durable evidence store, or separate reference
 renderer. Copilot App owns tool execution and session coordination.
 
+The proposed [public self-improvement loop](improvement-loop.md) preserves this boundary. It uses
+sanitized, content-addressed repository records to evaluate candidate prompt changes, while native
+sessions perform research, independent criticism, and repair. A human maintainer remains the only release
+authority.
+
 ## Agents
 
 ### `learn-researcher`

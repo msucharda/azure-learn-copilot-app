@@ -9,6 +9,7 @@ const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
 const DOCUMENTATION_PATHS = [
     "README.md",
     "docs/architecture.md",
+    "docs/improvement-loop.md",
     "docs/setup.md",
     "docs/troubleshooting.md",
 ];
@@ -26,7 +27,7 @@ function compact(markdown) {
 }
 
 function frontmatter(markdown) {
-    const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+    const match = markdown.replaceAll("\r\n", "\n").match(/^---\n([\s\S]*?)\n---\n/);
     assert.ok(match, "agent frontmatter is required");
     return match[1];
 }
