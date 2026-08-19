@@ -78,6 +78,10 @@ review packet in the session artifact directory and give a read-enabled reviewer
 - Require contradiction, qualifier-propagation, irreversible-choice, protective-control interaction,
   single-plane recovery, link, and claim-ledger preflights. Check every mandatory action verb against
   its operations page and distinguish data-plane from management-plane behavior.
+- Require explicit support for negative/exclusive claims or label them synthesis. Preserve routing
+  symmetry, preference, and steering qualifiers; topology coexistence is not evidence of load-sharing.
+- For multi-table queries, map every table to its producer, diagnostic category, destination, and
+  prerequisites; enforce join cardinality and preserve identity provenance across telemetry planes.
 - For a current-to-target decision, surface lost capabilities, restart/redeploy needs, documented
   defaults and side effects, cost/billing, permission scope, and relevant preview alternatives. Treat
   parent headings and notes as claim conditions; do not silently reconcile source-internal conflicts.

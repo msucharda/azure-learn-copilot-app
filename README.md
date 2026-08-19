@@ -92,6 +92,10 @@ surface lost capabilities, restart and cost consequences, permission scope, prev
 source conflicts. Requested runbooks include fetched executable operations rather than intentions alone,
 but fenced commands count toward the core ceiling. Assumptions and conditional numeric overrides
 reverse-map to compound audit rows; manifest values map to exact core headings and pivot-scoped links.
+Negative or exclusive claims require explicit support or a synthesis label, and route coexistence cannot
+be paraphrased as load-sharing without preserving symmetry and traffic-steering qualifiers. Multi-table
+queries map each table to its telemetry producer and configuration, establish join cardinality, and keep
+credential, principal, telemetry-field, and aggregation-key provenance distinct across identity planes.
 
 Evaluation details live after References in a coordinator-only packet rather than the published answer.
 A different-model critic reads that exact artifact, verifies only its existing Learn links, and returns

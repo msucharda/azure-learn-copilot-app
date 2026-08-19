@@ -61,7 +61,10 @@ website link. Check:
     available, whether conclusions label synthesized conditions, and whether all user-visible core text including
     headings, labels, tables, and fenced code satisfies the stated word ceiling; and
 11. whether each recommended numeric/default setting includes or explicitly excludes every fetched
-    conditional override and creation-time toggle.
+    conditional override and creation-time toggle; and
+12. whether negative/exclusive claims have explicit support or are labeled synthesis; topology coexistence
+    preserves routing qualifiers; multi-table queries map producers, diagnostic categories, destinations,
+    prerequisites, and join cardinality; and identity attribution preserves provenance across telemetry planes.
 
 For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
 usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one
