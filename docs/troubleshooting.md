@@ -67,16 +67,7 @@
 | A completed child answer is absent from the callback | Treat the run as incomplete even if the idle event fired; the callback must contain the complete result |
 | A standard research task requests long context by default | Use the default tier; escalate only for a packet over 15,000 characters, more than 30 fixed atoms, multi-answer comparison, or measured context pressure |
 | A default-context run reaches 120,000 input tokens or loses earlier evidence | Record the run and repeat once with `long_context`; do not make long context the global default |
-| A focused lesson covers several independent topics | Keep one prerequisite objective and list the rest only as possible next objectives |
-| A focused lesson becomes a research report | Enforce 400-700 words, at most five fetched pages, one worked example, and exactly two unanswered questions |
-| The lesson reveals its own check answers | Remove the answer, answer key, and result-revealing hints; wait for the learner response |
-| A recall question cues the answer | Remove distinctive role, option, or discriminator wording from the stem so the learner must retrieve it |
-| A lesson uses an unsupported portal label | Prefer conceptual action wording unless exact fetched page text contains the UI label |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
-| Feedback introduces new sources, facts, or concepts | Treat the exact lesson as the teaching boundary; References verify its claims, and learner responses are evidence of understanding rather than factual sources |
-| Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; write `Mastered: None yet` instead of narrowing mastery to the recall scenario |
-| The retry repeats the targeted correction | Change or invert the actor/action scenario; do not ask for the same entities, options, checklist, or sequence |
-| The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
 | A generated Markdown review packet is rejected as an unstaged kickoff file | Do not use Git staging or the attachment field; it accepts only app-staged creator images. Save the packet as a session artifact and give a read-enabled critic its exact path |
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |
