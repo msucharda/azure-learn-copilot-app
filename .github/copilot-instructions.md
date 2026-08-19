@@ -66,12 +66,12 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Research and publication
 
-- Limit the evidence set to 15 authoritative pages, fetch every cited page, and treat search chunks as
-  discovery only. Preserve exact qualifiers, actor/action boundaries, mutable status, numeric
-  conditions, and successful fetch URLs. When retrieval timestamps are unavailable, label mutable
-  facts time-sensitive and require deployment-time revalidation.
-- Reserve evidence slots for the lead architecture's exact tier and mode before alternatives:
-  capability, reliability/operations, network/management-plane, and limits/lifecycle pages.
+- A discovery-only candidate pool may exceed 15 pages, but Sol fixes protected evidence slots before
+  ranking. An advisory weak ranker may fill those slots; it cannot derive, merge, drop, or support claims.
+- Limit the final evidence set to 15 authoritative pages and fetch every cited page. Exact operations,
+  schemas, identity, limits, and qualifier-bearing pages precede generic or adjacent-product pages.
+- Preserve actor/action boundaries, mutable status, numeric conditions, and successful fetch URLs. When
+  retrieval timestamps are unavailable, label mutable facts time-sensitive and require revalidation.
 - Require deterministic atomization before search: each numbered item, bullet, or semicolon-delimited
   subtopic is one row; terms joined inside that item remain one compound atom whose least-supported
   dimension sets the status.

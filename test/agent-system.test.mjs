@@ -85,7 +85,9 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /least-supported dimension determines that atom's final status/i);
     assert.match(contract, /Select at most 15 authoritative pages/i);
     assert.match(contract, /Fetch every selected page/i);
-    assert.match(contract, /Reserve evidence slots for the lead's exact service, tier, and mode/i);
+    assert.match(contract, /reserve evidence slots for the lead's exact service, tier, and mode/i);
+    assert.match(contract, /advisory ranker may fill fixed slots but cannot derive, merge, or drop them/i);
+    assert.match(contract, /exact pages come before generic or adjacent-product pages/i);
     assert.match(contract, /mark mutable facts time-sensitive and require deployment-time revalidation/i);
     assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
     assert.match(contract, /parent-heading or section scope/i);
@@ -194,6 +196,8 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /negative\/exclusive claims have explicit support or are labeled synthesis/i);
     assert.match(contract, /multi-table queries map producers, diagnostic categories, destinations/i);
     assert.match(contract, /identity attribution preserves provenance across telemetry planes/i);
+    assert.match(contract, /discovery ranker filled strong-model protected evidence slots/i);
+    assert.match(contract, /final evidence set.*discovery pool.*supports claims/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -229,6 +233,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /review packet in the session artifact directory/i);
     assert.match(contract, /Direct Learn discovery is the only evidence path/i);
     assert.match(contract, /Do not load, preselect, or inject an installed product skill/i);
+    assert.match(contract, /discovery-only candidate pool may exceed 15 pages/i);
+    assert.match(contract, /Sol fixes protected evidence slots before ranking/i);
+    assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
+    assert.match(contract, /final evidence set to 15 authoritative pages/i);
     assert.doesNotMatch(instructions, /Selected official product skill|Select at most one exact installed official product skill/i);
     assert.match(contract, /Research mode: standard.*evaluation.*repair/i);
     assert.match(contract, /Learning mode: focused.*Learning phase: lesson.*feedback/i);
