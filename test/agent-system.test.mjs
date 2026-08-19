@@ -93,6 +93,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /current-to-target change.*lost or incompatible features.*restart\/redeploy needs/i);
     assert.match(contract, /billing\/cost, permissions, and management scope/i);
     assert.match(contract, /surface source-internal conflicts instead of harmonizing them/i);
+    assert.match(contract, /exclusive or negative claim needs an explicit prohibition.*labeled as synthesis/i);
     assert.match(contract, /In `Conclusion`, label any synthesized condition or sequence/i);
     assert.match(contract, /requested runbook or procedure.*exact fetched CLI, API, or IaC operation/i);
     assert.match(contract, /recommended numeric\/default setting.*conditional overrides and creation-time toggles/i);
@@ -102,6 +103,12 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
     assert.match(contract, /Protective-control interactions/i);
     assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
+    assert.match(contract, /Do not restate coexisting routes or topologies as recommended traffic sharing/i);
+    assert.match(contract, /multi-table query.*map each table to its producer, diagnostic category, destination mode/i);
+    assert.match(contract, /enforce one row per join key on both sides/i);
+    assert.match(contract, /identity attribution.*credential validation.*telemetry-field population/i);
+    assert.match(contract, /never transfer identity semantics across telemetry planes/i);
+    assert.match(contract, /cardinality and drop limits.*missing or inaccurate-data conditions/i);
     assert.match(contract, /identity, key, DNS, network, or management plane gates all access/i);
     assert.match(contract, /every URL must be HTTPS on exactly `learn\.microsoft\.com`/i);
     assert.match(contract, /Evaluation packet \(coordinator only\)/i);
@@ -184,6 +191,9 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /all user-visible core text including headings, labels, tables, and fenced code/i);
     assert.match(contract, /final core under the named `Core location`/i);
     assert.match(contract, /recommended numeric\/default setting includes or explicitly excludes/i);
+    assert.match(contract, /negative\/exclusive claims have explicit support or are labeled synthesis/i);
+    assert.match(contract, /multi-table queries map producers, diagnostic categories, destinations/i);
+    assert.match(contract, /identity attribution preserves provenance across telemetry planes/i);
     assert.match(contract, /End with a compact repair brief/i);
     assert.match(contract, /Do not rewrite the answer or propose a competing architecture/i);
     assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
@@ -244,6 +254,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /method is unavailable and another exposes it, report a conflict/i);
     assert.match(contract, /query parameters and selected pivots as citation scope/i);
     assert.match(contract, /co-citation cannot transfer support/i);
+    assert.match(contract, /negative\/exclusive claims or label them synthesis/i);
+    assert.match(contract, /topology coexistence is not evidence of load-sharing/i);
+    assert.match(contract, /multi-table queries, map every table to its producer, diagnostic category, destination/i);
+    assert.match(contract, /enforce join cardinality and preserve identity provenance across telemetry planes/i);
     assert.match(contract, /Sweep each recommended numeric\/default value for conditional overrides/i);
     assert.match(contract, /manifest `Core location` headings/i);
     assert.doesNotMatch(instructions, /create_session/);
