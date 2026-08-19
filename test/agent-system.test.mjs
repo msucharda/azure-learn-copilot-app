@@ -26,7 +26,7 @@ function compact(markdown) {
 }
 
 function frontmatter(markdown) {
-    const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
     assert.ok(match, "agent frontmatter is required");
     return match[1];
 }
@@ -85,11 +85,15 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.doesNotMatch(researcher, /Selected official product skill|Load at most.*official skill/i);
     assert.match(contract, /Each numbered item, bullet, or semicolon-delimited subtopic is one atom/i);
     assert.match(contract, /least-supported dimension determines that atom's final status/i);
+    assert.match(contract, /fixed atoms, copy them verbatim into the audit before searching/i);
+    assert.match(contract, /Never split, merge, add, drop, or renumber fixed atoms/i);
     assert.match(contract, /Fetch every selected page/i);
     assert.match(contract, /reserve slots for the lead's exact service, tier, and mode/i);
     assert.match(contract, /slot fixes actor, action, target service\/plane, and a decisive exclusion/i);
     assert.match(contract, /advisory ranker.*cannot derive, merge, or drop slots.*prove the fixed scope/i);
     assert.match(contract, /Select at most 15 exact pages before generic alternatives/i);
+    assert.match(contract, /task's smaller page cap is hard/i);
+    assert.match(contract, /never repeat a successful fetch/i);
     assert.match(contract, /mark mutable facts time-sensitive and require deployment-time revalidation/i);
     assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
     assert.match(contract, /parent-heading or section scope/i);
@@ -99,7 +103,10 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /surface source-internal conflicts instead of harmonizing them/i);
     assert.match(contract, /exclusive or negative claim needs an explicit prohibition.*labeled as synthesis/i);
     assert.match(contract, /In `Conclusion`, label any synthesized condition or sequence/i);
+    assert.match(contract, /Lock every fact and operation to its exact mechanism, tier, mode, and plane/i);
+    assert.match(contract, /mutually exclusive alternative stays conditional and never supplies the lead path/i);
     assert.match(contract, /requested runbook or procedure.*exact fetched CLI, API, or IaC operation/i);
+    assert.match(contract, /never infer a missing destructive-mode selector/i);
     assert.match(contract, /recommended numeric\/default setting.*conditional overrides and creation-time toggles/i);
     assert.match(contract, /relevant documented mode variants, including preview alternatives/i);
     assert.match(contract, /Remove each manifest value absent from the core/i);
@@ -117,8 +124,12 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /every URL must be HTTPS on exactly `learn\.microsoft\.com`/i);
     assert.match(contract, /Evaluation packet \(coordinator only\)/i);
     assert.match(contract, /Publish totals and verify they sum to the fixed row count/i);
+    assert.match(contract, /copy each fixed atom verbatim into exactly one body row/i);
+    assert.match(contract, /never add a `Total` body row/i);
+    assert.match(contract, /Report any cap breach as failure, never compliance/i);
     assert.match(contract, /current-run fetch status/i);
     assert.match(contract, /Count all user-visible text before References, including headings, labels, tables, and fenced code/i);
+    assert.match(contract, /smaller task limit is binding/i);
     assert.match(contract, /target 1,350 when code or tables appear/i);
     assert.match(contract, /Reverse-map every specific assumption or unresolved constraint to its row/i);
     assert.match(contract, /missing or conditional dimension forces `Partially covered` or `Unresolved`/i);
@@ -135,6 +146,8 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
     assert.match(contract, /Send each callback at most once/i);
+    assert.match(contract, /callback result byte-for-byte identical to the complete child result/i);
+    assert.match(contract, /send `FAILED` instead of `COMPLETED`/i);
     assert.match(contract, /return `CALLBACK_CONFIGURATION_ERROR` and do not research/i);
     assert.match(contract, /Learning mode: focused/i);
     for (const phase of ["lesson", "feedback"]) {
