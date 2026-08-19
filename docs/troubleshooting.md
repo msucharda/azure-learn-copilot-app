@@ -33,9 +33,12 @@
 | A source says preview, partially supported, only, or conditional but the answer drops that term | Restore the exact support qualifier in fetched facts, recommendations, dependent workflows, and coverage status |
 | A claim is accurate only inside a source section or parent heading | Treat that heading or note as a claim condition and propagate its scope; a sentence does not become globally applicable when synthesized |
 | A claim comes from a different pivot than the cited URL selects | Treat the query parameter and selected pivot as evidence scope; cite a page/pivot that actually renders the claim or leave it unresolved |
+| A URL anchor names a section that does not contain the attached claim | Treat the fragment as hard scope; cite the exact claim-bearing section or use an unanchored successfully fetched URL rather than borrowing from another heading |
+| A factual subsection relies on a link that appears only elsewhere | Add the claim-bearing link at each factual occurrence; proximity in another section does not transfer evidence |
 | A sentence co-cites two pages but only one supports the qualifier | Split the sentence and attach each link to the smallest factual clause it independently supports |
 | A recommendation changes mode but omits what the current mode loses | Compare current and target states; surface incompatible features, restart/redeploy requirements, defaults, side effects, cost, permission scope, and management scope |
 | A runbook describes intentions but no executable operation | Include an exact fetched CLI, API, or IaC operation with its target scope when the selected operations page provides one; otherwise mark the step unresolved |
+| The answer calls an operation unavailable even though another fetched page supplies it | Sweep every fetched page for each mandatory verb before declaring a gap; then preserve the exact API version, selector, and scope |
 | A recommendation keeps capacity, protection, or diagnostics enabled without consequences | Carry documented billing, restart, default behavior, permissions, and resource-scope consequences into the recommendation and pre-rollout checks |
 | A selected page documents another relevant mode, especially preview | Name it and explain why it is selected, excluded, or unresolved; do not silently collapse the documented mode set |
 | A recommended numeric default changes under an optional creation-time mode | Surface the conditional override and explicitly select or exclude the triggering mode before marking the atom `Covered` |
@@ -51,9 +54,11 @@
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
 | A how-to says a method is unavailable but another fetched page exposes it | Record a source conflict and keep the method conditional until resolved; do not silently prefer either page |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
+| A child repeatedly overshoots a smaller task word ceiling | Without a deterministic counter, draft to 85% of the supplied ceiling so headings, labels, tables, and code remain inside the hard cap |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
 | The evidence manifest contains material values absent from the answer | Rebuild the core, audit, and manifest together; map each value to a qualified core sentence or remove it, then downgrade any optimistic status it had supported |
 | A manifest row names broad audit atoms but its values drift from the final core | Add an exact `Core location` heading and require every semicolon-delimited value to appear there with its qualifier |
+| Exact commands, ports, permissions, defaults, conflicts, or billing values appear only in the core | Rebuild the manifest with those material values and their exact headings, or remove them and downgrade affected coverage |
 | Two audit rows describe the same mechanism with different statuses | Explain the supported-dimension difference in the core or lower the optimistic status |
 | A page fetch fails | Omit claims that require that page or mark them unresolved |
 | A returned URL is not HTTPS on the exact `learn.microsoft.com` host | Do not cite it |

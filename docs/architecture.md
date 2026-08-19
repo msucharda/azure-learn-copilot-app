@@ -207,6 +207,12 @@ References are part of the answer:
     toggles, which are selected, explicitly excluded, or mapped to a partial audit status.
 48. Each evidence-manifest row names exact `Core location` headings. Every semicolon-delimited value
     appears there with its qualifier, and material core facts map back to the supporting row.
+49. URL fragments, query pivots, and parent headings are hard evidence scope. Every factual occurrence
+    receives its own adjacent supporting link rather than relying on a link in another section.
+50. When no deterministic counter is available, drafting targets 85% of a smaller task word ceiling so
+    the hard cap retains margin for headings, labels, tables, and code.
+51. The final manifest sweep inventories exact operations, ports, permissions, defaults, conflicts,
+    lifecycle limits, and billing values in both directions with the core.
 
 ## Formal review contract
 

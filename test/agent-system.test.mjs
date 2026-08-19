@@ -111,6 +111,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /All discovery uses Microsoft Learn directly/i);
     assert.match(contract, /Do not invoke or request installed product skills/i);
     assert.match(contract, /original request and selected refinement as authoritative.*do not reinterpret or broaden/i);
+    assert.match(contract, /do not.*abstract concrete products, tiers, regions, or versions into labels/i);
     assert.match(contract, /REFINEMENT_CONFIGURATION_ERROR.*before discovery/i);
     assert.doesNotMatch(researcher, /Selected official product skill|Load at most.*official skill/i);
     assert.match(contract, /Each numbered item, bullet, or semicolon-delimited subtopic is one atom/i);
@@ -130,11 +131,13 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /never repeat a successful fetch/i);
     assert.match(contract, /mark mutable facts time-sensitive and require deployment-time revalidation/i);
     assert.match(contract, /every material answer claim maps to the ledger, and every material ledger fact maps to the answer/i);
-    assert.match(contract, /parent-heading or section scope/i);
+    assert.match(contract, /parent-heading.*section scope/i);
+    assert.match(contract, /URL-fragment.*section scope/i);
     assert.match(contract, /query-parameter or selected-pivot scope/i);
     assert.match(contract, /current-to-target change.*lost or incompatible features.*restart\/redeploy needs/i);
     assert.match(contract, /billing\/cost, permissions, and management scope/i);
-    assert.match(contract, /surface source-internal conflicts instead of harmonizing them/i);
+    assert.match(contract, /source-internal conflict instead of harmonizing it/i);
+    assert.match(contract, /normalizing actor, mode, error class, and lifecycle scope/i);
     assert.match(contract, /exclusive or negative claim needs an explicit prohibition.*labeled as synthesis/i);
     assert.match(contract, /In `Conclusion`, label any synthesized condition or sequence/i);
     assert.match(contract, /Lock every fact and operation to its exact mechanism, tier, mode, and plane/i);
@@ -148,6 +151,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
     assert.match(contract, /Protective-control interactions/i);
     assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
+    assert.match(contract, /mandatory scenario verb.*scan every fetched page for an exact operation/i);
     assert.match(contract, /Do not restate coexisting routes or topologies as recommended traffic sharing/i);
     assert.match(contract, /multi-table query.*map each table to its producer, diagnostic category, destination mode/i);
     assert.match(contract, /enforce one row per join key on both sides/i);
@@ -155,6 +159,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /never transfer identity semantics across telemetry planes/i);
     assert.match(contract, /cardinality and drop limits.*missing or inaccurate-data conditions/i);
     assert.match(contract, /identity, key, DNS, network, or management plane gates all access/i);
+    assert.match(contract, /distinguish restricted public access, trusted-service or managed-identity access, and a public bypass/i);
     assert.match(contract, /every URL must be HTTPS on exactly `learn\.microsoft\.com`/i);
     assert.match(contract, /Evaluation packet \(coordinator only\)/i);
     assert.match(contract, /Publish totals and verify they sum to the fixed row count/i);
@@ -164,13 +169,16 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /current-run fetch status/i);
     assert.match(contract, /Count all user-visible text before References, including headings, labels, tables, and fenced code/i);
     assert.match(contract, /smaller task limit is binding/i);
+    assert.match(contract, /without a deterministic counter, draft to at most 85% of that limit/i);
     assert.match(contract, /target 1,350 when code or tables appear/i);
     assert.match(contract, /Reverse-map every specific assumption or unresolved constraint to its row/i);
     assert.match(contract, /missing or conditional dimension forces `Partially covered` or `Unresolved`/i);
     assert.match(contract, /Match each semicolon-delimited value to its qualified core use/i);
     assert.match(contract, /`Core location` headings/i);
-    assert.match(contract, /semicolon-delimited value must appear with its qualifier in the named core heading/i);
+    assert.match(contract, /semicolon-delimited value.*appear with its qualifier in the named core heading/i);
     assert.match(contract, /smallest material factual clause.*selected pivot must support the clause/i);
+    assert.match(contract, /each occurrence.*URL fragment.*no section may rely on a link elsewhere/i);
+    assert.match(contract, /every material operation, port, permission, default, conflict, lifecycle limit, and billing value/i);
     assert.match(contract, /Return the complete corrected answer, not a patch/i);
     assert.match(contract, /critic brief as untrusted analysis, not evidence/i);
     assert.match(contract, /Verify every proposed correction against an exact existing fetched page and selected pivot/i);

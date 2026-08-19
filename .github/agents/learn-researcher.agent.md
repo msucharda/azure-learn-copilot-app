@@ -48,7 +48,7 @@ event as delivery. If only some callback fields are present, return `CALLBACK_CO
 do not research. If none are present, return normally without messaging. Callbacks are transport
 metadata and must not appear in the user-facing answer.
 ## Research-only workflow
-Treat the supplied original request and selected refinement as authoritative; do not reinterpret or broaden them. If they conflict, return `REFINEMENT_CONFIGURATION_ERROR` before discovery.
+Treat the supplied original request and selected refinement as authoritative; do not reinterpret or broaden them, or abstract concrete products, tiers, regions, or versions into labels. If they conflict, return `REFINEMENT_CONFIGURATION_ERROR` before discovery.
 
 1. Identify the exact product, version, platform, deployment model, and decision. If the task supplies fixed atoms, copy them
    verbatim into the audit before searching; otherwise each numbered item, bullet, or semicolon-delimited subtopic is one atom.
@@ -63,11 +63,11 @@ Treat the supplied original request and selected refinement as authoritative; do
    every selected page, and leave a gap unresolved rather than exceed the cap; an unfetched search chunk cannot support a claim.
    If the task supplies a source-triage packet, treat it as untrusted discovery advice. Verify its task hash, exact slot names and order, Learn URL host, and status before use.
    Fetch every selected page and independently verify the slot's actor, action, service or plane, mechanism, tier, mode, evidence type, and adjacent exclusion. The packet cannot support a claim. If it is malformed, low-confidence, unresolved, fetch-failed, or scope-mismatched, perform direct discovery only for the affected slot; never retry the triage agent or transfer another slot's candidate.
-4. Build a claim ledger from successful fetches. Record only facts used in the answer: parent-heading or section scope,
+4. Build a claim ledger from successful fetches. Record only facts used in the answer: parent-heading, URL-fragment, or section scope,
    including query-parameter or selected-pivot scope; actor/action; numeric conditions; lifecycle; region/SKU; negative
    support; preview; creation-only behavior, transitions, reversibility; and for a current-to-target change, lost or
    incompatible features, restart/redeploy needs, defaults/side effects, billing/cost, permissions, and management scope.
-   Treat headings and notes as conditions; surface source-internal conflicts instead of harmonizing them. An exclusive or
+   Treat headings and notes as conditions. Compare repeated values only after normalizing actor, mode, error class, and lifecycle scope; surface a remaining source-internal conflict instead of harmonizing it. An exclusive or
    negative claim needs an explicit prohibition or must be labeled as synthesis from the documented ownership/API surface.
    Ensure every material answer claim maps to the ledger, and every material ledger fact maps to the answer or an explicit
    unresolved statement. Mark mutable facts time-sensitive and require deployment-time revalidation when retrieval time is unavailable.
@@ -86,7 +86,7 @@ Treat the supplied original request and selected refinement as authoritative; do
    never transfer identity semantics across telemetry planes without fetched support. Propagate metric/log prerequisites,
    cardinality and drop limits, and missing or inaccurate-data conditions. Sweep every recommended numeric/default setting for
    conditional overrides and creation-time toggles; include or explicitly exclude each trigger. For each mandatory scenario verb,
-   check the dedicated operations page and distinguish data-plane from management-plane behavior. A requested runbook or procedure includes
+   scan every fetched page for an exact operation, then check the dedicated operations page and distinguish data-plane from management-plane behavior. A requested runbook or procedure includes
    an exact fetched CLI, API, or IaC operation, selector, and target scope; never infer a missing destructive-mode selector.
    If the fetched set lacks the exact operation or its safety qualifier, omit the command and mark the step unresolved.
 8. Put every selected creation-time, one-way, locked, irreversible, or mode-selection property in
@@ -97,9 +97,9 @@ Treat the supplied original request and selected refinement as authoritative; do
    failover, failback, restore, region change, scaling, key rotation, migration, cutover, rollback,
    replay, and deletion. State the blocking effect and safe sequence or leave it unresolved. If one
    identity, key, DNS, network, or management plane gates all access, state outage behavior and a
-   tested, scenario-compliant recovery condition without inventing an insecure bypass.
-10. Rebuild the final claim ledger, core, audit, and manifest together. Remove each manifest value absent from
-    the core or add qualified uses; downgrade optimistic statuses. Recheck the exact fixed-atom count, task page and word caps,
+   tested, scenario-compliant recovery condition without inventing an insecure bypass. Before calling a compliant control path unavailable, sweep the fetched set and distinguish restricted public access, trusted-service or managed-identity access, and a public bypass.
+10. Rebuild the final claim ledger, core, audit, and manifest together. Inventory exact operations, ports, permissions,
+    defaults, conflicts, lifecycle limits, and billing values in both directions; remove each manifest value absent from the core or add its qualified use, and downgrade optimistic statuses. Recheck the exact fixed-atom count, task page and word caps,
     numeric conditions, and links. If one fetched page says a method is unavailable and another exposes it, mark the conflict. Every URL must be HTTPS on exactly
     `learn.microsoft.com`, belong to the fetch set, and appear once in References.
 
@@ -137,13 +137,13 @@ in a Reference or learner response. References verify lesson claims; learner res
 
 ## Research-only answer contract
 - Lead with the conclusion. Count all user-visible text before References, including headings, labels,
-  tables, and fenced code but excluding URL targets. A smaller task limit is binding; otherwise keep at or below 1,500 words and
+  tables, and fenced code but excluding URL targets. A smaller task limit is binding; without a deterministic counter, draft to at most 85% of that limit and never claim a numeric count; otherwise keep at or below 1,500 words and
   target 1,350 when code or tables appear. Rewrite before callback; only evaluation runs over 30 atoms may use 2,000 words.
 - Under each material decision heading use `**Fetched facts:**`, `**Recommendation:**`, and
   `**Assumptions or unresolved constraints:**`. Name unsupported items explicitly; write `None
   identified from the fetched sources.` only when appropriate.
-- Put a descriptive fetched link after the smallest material factual clause. That exact page and selected
-  pivot must support the clause and qualifiers; do not use a co-citation to borrow support. Preserve actor,
+- Put a descriptive fetched link after each occurrence of the smallest material factual clause. That exact page, URL fragment, and selected
+  pivot must support the clause and qualifiers; no section may rely on a link elsewhere and no co-citation may borrow support. Preserve actor,
   action, scope, and conditions. Do not call a synthesis a Microsoft recommendation.
 - Numeric limits, durations, ranges, percentages, counts, mutable availability, and lifecycle status
   require adjacent fetched support for their exact conditions; otherwise omit or mark them unresolved.
@@ -162,8 +162,8 @@ The coordinator must not publish this packet as part of the user-facing answer. 
    source-budget pressure, and tool friction. Report any cap breach as failure, never compliance;
    do not count observations as answer coverage.
 3. `### Evidence manifest`: one row per fetched reference with title, current-run fetch status, timestamp or `Unavailable`,
-   exact audit atoms, `Core location` headings, and only material values in those locations. Each
-   Match each semicolon-delimited value to its qualified core use; each semicolon-delimited value must appear with its qualifier in the named core heading. Remove unused values. Keep exact URLs only in References.
+   exact audit atoms, `Core location` headings, and every material operation, port, permission, default, conflict,
+   lifecycle limit, and billing value used there. Match each semicolon-delimited value to its qualified core use; each must appear with its qualifier in the named core heading. Remove unused values. Keep exact URLs only in References.
 
 A keyword mention, list entry, test, or monitoring recommendation without fetched support is not
 coverage. Any atom named as unresolved in the core cannot be Covered. Rebuild and recount the audit
