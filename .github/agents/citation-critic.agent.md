@@ -71,15 +71,6 @@ website link. Check:
 14. whether the answer follows the supplied selected refinement without broadening, narrowing, or replacing
     the user's frozen intent.
 
-For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
-usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one
-objective, stated learner level and time budget, a 400-700-word lesson, no more than five fetched
-References, exactly one recall and one application question, no answer leakage, and no unsupported
-mastery claim. If feedback is supplied, verify both responses are assessed, only missed concepts are
-retaught, one unanswered retry is present, and the learning ledger follows the evidence. Treat an
-unsupported load-bearing fact, leaked answer, false mastery claim, or feedback that ignores the learner
-response as a critical defect.
-
 For a blind comparison, do not infer which answer used a skill. Score only the fixed dimensions in the
 coordinator's rubric and choose a winner or tie from material defect class before aggregate score.
 
