@@ -18,8 +18,9 @@ list of mandatory verbs, at most six exact `https://learn.microsoft.com` URLs, a
 `Callback session ID`, `Task SHA-256`, and `Callback nonce`. Missing or partial configuration is
 `OPERATIONS_CONFIGURATION_ERROR`.
 
-Send `STARTED <task-sha-256> <callback-nonce>` before fetching. Fetch every supplied URL exactly once;
-do not search, follow links, replace URLs, or add sources. Use `read` only for exact tool-spooled paths.
+The `STARTED <task-sha-256> <callback-nonce>` send must be the first tool call. Do not read or fetch
+until it succeeds. Fetch every supplied URL exactly once; do not search, follow links, replace URLs, or
+add sources. Use `read` only for exact tool-spooled paths.
 After preflights, send `COMPLETED <task-sha-256> <callback-nonce>`, two newlines, and the complete
 minified JSON as the final tool call, then return the identical complete result. Send `FAILED` once for
 a terminal error.
@@ -31,9 +32,14 @@ Preserve URL fragment or query-pivot scope, section, API version, actor and perm
 or data plane, method or command, target resource, selectors, prerequisites, defaults, side effects,
 connection effects, safety conditions, rollback limits, and destructive or data-loss flags.
 
-Never infer a command, selector, API version, or safety condition. If no fetched page supplies the exact
-operation, mark only that verb unresolved. If pages expose incompatible operations after their scopes
-are normalized, record a conflict rather than choosing.
+Never infer a command, selector, API version, permission, prerequisite, or safety condition. A permission
+action segment is not an operation name, an API display name is not executable syntax, and selectors or
+defaults from create or update do not transfer to failover, delete, or another action. Record
+`operation_kind` so a fetched API display name cannot masquerade as a command. Include selectors only
+when the cited source prints them for that exact operation; an empty array is correct restraint.
+Creation-time constraints are not deletion prerequisites. If no fetched page supplies the exact
+operation, mark only that verb unresolved. If pages expose incompatible operations or numeric limits
+after their scopes are normalized, set the verb status to `conflicting` and preserve both values.
 
 ## Output
 
@@ -45,11 +51,17 @@ Return one minified JSON line:
     {
       "verb": "<exact supplied verb>",
       "status": "supported|conflicting|unresolved",
-      "url": "<supplied URL or null>",
-      "section": "<heading or pivot or null>",
+      "sources": [
+        {
+          "url": "<supplied URL>",
+          "section": "<heading or pivot>",
+          "supports": ["operation|permission|selector|prerequisite|effect|rollback|safety"]
+        }
+      ],
       "plane": "management|data|mixed|unresolved",
       "actor_permissions": ["<actor or permission>"],
       "operation": "<exact CLI, API, SDK, or IaC operation or null>",
+      "operation_kind": "command|method-uri|sdk-signature|iac|api-display-name|unresolved",
       "target_scope": "<resource scope or null>",
       "selectors": ["<selector>"],
       "prerequisites": ["<condition>"],
@@ -60,6 +72,7 @@ Return one minified JSON line:
   ]
 }
 
-Validate JSON parsing, verb count and order, supplied URL membership, non-inferred selectors, and the
-serialized cap. If the minified output exceeds the cap, send `FAILED` with
+Validate JSON parsing, verb count and order, source URL membership, field-level source attribution,
+non-inferred selectors, operation-kind fidelity, and the serialized cap. If the minified output exceeds
+the cap, send `FAILED` with
 `OPERATIONS_PAYLOAD_LIMIT`. This packet is evidence input, not a user-facing runbook.

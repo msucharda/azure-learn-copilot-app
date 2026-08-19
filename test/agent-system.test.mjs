@@ -112,8 +112,14 @@ test("MAI evaluation agents keep bounded single-purpose contracts", async () => 
     assert.match(compact(evidence), /EVIDENCE_PAYLOAD_LIMIT/i);
 
     assert.match(compact(operations), /Evidence mode: operation-extraction/i);
+    assert.match(compact(operations), /must be the first tool call/i);
     assert.match(compact(operations), /scan every fetched page/i);
-    assert.match(compact(operations), /Never infer a command, selector, API version, or safety condition/i);
+    assert.match(compact(operations), /Never infer a command, selector, API version, permission, prerequisite, or safety condition/i);
+    assert.match(compact(operations), /permission action segment is not an operation name/i);
+    assert.match(compact(operations), /API display name is not executable syntax/i);
+    assert.match(compact(operations), /Creation-time constraints are not deletion prerequisites/i);
+    assert.match(compact(operations), /operation_kind/i);
+    assert.match(compact(operations), /field-level source attribution/i);
     assert.match(compact(operations), /OPERATIONS_PAYLOAD_LIMIT/i);
 
     assert.match(compact(preflight), /Audit mode: preflight/i);
