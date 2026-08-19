@@ -29,7 +29,8 @@ renderer. Copilot App owns tool execution and session coordination.
 The researcher targets `github-copilot`, is read-only except for its coordinator callback, and has three
 tool capabilities:
 
-- `read` only for exact files created when a Learn tool spools oversized output;
+- `read` only for an exact coordinator-supplied repair-packet path or an exact file path returned when a
+  Learn tool spools output; unrelated workspace and user files remain forbidden;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search;
 - `send_session_message` only for a task-hash-and-nonce-correlated callback to the supplied coordinator.
 
