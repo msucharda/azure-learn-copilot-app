@@ -1,9 +1,9 @@
 # Azure Learn Copilot agent system
 
-An agent-only Microsoft Learn research and focused-learning workflow for Copilot App. The repository
-contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
-Research and lessons use the Microsoft Learn tools configured in Copilot App, and references are
-returned as normal website links.
+An agent-only Microsoft Learn research, focused-learning, and Intune discovery workflow for Copilot
+App. The repository contains no project extensions, custom runtime tools, persistence layer, or
+separate reference UI. Research and lessons use the Microsoft Learn tools configured in Copilot App.
+The Intune workshop adds delegated, read-only Entra evidence from Microsoft MCP Server for Enterprise.
 
 ## Components
 
@@ -11,7 +11,9 @@ returned as normal website links.
 | --- | --- |
 | `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
 | `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
+| `.github/agents/intune-discovery-coach.agent.md` | Coaches bounded Intune discovery with Learn documentation and read-only Entra evidence |
 | `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |
+| `prompts/intune/prompt-library.json` | Defines the ordered seven-mission workshop, evidence gates, and safety guardrails |
 
 ## Flow
 
@@ -33,6 +35,11 @@ returned as normal website links.
    refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
    corrected user-facing answer.
+
+The separate Intune coach reads the mission library, uses Microsoft Learn MCP for documentation, and
+uses Enterprise MCP only for Entra users, groups, group membership, devices, licenses, organization,
+and directory-role evidence. Enterprise MCP is read-only and does not expose Intune configuration or
+managed-device APIs. Workshop assignments must never target **All users** or **All devices**.
 
 ## Focused learning
 

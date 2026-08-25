@@ -368,3 +368,28 @@ test("documentation links are safe websites", async () => {
         assert.equal(url.port, "");
     }
 });
+
+test("documentation defines Enterprise MCP setup and workshop boundaries", async () => {
+    const [readme, architecture, setup, troubleshooting] = await Promise.all(
+        DOCUMENTATION_PATHS.map(text),
+    );
+    const contract = compact([readme, architecture, setup, troubleshooting].join("\n"));
+
+    assert.match(contract, /e8c77dc2-69b3-43f4-bc51-3213c9d915b4/);
+    assert.match(contract, /https:\/\/mcp\.svc\.cloud\.microsoft\/enterprise/);
+    for (const scope of [
+        "MCP.Device.Read.All",
+        "MCP.Group.Read.All",
+        "MCP.GroupMember.Read.All",
+        "MCP.LicenseAssignment.Read.All",
+        "MCP.Organization.Read.All",
+        "MCP.RoleManagement.Read.Directory",
+        "MCP.User.Read.All",
+    ]) {
+        assert.match(contract, new RegExp(scope.replaceAll(".", "\\.")));
+    }
+    assert.match(contract, /server service principal.*does not prove.*external client registration/i);
+    assert.match(contract, /Enterprise MCP.*read-only.*not Intune configuration/i);
+    assert.match(contract, /All users.*All devices/i);
+    assert.match(contract, /contains exactly the assigned experiment device/i);
+});

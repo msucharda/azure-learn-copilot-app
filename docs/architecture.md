@@ -19,6 +19,11 @@ flowchart LR
     O -->|Fresh feedback phase| R
     R -->|Correlated callback| O
     O -->|User-facing answer and website links| U
+    U --> I[Intune discovery coach]
+    I --> M[Seven-mission prompt library]
+    I --> L
+    I --> E[Enterprise MCP read-only Entra evidence]
+    E --> I
 ```
 
 There is no project runtime, custom tool server, durable evidence store, or separate reference
@@ -45,6 +50,18 @@ The critic has the same callback-only messaging exception. It reads only the exa
 coordinator-supplied packet and may fetch only the Learn URLs already listed in that packet. It cannot
 search, add a source, invoke a skill, or rewrite the answer. Review-time fetches independently verify
 claims without being misrepresented as the researcher's original tool trace.
+
+### `intune-discovery-coach`
+
+The coach reads `prompts/intune/prompt-library.json` and exposes only `read`,
+`microsoft-learn/*`, and `microsoft-enterprise/*`. Learn MCP supplies current documentation.
+Enterprise MCP supplies delegated, read-only Entra evidence and the generated Microsoft Graph request
+path. It cannot establish Intune configuration, assignment, compliance, managed-device, or endpoint
+state; the learner supplies those facts from Intune and the assigned endpoint.
+
+The coach rejects **All users**, **All devices**, and any target without current proof that the
+trainee group contains exactly the assigned experiment device. It never performs writes. The learner
+manually makes only a reversible, reviewed Intune change after the blast-radius gate passes.
 
 ## Quick and deep paths
 
@@ -218,4 +235,8 @@ The links open the source as a normal website, including
   workspace and user files are out of scope.
 - The critic cannot search, add sources, invoke skills, or read outside the exact packet. It may fetch
   only existing Reference URLs for review-time verification.
+- The Intune coach can query only the two App-configured MCP namespaces. Enterprise calls are limited
+  by the external client's reviewed delegated grant and the signed-in user's access.
+- Enterprise MCP exposes Entra evidence, not Intune configuration or managed-device APIs. Neither MCP
+  server may mutate workshop state.
 - Copilot App provides and authorizes all tools and orchestration.

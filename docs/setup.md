@@ -4,6 +4,7 @@
 
 - Copilot App with project custom-agent discovery.
 - The Microsoft Learn MCP server configured in Copilot App and exposed as `microsoft-learn/*`.
+- Microsoft MCP Server for Enterprise configured as `microsoft-enterprise/*` for the Intune workshop.
 
 No project extension, SDK package, local service, storage root, environment variable, or committed
 MCP configuration is required.
@@ -17,6 +18,67 @@ and [Microsoft Learn MCP setup](https://learn.microsoft.com/en-us/training/suppo
 Installed product skills may remain available elsewhere in Copilot App, but this project does not load
 them. `learn-researcher` uses direct Learn discovery in every mode, and fetched Learn pages are the only
 citation evidence.
+
+## Enterprise MCP external client
+
+The tenant-side Microsoft-owned service principal must have app ID
+`e8c77dc2-69b3-43f4-bc51-3213c9d915b4`. Configure the external client with:
+
+- server name `microsoft-enterprise`;
+- endpoint `https://mcp.svc.cloud.microsoft/enterprise`;
+- interactive delegated authentication; app-only workflows are not supported;
+- a dedicated single-tenant client app registration and its exact redirect URI; and
+- only these reviewed delegated scopes:
+
+```text
+MCP.Device.Read.All
+MCP.Group.Read.All
+MCP.GroupMember.Read.All
+MCP.LicenseAssignment.Read.All
+MCP.Organization.Read.All
+MCP.RoleManagement.Read.Directory
+MCP.User.Read.All
+```
+
+Do not grant all available MCP scopes. Microsoft documents that a custom client needs its own
+application registration, client ID, tenant ID, redirect URI, delegated permissions, and admin
+consent in [Get started with Microsoft MCP Server for Enterprise](https://learn.microsoft.com/graph/mcp-server/get-started).
+The server service principal existing in the tenant does not prove that this external client
+registration or its OAuth2 permission grant exists.
+
+An application or cloud application administrator can grant the reviewed set with Microsoft Entra
+PowerShell:
+
+```powershell
+$reviewedScopes = @(
+    'MCP.Device.Read.All'
+    'MCP.Group.Read.All'
+    'MCP.GroupMember.Read.All'
+    'MCP.LicenseAssignment.Read.All'
+    'MCP.Organization.Read.All'
+    'MCP.RoleManagement.Read.Directory'
+    'MCP.User.Read.All'
+)
+
+Grant-EntraBetaMCPServerPermission `
+    -ApplicationId '<external-client-application-id>' `
+    -Scopes $reviewedScopes
+```
+
+Granting specific scopes is additive. Audit the resulting OAuth2 permission grant and revoke every
+scope outside the reviewed set before the workshop; do not reuse a broadly consented client. See
+[Manage Microsoft MCP Server for Enterprise permissions](https://learn.microsoft.com/powershell/entra-powershell/how-to-manage-mcp-server-permissions?view=entra-powershell).
+
+Configure both MCP servers in Copilot App, start a fresh project session, and select
+`intune-discovery-coach`. Test one bounded Entra query and confirm that the response shows the
+generated Microsoft Graph request path. Enterprise MCP currently performs read-only operations and
+cannot read or change Intune configuration or managed-device state; those facts must come from the
+Intune admin center or assigned endpoint.
+
+**Deployment blocker:** this repository contains no tenant credentials or external client ID, so it
+cannot prove or create the client registration. Deployment is ready only after an administrator
+records the external client application ID, verifies its service principal and redirect URI, and
+confirms that its grant contains exactly the seven reviewed scopes.
 
 ## Use
 
