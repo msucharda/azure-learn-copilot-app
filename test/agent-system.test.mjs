@@ -6,6 +6,7 @@ const ROOT = new URL("../", import.meta.url);
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
+const INTUNE_LIBRARY_PATH = "prompts/intune/prompt-library.json";
 const DOCUMENTATION_PATHS = [
     "README.md",
     "docs/architecture.md",
@@ -26,7 +27,7 @@ function compact(markdown) {
 }
 
 function frontmatter(markdown) {
-    const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
     assert.ok(match, "agent frontmatter is required");
     return match[1];
 }
@@ -67,6 +68,37 @@ test("repository exposes only the native agent system", async () => {
     assert.deepEqual(tools(critic), nativeAgentTools);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
+});
+
+test("Intune prompt library preserves mission and safety contracts", async () => {
+    const library = JSON.parse(await text(INTUNE_LIBRARY_PATH));
+    const missionIds = library.missions.map((mission) => mission.id);
+    const enterprise = library.mcp_sources.find((source) => source.id === "microsoft-enterprise");
+
+    assert.equal(library.schema_version, 1);
+    assert.equal(library.library_id, "intune-self-discovery");
+    assert.deepEqual(missionIds, [
+        "capability-map",
+        "prove-prerequisites",
+        "design-experiment",
+        "challenge-blast-radius",
+        "observe-change",
+        "diagnose-evidence",
+        "clean-and-reflect",
+    ]);
+    assert.equal(enterprise.endpoint, "https://mcp.svc.cloud.microsoft/enterprise");
+    assert.deepEqual(enterprise.recommended_scopes, [
+        "MCP.Device.Read.All",
+        "MCP.Group.Read.All",
+        "MCP.GroupMember.Read.All",
+        "MCP.LicenseAssignment.Read.All",
+        "MCP.Organization.Read.All",
+        "MCP.RoleManagement.Read.Directory",
+        "MCP.User.Read.All",
+    ]);
+    assert.match(enterprise.boundary, /read-only.*no Intune configuration or managed-device APIs/i);
+    assert.match(library.guardrails.join(" "), /Never target All users or All devices/i);
+    assert.match(library.guardrails.join(" "), /exactly the assigned current endpoint/i);
 });
 
 test("researcher separates research and focused learning behavior", async () => {

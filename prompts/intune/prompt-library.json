@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "library_id": "intune-self-discovery",
+  "title": "Intune self-discovery",
+  "description": "Evidence-driven missions for one disposable Intune endpoint per trainee.",
+  "client_integration_owner": "azure-learn-copilot-app",
+  "variables": {
+    "trainee_number": "001",
+    "control_device": "avdtrn001",
+    "experiment_device": "intunetrn001",
+    "target_group": "grp-intune-trn-001-devices"
+  },
+  "coaching_contract": [
+    "Coach me through discovery instead of giving me the final answer immediately.",
+    "Ask me to state a hypothesis before suggesting an inspection.",
+    "Use Microsoft Learn MCP for current authoritative documentation and cite every source.",
+    "Use Microsoft MCP Server for Enterprise only for delegated, read-only Entra evidence and show the Microsoft Graph request path.",
+    "Do not claim that Enterprise MCP can read or change Intune configuration or managed-device state.",
+    "Separate observation, interpretation, proposed change, validation, and cleanup.",
+    "Do not request or display credentials, tokens, personal data, Terraform state, or unrestricted tenant exports.",
+    "Stop if a proposed action could affect anything outside my assigned target group and endpoint."
+  ],
+  "guardrails": [
+    "Never target All users or All devices.",
+    "The target group must contain exactly the assigned current endpoint.",
+    "Do not modify enrollment restrictions, connectors, Intune RBAC, conditional access, security baselines, or tenant-wide settings.",
+    "Do not wipe, retire, rename, or delete devices.",
+    "Use only reversible settings with an explicit rollback.",
+    "Treat tenant-wide Intune Administrator access as privileged access, not permission to broaden the experiment."
+  ],
+  "mcp_sources": [
+    {
+      "id": "microsoft-learn",
+      "purpose": "Current Microsoft product documentation and citations",
+      "boundary": "Documentation only"
+    },
+    {
+      "id": "microsoft-enterprise",
+      "name": "Microsoft MCP Server for Enterprise",
+      "endpoint": "https://mcp.svc.cloud.microsoft/enterprise",
+      "tools": [
+        "microsoft_graph_suggest_queries",
+        "microsoft_graph_get",
+        "microsoft_graph_list_properties"
+      ],
+      "purpose": "Delegated read-only Entra tenant evidence",
+      "boundary": "Preview, global cloud, read-only; no Intune configuration or managed-device APIs",
+      "recommended_scopes": [
+        "MCP.Device.Read.All",
+        "MCP.Group.Read.All",
+        "MCP.GroupMember.Read.All",
+        "MCP.LicenseAssignment.Read.All",
+        "MCP.Organization.Read.All",
+        "MCP.RoleManagement.Read.Directory",
+        "MCP.User.Read.All"
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "id": "capability-map",
+      "title": "Map the capability boundary",
+      "objective": "Distinguish Intune, Entra, the two MCP servers, the control device, and the experiment device.",
+      "prompt": "I am trainee {{trainee_number}}. My control device is {{control_device}} and my disposable experiment device is {{experiment_device}}. Help me build a capability map before I make any change. Use Microsoft Learn MCP to identify the current Intune capabilities relevant to Windows enrollment, configuration, compliance, applications, reporting, and remote actions. Use Microsoft MCP Server for Enterprise to discover only the Entra-side user, group, device, license, organization, and directory-role evidence that its reviewed scopes permit. Show which source supports each claim, state what Enterprise MCP cannot inspect, and ask me to explain why the AVD device must remain outside the experiment plane.",
+      "evidence_required": [
+        "Capability map with source and control-plane boundary",
+        "At least three Microsoft Learn citations",
+        "Enterprise MCP Graph request paths",
+        "Statement that Enterprise MCP is read-only and does not expose Intune configuration"
+      ],
+      "exit_criteria": "The learner can explain which tool answers documentation, Entra evidence, Intune state, and endpoint-result questions."
+    },
+    {
+      "id": "prove-prerequisites",
+      "title": "Prove the prerequisites",
+      "objective": "Verify identity, role, license, enrollment, and target readiness without changing the tenant.",
+      "prompt": "Help me prove that trainee {{trainee_number}} and {{experiment_device}} are ready for an Intune experiment. First ask me to predict the required identity, licensing, MDM enrollment, device join, Intune role, and dynamic-group conditions. Use Microsoft Learn MCP for the official prerequisites. Use Enterprise MCP only for read-only Entra evidence that fits the reviewed scopes. Tell me which remaining facts must be verified in Intune. Require proof that {{target_group}} contains exactly {{experiment_device}} before declaring readiness.",
+      "evidence_required": [
+        "Prerequisite hypothesis",
+        "Current documentation citations",
+        "Entra evidence and Graph request paths",
+        "Intune enrollment and managed-device evidence",
+        "One-device target proof"
+      ],
+      "exit_criteria": "Every prerequisite is marked proved, disproved, or not observable with the selected tool."
+    },
+    {
+      "id": "design-experiment",
+      "title": "Design a reversible experiment",
+      "objective": "Choose a low-risk Windows setting and define expected evidence and rollback.",
+      "prompt": "Coach me to design one reversible Intune configuration experiment for {{experiment_device}}. Do not choose the setting for me. Ask questions that help me select a setting with a visible local result, current Microsoft Learn documentation, no tenant-wide dependency, and a clean rollback. Reject any design that targets All users, All devices, or anything except {{target_group}}. Before implementation, require a prediction covering assignment flow, timing, local observation, Intune reporting, likely failure modes, and rollback.",
+      "evidence_required": [
+        "Chosen capability and rationale",
+        "Microsoft Learn citations",
+        "Exact target and expected membership",
+        "Predicted before and after state",
+        "Rollback and timeout"
+      ],
+      "exit_criteria": "The experiment is reversible, observable, and limited to the one-device target."
+    },
+    {
+      "id": "challenge-blast-radius",
+      "title": "Challenge the blast radius",
+      "objective": "Falsify unsafe assumptions before creating an Intune object or assignment.",
+      "prompt": "Act as a skeptical change reviewer for my proposed Intune experiment. Ask me to show the exact target, current membership, exclusions, platform dependencies, and rollback. Use Enterprise MCP for read-only Entra group and device evidence only. Use Microsoft Learn MCP to test my assumptions about assignment behavior and conflict handling. Do not approve the experiment if the target is broader than {{target_group}}, if membership is not exactly {{experiment_device}}, or if cleanup cannot be proved.",
+      "evidence_required": [
+        "Blast-radius statement",
+        "Current one-device membership evidence",
+        "Conflict and precedence notes",
+        "Go or no-go decision with reasons"
+      ],
+      "exit_criteria": "The learner can defend why no other user or device should receive the experiment."
+    },
+    {
+      "id": "observe-change",
+      "title": "Run and observe the change",
+      "objective": "Create the approved assignment manually and collect evidence without agent-driven write actions.",
+      "prompt": "My experiment has passed blast-radius review. Keep Enterprise MCP in read-only mode. Ask me to capture the endpoint before state, create the Intune object and assignment manually, trigger or wait for the documented evaluation path, and collect timestamps from Intune and {{experiment_device}}. Help me compare observed behavior with my prediction. Do not provide a success-shaped conclusion until both the Intune report and local endpoint evidence agree.",
+      "evidence_required": [
+        "Before evidence",
+        "Change timestamp and exact assignment",
+        "Intune processing evidence",
+        "Endpoint after evidence",
+        "Prediction comparison"
+      ],
+      "exit_criteria": "The observed result is correlated across assignment, Intune report, and endpoint state."
+    },
+    {
+      "id": "diagnose-evidence",
+      "title": "Diagnose from evidence",
+      "objective": "Explain success, delay, conflict, or failure without trial-and-error changes.",
+      "prompt": "Help me diagnose the current experiment without adding another change. Ask me to classify the failure domain: identity, license, enrollment, target membership, assignment, sync, conflict, unsupported setting, or local observation. Use Microsoft Learn MCP to find current diagnostic guidance and cite it. Use Enterprise MCP only when read-only Entra evidence can test a hypothesis. Rank hypotheses, name the evidence that would falsify each one, and stop me from making random corrective changes.",
+      "evidence_required": [
+        "Failure-domain classification",
+        "Ranked hypotheses",
+        "Evidence for and against each hypothesis",
+        "Microsoft Learn citations",
+        "Conclusion or explicit unresolved state"
+      ],
+      "exit_criteria": "The diagnosis follows evidence and identifies the smallest justified next action."
+    },
+    {
+      "id": "clean-and-reflect",
+      "title": "Clean up and reflect",
+      "objective": "Remove the experiment and prove return to baseline.",
+      "prompt": "Coach me through cleanup of my Intune experiment. First ask me to predict the order for removing the assignment and temporary object and for observing endpoint reversal. Keep all MCP use read-only. Require proof that {{target_group}} is no longer assigned, the temporary object is removed, and {{experiment_device}} has returned to the expected state or has a documented reason why reset is required. Finish by asking me what Microsoft Learn established, what Enterprise MCP proved, what Intune proved, and what only the endpoint could prove.",
+      "evidence_required": [
+        "Cleanup sequence",
+        "Assignment removal proof",
+        "Temporary object removal proof",
+        "Endpoint rollback evidence",
+        "Source-boundary reflection"
+      ],
+      "exit_criteria": "No workshop-created assignment or object remains, and residual endpoint state is either cleared or escalated for facilitator reset."
+    }
+  ]
+}
