@@ -5,6 +5,7 @@ import test from "node:test";
 const ROOT = new URL("../", import.meta.url);
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
+const INTUNE_COACH_PATH = ".github/agents/intune-discovery-coach.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
 const INTUNE_LIBRARY_PATH = "prompts/intune/prompt-library.json";
 const DOCUMENTATION_PATHS = [
@@ -58,16 +59,23 @@ test("repository exposes only the native agent system", async () => {
         assertMissing(".github/skills"),
     ]);
 
-    const [researcher, critic] = await Promise.all([
+    const [researcher, critic, intuneCoach] = await Promise.all([
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
+        text(INTUNE_COACH_PATH),
     ]);
 
     const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
     assert.deepEqual(tools(researcher), nativeAgentTools);
     assert.deepEqual(tools(critic), nativeAgentTools);
+    assert.deepEqual(tools(intuneCoach), [
+        "read",
+        "microsoft-learn/*",
+        "microsoft-enterprise/*",
+    ]);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
+    assert.equal(property(intuneCoach, "target"), "github-copilot");
 });
 
 test("Intune prompt library preserves mission and safety contracts", async () => {
@@ -99,6 +107,27 @@ test("Intune prompt library preserves mission and safety contracts", async () =>
     assert.match(enterprise.boundary, /read-only.*no Intune configuration or managed-device APIs/i);
     assert.match(library.guardrails.join(" "), /Never target All users or All devices/i);
     assert.match(library.guardrails.join(" "), /exactly the assigned current endpoint/i);
+});
+
+test("Intune coach enforces source and target boundaries", async () => {
+    const coach = await text(INTUNE_COACH_PATH);
+    const contract = compact(coach);
+
+    assert.ok(coach.split("\n").length <= 100, "Intune coach contract must stay compact");
+    assert.match(contract, /read only `prompts\/intune\/prompt-library\.json`/i);
+    assert.match(contract, /other than seven missions/i);
+    assert.match(contract, /Run one mission at a time in library order/i);
+    assert.match(contract, /microsoft-learn\/\*.*current Microsoft product documentation/i);
+    assert.match(contract, /microsoft-enterprise\/\*.*delegated, read-only Microsoft Entra evidence/i);
+    assert.match(contract, /seven reviewed scopes listed in the library/i);
+    assert.match(contract, /exact Microsoft Graph request path/i);
+    assert.match(contract, /does not expose Intune configuration or Intune managed-device APIs/i);
+    assert.match(contract, /Never use either MCP server for a write/i);
+    assert.match(contract, /`All users` and `All devices` are prohibited targets/i);
+    assert.match(contract, /contains exactly the assigned experiment device/i);
+    assert.match(contract, /AVD control device stays outside the experiment plane/i);
+    assert.match(contract, /Ask the learner for a hypothesis before suggesting an inspection/i);
+    assert.match(contract, /Do not give a success-shaped conclusion/i);
 });
 
 test("researcher separates research and focused learning behavior", async () => {
