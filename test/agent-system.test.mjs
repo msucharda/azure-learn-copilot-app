@@ -5,7 +5,9 @@ import test from "node:test";
 const ROOT = new URL("../", import.meta.url);
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
+const INTUNE_COACH_PATH = ".github/agents/intune-discovery-coach.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
+const INTUNE_LIBRARY_PATH = "prompts/intune/prompt-library.json";
 const DOCUMENTATION_PATHS = [
     "README.md",
     "docs/architecture.md",
@@ -26,7 +28,7 @@ function compact(markdown) {
 }
 
 function frontmatter(markdown) {
-    const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+    const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
     assert.ok(match, "agent frontmatter is required");
     return match[1];
 }
@@ -57,16 +59,75 @@ test("repository exposes only the native agent system", async () => {
         assertMissing(".github/skills"),
     ]);
 
-    const [researcher, critic] = await Promise.all([
+    const [researcher, critic, intuneCoach] = await Promise.all([
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
+        text(INTUNE_COACH_PATH),
     ]);
 
     const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
     assert.deepEqual(tools(researcher), nativeAgentTools);
     assert.deepEqual(tools(critic), nativeAgentTools);
+    assert.deepEqual(tools(intuneCoach), [
+        "read",
+        "microsoft-learn/*",
+        "microsoft-enterprise/*",
+    ]);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
+    assert.equal(property(intuneCoach, "target"), "github-copilot");
+});
+
+test("Intune prompt library preserves mission and safety contracts", async () => {
+    const library = JSON.parse(await text(INTUNE_LIBRARY_PATH));
+    const missionIds = library.missions.map((mission) => mission.id);
+    const enterprise = library.mcp_sources.find((source) => source.id === "microsoft-enterprise");
+
+    assert.equal(library.schema_version, 1);
+    assert.equal(library.library_id, "intune-self-discovery");
+    assert.deepEqual(missionIds, [
+        "capability-map",
+        "prove-prerequisites",
+        "design-experiment",
+        "challenge-blast-radius",
+        "observe-change",
+        "diagnose-evidence",
+        "clean-and-reflect",
+    ]);
+    assert.equal(enterprise.endpoint, "https://mcp.svc.cloud.microsoft/enterprise");
+    assert.deepEqual(enterprise.recommended_scopes, [
+        "MCP.Device.Read.All",
+        "MCP.Group.Read.All",
+        "MCP.GroupMember.Read.All",
+        "MCP.LicenseAssignment.Read.All",
+        "MCP.Organization.Read.All",
+        "MCP.RoleManagement.Read.Directory",
+        "MCP.User.Read.All",
+    ]);
+    assert.match(enterprise.boundary, /read-only.*no Intune configuration or managed-device APIs/i);
+    assert.match(library.guardrails.join(" "), /Never target All users or All devices/i);
+    assert.match(library.guardrails.join(" "), /exactly the assigned current endpoint/i);
+});
+
+test("Intune coach enforces source and target boundaries", async () => {
+    const coach = await text(INTUNE_COACH_PATH);
+    const contract = compact(coach);
+
+    assert.ok(coach.split("\n").length <= 100, "Intune coach contract must stay compact");
+    assert.match(contract, /read only `prompts\/intune\/prompt-library\.json`/i);
+    assert.match(contract, /other than seven missions/i);
+    assert.match(contract, /Run one mission at a time in library order/i);
+    assert.match(contract, /microsoft-learn\/\*.*current Microsoft product documentation/i);
+    assert.match(contract, /microsoft-enterprise\/\*.*delegated, read-only Microsoft Entra evidence/i);
+    assert.match(contract, /seven reviewed scopes listed in the library/i);
+    assert.match(contract, /exact Microsoft Graph request path/i);
+    assert.match(contract, /does not expose Intune configuration or Intune managed-device APIs/i);
+    assert.match(contract, /Never use either MCP server for a write/i);
+    assert.match(contract, /`All users` and `All devices` are prohibited targets/i);
+    assert.match(contract, /contains exactly the assigned experiment device/i);
+    assert.match(contract, /AVD control device stays outside the experiment plane/i);
+    assert.match(contract, /Ask the learner for a hypothesis before suggesting an inspection/i);
+    assert.match(contract, /Do not give a success-shaped conclusion/i);
 });
 
 test("researcher separates research and focused learning behavior", async () => {
@@ -306,4 +367,29 @@ test("documentation links are safe websites", async () => {
         assert.equal(url.password, "");
         assert.equal(url.port, "");
     }
+});
+
+test("documentation defines Enterprise MCP setup and workshop boundaries", async () => {
+    const [readme, architecture, setup, troubleshooting] = await Promise.all(
+        DOCUMENTATION_PATHS.map(text),
+    );
+    const contract = compact([readme, architecture, setup, troubleshooting].join("\n"));
+
+    assert.match(contract, /e8c77dc2-69b3-43f4-bc51-3213c9d915b4/);
+    assert.match(contract, /https:\/\/mcp\.svc\.cloud\.microsoft\/enterprise/);
+    for (const scope of [
+        "MCP.Device.Read.All",
+        "MCP.Group.Read.All",
+        "MCP.GroupMember.Read.All",
+        "MCP.LicenseAssignment.Read.All",
+        "MCP.Organization.Read.All",
+        "MCP.RoleManagement.Read.Directory",
+        "MCP.User.Read.All",
+    ]) {
+        assert.match(contract, new RegExp(scope.replaceAll(".", "\\.")));
+    }
+    assert.match(contract, /server service principal.*does not prove.*external client registration/i);
+    assert.match(contract, /Enterprise MCP.*read-only.*not Intune configuration/i);
+    assert.match(contract, /All users.*All devices/i);
+    assert.match(contract, /contains exactly the assigned experiment device/i);
 });

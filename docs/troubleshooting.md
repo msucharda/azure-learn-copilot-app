@@ -4,6 +4,13 @@
 | --- | --- |
 | `learn-researcher` is not available | Start a new project turn or session so Copilot reloads project agents |
 | `microsoft-learn/*` is unavailable | Configure the Learn MCP server in App settings under the exact `microsoft-learn` name, then start a fresh session |
+| `microsoft-enterprise/*` is unavailable | Configure `https://mcp.svc.cloud.microsoft/enterprise` in App settings under the exact `microsoft-enterprise` name, then start a fresh session |
+| The Enterprise server service principal exists but sign-in fails | The server app ID `e8c77dc2-69b3-43f4-bc51-3213c9d915b4` is not the external client. Verify the dedicated client app registration, service principal, redirect URI, interactive delegated flow, admin consent, Conditional Access, and endpoint egress |
+| Enterprise MCP returns authorization errors | Audit the client's OAuth2 permission grant and the signed-in user's access. The grant must contain the required reviewed scope and no workshop-unreviewed scope; do not solve the error by granting every available scope |
+| Enterprise MCP cannot query Intune configuration or managed devices | Expected. It provides read-only Entra evidence, not Intune configuration, assignment, compliance, reporting, or managed-device APIs. Collect those facts from Intune or the assigned endpoint |
+| Enterprise MCP returns broad tenant data | Stop, narrow the Graph path and selected properties to the assigned user, group, or device, and do not copy unrestricted exports into the conversation |
+| A proposed assignment targets `All users` or `All devices` | Reject it. The only permitted target is the trainee's assigned group after current proof that it contains exactly the assigned experiment device |
+| The Intune coach is available but its tools are denied | Confirm the custom agent allow-list contains `read`, `microsoft-learn/*`, and `microsoft-enterprise/*`, and that both server names match App settings |
 | Learn output is saved to a temporary file | Use `read` only on the exact path returned by that tool and inspect only the necessary ranges |
 | The answer cites a search result without fetching it | Treat the citation as unverified and rerun with a fetched source; search chunks are discovery only |
 | An unfetched URL appears in unresolved items or next steps | Remove the link or fetch it within the 15-page budget |

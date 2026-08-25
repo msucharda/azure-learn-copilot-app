@@ -62,6 +62,11 @@ review packet in the session artifact directory and give a read-enabled reviewer
 - Direct Learn discovery is the only evidence path. Do not load, preselect, or inject an installed
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
   startup complexity; factual premises come only from successfully fetched Learn pages.
+- Intune workshop coaching is the separate `intune-discovery-coach` agent. It reads the seven-mission
+  prompt library, uses Learn MCP for documentation, and uses Enterprise MCP only for delegated,
+  read-only Entra evidence. Enterprise MCP is not an Intune configuration or managed-device API.
+  `All users` and `All devices` are prohibited targets; require current proof that the trainee group
+  contains exactly the assigned experiment device.
 
 ## Focused learning loop
 
