@@ -376,6 +376,11 @@ test("documentation defines Enterprise MCP setup and workshop boundaries", async
     const contract = compact([readme, architecture, setup, troubleshooting].join("\n"));
 
     assert.match(contract, /e8c77dc2-69b3-43f4-bc51-3213c9d915b4/);
+    assert.match(contract, /azure-learn-copilot-app-enterprise-mcp/);
+    assert.match(contract, /bb0f57f4-5880-404f-b331-9245e26145e2/);
+    assert.match(contract, /Public client/i);
+    assert.match(contract, /http:\/\/localhost/);
+    assert.match(contract, /AllPrincipals.*admin consent/i);
     assert.match(contract, /https:\/\/mcp\.svc\.cloud\.microsoft\/enterprise/);
     for (const scope of [
         "MCP.Device.Read.All",
@@ -388,7 +393,8 @@ test("documentation defines Enterprise MCP setup and workshop boundaries", async
     ]) {
         assert.match(contract, new RegExp(scope.replaceAll(".", "\\.")));
     }
-    assert.match(contract, /server service principal.*does not prove.*external client registration/i);
+    assert.doesNotMatch(setup, /Deployment blocker:/i);
+    assert.match(setup, /scope set must equal the seven reviewed scopes exactly/i);
     assert.match(contract, /Enterprise MCP.*read-only.*not Intune configuration/i);
     assert.match(contract, /All users.*All devices/i);
     assert.match(contract, /contains exactly the assigned experiment device/i);
