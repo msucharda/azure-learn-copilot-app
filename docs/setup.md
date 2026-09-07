@@ -96,6 +96,13 @@ come from the Intune admin center or assigned endpoint.
 
 ## Use
 
+Select GPT-6 Astra (`gpt-6-astra`) for the coordinator in Copilot App. The researcher and Intune coach
+also pin Astra in their agent frontmatter; the critic pins Claude Sonnet 5 (`claude-sonnet-5`) to retain
+independent review. Pass the matching model explicitly when starting a coordinated child and record
+the requested and observed model. Stop and report model unavailability rather than substituting.
+There is no documented repository model-default key in `.github/github-app.yml`; these instructions
+do not change the App-wide default or an already-running session's model.
+
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
 
@@ -114,6 +121,7 @@ References, and returns targeted correction plus a learning ledger.
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
+- model: `gpt-6-astra` (use `claude-sonnet-5` for `citation-critic`);
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
 - coordination: `coordinate_with_creator: true`;

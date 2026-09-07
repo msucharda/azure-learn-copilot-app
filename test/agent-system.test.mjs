@@ -33,6 +33,10 @@ function frontmatter(markdown) {
     return match[1];
 }
 
+function promptLineCount(markdown) {
+    return markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").split("\n").length;
+}
+
 function tools(markdown) {
     const match = frontmatter(markdown).match(/^tools: (.+)$/m);
     assert.ok(match, "agent tools must be explicit");
@@ -109,11 +113,29 @@ test("Intune prompt library preserves mission and safety contracts", async () =>
     assert.match(library.guardrails.join(" "), /exactly the assigned current endpoint/i);
 });
 
+test("base roles pin Astra and retain an independent critic", async () => {
+    const [researcher, critic, coach, instructions, setup] = await Promise.all([
+        text(RESEARCHER_PATH),
+        text(CRITIC_PATH),
+        text(INTUNE_COACH_PATH),
+        text(INSTRUCTIONS_PATH),
+        text("docs/setup.md"),
+    ]);
+    assert.equal(property(researcher, "model"), "gpt-6-astra");
+    assert.equal(property(coach, "model"), "gpt-6-astra");
+    assert.equal(property(critic, "model"), "claude-sonnet-5");
+    assert.notEqual(property(researcher, "model"), property(critic, "model"));
+    assert.match(compact(instructions), /Explicitly select it in native child kickoffs/i);
+    assert.match(compact(instructions), /requested and observed model.*never silently substitute/i);
+    assert.match(compact(setup), /do not change the App-wide default/i);
+    assert.doesNotMatch(instructions, /\bSol\b/);
+});
+
 test("Intune coach enforces source and target boundaries", async () => {
     const coach = await text(INTUNE_COACH_PATH);
     const contract = compact(coach);
 
-    assert.ok(coach.split("\n").length <= 100, "Intune coach contract must stay compact");
+    assert.ok(promptLineCount(coach) <= 92, "Intune coach prompt must stay compact");
     assert.match(contract, /read only `prompts\/intune\/prompt-library\.json`/i);
     assert.match(contract, /other than seven missions/i);
     assert.match(contract, /Run one mission at a time in library order/i);
@@ -134,7 +156,7 @@ test("researcher separates research and focused learning behavior", async () => 
     const researcher = await text(RESEARCHER_PATH);
     const contract = compact(researcher);
 
-    assert.ok(researcher.split("\n").length <= 180, "researcher contract must stay compact");
+    assert.ok(promptLineCount(researcher) <= 172, "researcher prompt must stay compact");
     for (const mode of ["standard", "evaluation", "repair"]) {
         assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }
@@ -240,7 +262,7 @@ test("critic reads one packet and verifies only existing references", async () =
     const critic = await text(CRITIC_PATH);
     const contract = compact(critic);
 
-    assert.ok(critic.split("\n").length <= 100, "critic contract must stay compact");
+    assert.ok(promptLineCount(critic) <= 92, "critic prompt must stay compact");
     assert.match(contract, /use `read` only on that file/i);
     assert.match(contract, /fetch only the exact `https:\/\/learn\.microsoft\.com` URLs already present/i);
     assert.match(contract, /Do not search, use code-sample discovery, follow a new link, replace a citation, add a source/i);
@@ -277,7 +299,7 @@ test("project instructions enforce a verified native-session pipeline", async ()
     const instructions = await text(INSTRUCTIONS_PATH);
     const contract = compact(instructions);
 
-    assert.ok(instructions.split("\n").length <= 145, "project instructions must stay compact");
+    assert.ok(instructions.split("\n").length <= 150, "project instructions including model policy must stay compact");
     assert.match(contract, /Before Learn discovery, task hashing, or launching a research child/i);
     assert.match(contract, /`clear`.*`exploratory`.*`materially ambiguous`/i);
     assert.match(contract, /interpretations would change the product, evidence plan, decision, or risk/i);
@@ -288,7 +310,7 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /`Assumptions`.*`Exclusions`.*`Unresolved`/i);
     assert.match(contract, /Compute the task SHA-256 only after that record is final/i);
     assert.match(contract, /research child.*must not reinterpret/i);
-    assert.match(contract, /MAI preprocessing can begin only after Sol fixes intent/i);
+    assert.match(contract, /MAI preprocessing can begin only after Astra fixes intent/i);
     assert.match(contract, /built-in `\/orchestrate` skill/i);
     assert.match(contract, /freeze the complete task and compute its SHA-256/i);
     assert.match(contract, /generate a unique callback nonce/i);
@@ -310,7 +332,7 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Direct Learn discovery is the only evidence path/i);
     assert.match(contract, /Do not load, preselect, or inject an installed product skill/i);
     assert.match(contract, /discovery-only candidate pool may exceed 15 pages/i);
-    assert.match(contract, /Sol fixes protected evidence slots before ranking/i);
+    assert.match(contract, /Astra fixes protected evidence slots before ranking/i);
     assert.match(contract, /slot fixes actor, action, target service\/plane, and an adjacent-candidate exclusion/i);
     assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
     assert.match(contract, /final evidence set to 15 authoritative pages/i);

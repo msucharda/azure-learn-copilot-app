@@ -2,6 +2,7 @@
 name: citation-critic
 description: Independently checks whether cited Microsoft Learn pages support supplied claims
 target: github-copilot
+model: claude-sonnet-5
 tools: ["read", "microsoft-learn/*", "send_session_message"]
 disable-model-invocation: true
 user-invocable: true

@@ -6,7 +6,7 @@ The system is prompt-defined and agent-only:
 
 ```mermaid
 flowchart LR
-    U[User or parent session] --> P[Sol prompt-refinement gate]
+    U[User or parent session] --> P[Astra prompt-refinement gate]
     P -->|One ask_user choice when materially ambiguous| U
     P -->|Frozen original plus selected interpretation| O[Built-in orchestrate skill]
     O -->|One kickoff: task plus callback envelope| R[learn-researcher]
@@ -65,7 +65,7 @@ manually makes only a reversible, reviewed Intune change after the blast-radius 
 
 ## Quick and deep paths
 
-A quick question stays in the current chat. Before either path, Sol classifies the request as clear,
+A quick question stays in the current chat. Before either path, Astra classifies the request as clear,
 exploratory, or materially ambiguous. Exploratory breadth is preserved; material ambiguity triggers one
 `ask_user` choice among two or three interpretations that would produce different evidence or decisions.
 The refinement record keeps the original request, selected interpretation, objective, scope, assumptions,
@@ -79,7 +79,7 @@ default context tier is sufficient for standard research; long context is an exp
 large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
 
 The coordinator owns intent. The research child does not reinterpret the frozen task, and weak-model
-preprocessing starts only after Sol has fixed the interpretation.
+preprocessing starts only after Astra has fixed the interpretation.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a

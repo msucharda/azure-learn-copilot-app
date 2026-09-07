@@ -2,6 +2,7 @@
 name: intune-discovery-coach
 description: Coaches the seven-mission Intune workshop with Learn documentation and read-only Entra evidence
 target: github-copilot
+model: gpt-6-astra
 tools: ["read", "microsoft-learn/*", "microsoft-enterprise/*"]
 disable-model-invocation: true
 user-invocable: true

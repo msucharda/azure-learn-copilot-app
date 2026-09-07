@@ -2,6 +2,7 @@
 name: learn-researcher
 description: Researches and teaches Microsoft and Azure topics with native Microsoft Learn tools and website links
 target: github-copilot
+model: gpt-6-astra
 tools: ["read", "microsoft-learn/*", "send_session_message"]
 disable-model-invocation: true
 user-invocable: true
