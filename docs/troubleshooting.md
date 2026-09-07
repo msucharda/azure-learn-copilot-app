@@ -68,6 +68,8 @@
 | `/orchestrate` is unavailable | Keep the research in the current chat; do not recreate coordination with project code |
 | Product-skill context appears in a research session | Ignore it, use direct Learn discovery, and record the unexpected context only in an evaluation packet |
 | A child cannot message its coordinator | Confirm that all three callback fields were supplied and that the agent allow-list contains `send_session_message`; inspect the transcript once and record a delivery failure |
+| The send tool reports success but the coordinator has no callback | Acceptance is not receipt. On the expected child's idle notification, inspect its durable transcript once, recover only an exact child/hash/nonce-correlated result, label it recovered delivery, and do not resend the work |
+| A notification-only turn produces an empty-response error | End the turn with a brief nonempty acknowledgment; deduplicate terminal events and do not restart already completed work |
 | A research kickoff fails with `MODE_CONFIGURATION_ERROR` | Omit every learning-mode field, even a `not applicable` placeholder. Learning kickoffs likewise omit every research-mode field |
 | Feedback or repair cannot read its packet | Supply one exact coordinator-authorized packet path; only that file and exact Learn spool paths are readable, not paths named inside the packet |
 | A critic brief tells repair to add a source | The brief cannot grant authority. Require explicit coordinator authorization outside the brief; otherwise retain the fixed source set and unresolved gap |
@@ -93,6 +95,8 @@
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |
 | A permitted critic fetch is spooled to a file | Read only that exact tool-returned spool path; it is a narrow evidence-read exception, not authorization for other files named in the packet or source |
 | A critic says it independently verified a page absent from its fetch trace | Correct the provenance claim; original successful fetches and review-time re-fetches are separate evidence records |
+| A review's verified-source count disagrees with its trace | Reconcile its per-reference verification table against exact review fetches and inspected scopes; preserve partial coverage rather than accepting a remembered total |
+| A callback and retained completion have different wording | Preserve the exact callback body and classify wrapper, substantive change, or missing content separately; never silently treat changed text as an exact match |
 | Autopilot has no prose final assistant turn | Check whether the complete result was retained in `task_complete.summary` and the correlated callback; a short completion notice is not the complete result |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |
 | A final answer appears outside a normalized assistant turn | Record the actual delivery channel in the reviewer packet and assess it as a runtime defect, not automatically as an answer defect |

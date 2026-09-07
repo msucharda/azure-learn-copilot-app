@@ -81,6 +81,13 @@ messages. Idle notifications are diagnostic only. Direct discovery is the only r
 default context tier is sufficient for standard research; long context is an explicit escalation for
 large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
 
+A send acknowledgment proves acceptance, not recipient receipt or consumption. If an expected child
+becomes idle without a terminal callback, inspect its durable transcript once. Preserve an exact
+hash-and-nonce-correlated result as recovered delivery, explicitly record the receipt gap, and do not
+resend the task. Distinguish an exact result, a wrapper, a substantively changed result, and missing
+content; never silently normalize differences. Notification-only turns end with a brief nonempty
+acknowledgment rather than an empty response. These are coordinator safeguards, not a native queue fix.
+
 The coordinator owns intent. The research child does not reinterpret the frozen task, and weak-model
 preprocessing starts only after Astra has fixed the interpretation.
 
@@ -216,6 +223,9 @@ answer, coordinator-only packet, and delivery channel. It reads that one packet 
 the exact Learn URLs already in References. It reviews task compliance, claim support, contradictions,
 coverage status, and runtime defects without producing a competing architecture or broadening the
 source set. Review-time fetches are labeled separately from the original trace.
+The critic records each reference's exact URL, review-fetch outcome, and inspected claim or scope in
+a verification table. Coverage follows those rows, not a remembered total or a successful fetch of an
+uninspected claim. Its callback and retained completion use the same exact review body.
 
 The critic returns a repair brief. A fresh callback-enabled researcher receives the prior answer and
 brief in one repair-mode packet and uses the existing source set unless a new fetch is explicitly

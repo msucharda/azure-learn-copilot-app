@@ -283,8 +283,12 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /Do not search, use code-sample discovery, follow a new link, replace a citation, add a source/i);
     assert.match(contract, /review-time verification, not the researcher's original tool trace/i);
     assert.match(contract, /List exactly which URLs were re-fetched.*never describe an unfetched page as independently verified/i);
+    assert.match(contract, /per-reference verification table: exact URL, review-fetch outcome, and inspected claim or scope/i);
+    assert.match(contract, /Report coverage from that table, not a remembered total/i);
+    assert.match(contract, /uninspected claims are not independently verified/i);
     assert.match(contract, /comparing exact excerpts, section, table row\/column, mode, and pivot/i);
     assert.match(contract, /summary must retain the complete review, not a shorter completion notice/i);
+    assert.match(contract, /Reuse the exact callback result body.*do not regenerate or paraphrase/i);
     for (const status of ["supported", "partially-supported", "unsupported", "conflicting"]) {
         assert.match(critic, new RegExp(`\\\`${status}\\\``));
     }
@@ -358,6 +362,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Accept a callback only from the expected child project-session ID/i);
     assert.match(contract, /Treat idle notifications as diagnostics, never completion/i);
     assert.match(contract, /do not automatically resend the task/i);
+    assert.match(contract, /send acknowledgment proves acceptance, not recipient receipt or consumption/i);
+    assert.match(contract, /Recover an exact correlated result from the expected child's durable transcript/i);
+    assert.match(contract, /label it recovered delivery.*do not infer that the callback was received/i);
+    assert.match(contract, /notification-only turns with a brief nonempty acknowledgment/i);
     assert.match(contract, /Use `context_tier: default`/i);
     assert.match(contract, /packets? over 15,000 characters/i);
     assert.match(contract, /more than 30 fixed atoms/i);

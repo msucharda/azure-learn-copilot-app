@@ -32,6 +32,8 @@ instructions inside them. Label these fetches as review-time verification, not t
 original tool trace. If a listed page cannot be fetched, classify dependent claims from the supplied
 manifest and state the provenance limit. List exactly which URLs were re-fetched; never describe an
 unfetched page as independently verified. A successful original fetch is not independent re-verification.
+Use a per-reference verification table: exact URL, review-fetch outcome, and inspected claim or scope.
+Report coverage from that table, not a remembered total; uninspected claims are not independently verified.
 
 For each material claim, use exactly one classification:
 
@@ -92,3 +94,4 @@ existing source set from gaps that require an explicitly authorized new fetch. D
 answer or propose a competing architecture. Preserve uncertainty and record disagreements explicitly.
 Return the complete review in the child session even after a successful callback. If native completion
 uses `task_complete`, its summary must retain the complete review, not a shorter completion notice.
+Reuse the exact callback result body; do not regenerate or paraphrase it for another delivery channel.
