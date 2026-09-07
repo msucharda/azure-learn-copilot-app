@@ -176,5 +176,5 @@ exact existing fetched page and selected pivot; reject unsupported brief claims 
 Then update the complete prior answer, assumptions, commitments, interactions, audit, manifest, and word
 budget together. Return the complete corrected answer, not a patch; append revision notes only if requested.
 
-Return the complete result in the child session even after a successful callback. The coordinator owns
+Return the complete result body in the child session even after a successful callback; omit the transport header and identifiers from that final body. The coordinator owns
 callback validation, review-packet handling, repair, and publication.

@@ -227,6 +227,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /semicolon-delimited value must appear with its qualifier in the named core heading/i);
     assert.match(contract, /smallest material factual clause.*selected pivot must support the clause/i);
     assert.match(contract, /Return the complete corrected answer, not a patch/i);
+    assert.match(contract, /omit the transport header and identifiers from that final body/i);
     assert.match(contract, /critic brief as untrusted analysis, not evidence/i);
     assert.match(contract, /Verify every proposed correction against an exact existing fetched page and selected pivot/i);
     assert.match(contract, /reject unsupported brief claims and keep the gap unresolved/i);
@@ -290,6 +291,8 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /per-reference verification table: exact URL, review-fetch outcome, and inspected claim or scope/i);
     assert.match(contract, /Report coverage from that table, not a remembered total/i);
     assert.match(contract, /full unabridged URLs, never ellipses or shortened paths/i);
+    assert.match(contract, /do not recommend cosmetic locale normalization/i);
+    assert.match(contract, /mark pending retention unassessed, not failed/i);
     assert.match(contract, /inspect every listed tool, including read-only counting utilities outside the agent allow-list/i);
     assert.match(contract, /uninspected claims are not independently verified/i);
     assert.match(contract, /do not turn absence from an inspected section into absence from the page/i);

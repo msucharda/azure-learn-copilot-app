@@ -33,7 +33,7 @@ original tool trace. If a listed page cannot be fetched, classify dependent clai
 manifest and state the provenance limit. List exactly which URLs were re-fetched; never describe an
 unfetched page as independently verified. A successful original fetch is not independent re-verification.
 Use a per-reference verification table: exact URL, review-fetch outcome, and inspected claim or scope.
-Write full unabridged URLs, never ellipses or shortened paths; use the literal claim classifications below.
+Write full unabridged URLs, never ellipses or shortened paths; do not recommend cosmetic locale normalization. Use the literal claim classifications below.
 Report coverage from that table, not a remembered total; uninspected claims are not independently verified.
 Prioritize exact operations, permission scopes, irreversible effects and blocking controls; if any remain uninspected, give a limited verdict rather than an unconditional pass.
 For your own negative findings, do not turn absence from an inspected section into absence from the page; name the unsupported mechanism rather than claiming a topic is never mentioned.
@@ -65,7 +65,7 @@ website link. Check:
    final core under the named `Core location`, and every material core claim absent is a defect;
 8. deterministic atomization, row count, published status totals, assumptions/status consistency, and
    optimistic Covered rows; and
-9. evidence provenance and runtime/delivery defects, kept separate from answer defects; inspect every listed tool, including read-only counting utilities outside the agent allow-list, before asserting tool-boundary compliance; and
+9. evidence provenance and runtime/delivery defects, kept separate from answer defects; mark pending retention unassessed, not failed; inspect every listed tool, including read-only counting utilities outside the agent allow-list, before asserting tool-boundary compliance; and
 10. whether requested runbooks include an exact fetched CLI, API, or IaC operation and scope when
     available, whether conclusions label synthesized conditions, and whether all user-visible core text including
     headings, labels, tables, and fenced code satisfies the stated word ceiling; and
