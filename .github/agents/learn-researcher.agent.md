@@ -90,10 +90,10 @@ Treat the supplied original request and selected refinement as authoritative; do
    conditional overrides and creation-time toggles; include or explicitly exclude each trigger. For each mandatory scenario verb,
    check the dedicated operations page and distinguish data-plane from management-plane behavior. A requested runbook or procedure includes an
    exact fetched CLI, API, or IaC operation and target scope when available; otherwise mark the executable step unresolved.
-8. Put every selected creation-time, one-way, locked, irreversible, or mode-selection property in
-   `Pre-rollout commitments` with fixation, acceptance, and evidence or unresolved status. Enumerate relevant
+8. Put every selected creation-time, one-way, locked, irreversible, or mode-selection property in a
+   `Pre-rollout commitments` Markdown table with Choice, Fixation point, Acceptance check, and Evidence or unresolved status columns. Enumerate relevant
    documented mode variants, including preview alternatives, explain exclusions, and do not claim a mode is reversible unless fetched evidence establishes it.
-9. When protective controls are selected, include `Protective-control interactions`. Check locks,
+9. When protective controls are selected, include a `Protective-control interactions` Markdown table with Control, Affected action, Blocking effect, Safe sequence or recovery condition, and Evidence or unresolved status columns. Check locks,
    policies, immutability, retention, network restrictions, key protection, and deletion guards against
    failover, failback, restore, region change, scaling, key rotation, migration, cutover, rollback,
    replay, and deletion. State the blocking effect and safe sequence or leave it unresolved. If one
@@ -101,7 +101,7 @@ Treat the supplied original request and selected refinement as authoritative; do
    tested, scenario-compliant recovery condition without inventing an insecure bypass.
 10. Rebuild the final claim ledger, core, audit, and manifest together. Remove each manifest value absent from
     the core or add qualified uses; downgrade optimistic statuses. If one fetched page says a method is
-    unavailable and another exposes it, mark the conflict. Recheck numeric conditions and links. Use only a returned canonical URL or the exact successful request URL. Every URL
+    unavailable and another exposes it, mark the conflict after comparing exact excerpts, section, table row/column, mode, and pivot. Different product columns are not contradictions. Preserve genuine same-scope conflicts. Recheck numeric conditions and links. Use only a returned canonical URL or the exact successful request URL. Every URL
     must be HTTPS on exactly `learn.microsoft.com`, belong to the fetch set, and appear once in References.
 
 ## Focused learning workflow
@@ -152,7 +152,7 @@ in a Reference or learner response. References verify lesson claims; learner res
 
 ## Evaluation packet
 
-Only in `Research mode: evaluation`, append `## Evaluation packet (coordinator only)` after References.
+In `Research mode: evaluation`, append `## Evaluation packet (coordinator only)` after References; repair preserves and rebuilds it when the supplied answer contains one.
 The coordinator must not publish this packet as part of the user-facing answer. Include:
 
 1. `### Coverage audit`: one row per precomputed atom with `Decision area`, `Atomic item`, and one status:

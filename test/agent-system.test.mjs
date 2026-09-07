@@ -198,6 +198,10 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /one fetched page says a method is unavailable and another exposes it, mark the conflict/i);
     assert.match(contract, /Do not claim a mode is reversible unless fetched evidence establishes it/i);
     assert.match(contract, /Protective-control interactions/i);
+    assert.match(contract, /`Pre-rollout commitments` Markdown table with Choice, Fixation point, Acceptance check, and Evidence or unresolved status columns/i);
+    assert.match(contract, /`Protective-control interactions` Markdown table with Control, Affected action, Blocking effect, Safe sequence or recovery condition, and Evidence or unresolved status columns/i);
+    assert.match(contract, /Different product columns are not contradictions.*Preserve genuine same-scope conflicts/i);
+    assert.match(contract, /repair preserves and rebuilds it when the supplied answer contains one/i);
     assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
     assert.match(contract, /Do not restate coexisting routes or topologies as recommended traffic sharing/i);
     assert.match(contract, /multi-table query.*map each table to its producer, diagnostic category, destination mode/i);
@@ -276,6 +280,9 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /fetch only the exact `https:\/\/learn\.microsoft\.com` URLs already present/i);
     assert.match(contract, /Do not search, use code-sample discovery, follow a new link, replace a citation, add a source/i);
     assert.match(contract, /review-time verification, not the researcher's original tool trace/i);
+    assert.match(contract, /List exactly which URLs were re-fetched.*never describe an unfetched page as independently verified/i);
+    assert.match(contract, /comparing exact excerpts, section, table row\/column, mode, and pivot/i);
+    assert.match(contract, /summary must retain the complete review, not a shorter completion notice/i);
     for (const status of ["supported", "partially-supported", "unsupported", "conflicting"]) {
         assert.match(critic, new RegExp(`\\\`${status}\\\``));
     }

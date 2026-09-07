@@ -18,7 +18,7 @@
 | Fetch redirects but returns no canonical URL | Preserve the exact request URL that fetched successfully; do not infer or rewrite a canonical form |
 | More than 15 sources appear | Narrow to the authoritative pages that support material decisions and leave secondary details unresolved |
 | The source budget omits a lead-mode operations page | Reserve lead-tier capability, reliability/operations, network/management-plane, and limits/lifecycle pages before spending slots on alternatives |
-| A requested topic is absent from the answer | Split the request into atomic named services, constraints, comparisons, and comma-separated subtopics, then map each to a core-answer sentence with fetched evidence, a supported recommendation, or an explicit unresolved statement |
+| A requested topic is absent from the answer | Use one row per numbered item, bullet, or semicolon-delimited subtopic; keep joined terms compound and apply the least-supported dimension, then map each row to fetched support or an explicit unresolved statement |
 | The agent reports complete coverage despite a missing subtopic | Do not accept a parent-area paragraph, unsupported recommendation, or agent-system observation as coverage; rerun the item-by-item preflight |
 | A broad request loses subtopics at the word limit | If the atomic checklist exceeds 30 items, allow up to 2,000 core words and spend the additional allowance only on missing requested coverage |
 | The core exceeds its word ceiling | Remove repeated facts, catalog-style feature detail, and secondary examples; keep each capability once and have recommendations apply rather than restate it |
@@ -56,6 +56,7 @@
 | A recommendation violates a mandatory scenario constraint | Remove it or present it only as a conditional alternative with the explicit scenario trade-off; convenience does not override the requirement |
 | A lead feature is supported only by an overview or limits page | Fetch the feature or variant's dedicated page and verify generation, SKU, region, and compatibility constraints |
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
+| An alleged conflict compares different table columns or feature modes | Compare exact excerpts, section, row/column, mode, and pivot before declaring a same-scope contradiction; preserve genuine conflicts instead of inventing or silently reconciling them |
 | A how-to says a method is unavailable but another fetched page exposes it | Record a source conflict and keep the method conditional until resolved; do not silently prefer either page |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
@@ -90,6 +91,8 @@
 | The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
 | A generated Markdown review packet is rejected as an unstaged kickoff file | Do not use Git staging or the attachment field; it accepts only app-staged creator images. Save the packet as a session artifact and give a read-enabled critic its exact path |
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |
+| A critic says it independently verified a page absent from its fetch trace | Correct the provenance claim; original successful fetches and review-time re-fetches are separate evidence records |
+| Autopilot has no prose final assistant turn | Check whether the complete result was retained in `task_complete.summary` and the correlated callback; a short completion notice is not the complete result |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |
 | A final answer appears outside a normalized assistant turn | Record the actual delivery channel in the reviewer packet and assess it as a runtime defect, not automatically as an answer defect |
 | The critic finds material defects | Start a fresh callback-enabled researcher with the prior answer and repair brief in one repair-mode packet, verify the corrected result, and publish only the user-facing portion |
