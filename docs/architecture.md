@@ -229,6 +229,9 @@ source set. Review-time fetches are labeled separately from the original trace.
 The critic records each reference's exact URL, review-fetch outcome, and inspected claim or scope in
 a verification table. Coverage follows those rows, not a remembered total or a successful fetch of an
 uninspected claim. Its callback and retained completion use the same exact review body.
+Table URLs are full and unabridged. A review inspects the original tool list, including read-only
+counting utilities, before claiming boundary compliance. Claim support must match the failure trigger
+and recovery mechanism, not merely similar troubleshooting symptoms.
 
 The critic returns a repair brief. A fresh callback-enabled researcher receives the prior answer and
 brief in one repair-mode packet and uses the existing source set unless a new fetch is explicitly

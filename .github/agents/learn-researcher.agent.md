@@ -69,7 +69,7 @@ Treat the supplied original request and selected refinement as authoritative; do
    including query-parameter or selected-pivot scope; actor/action; numeric conditions; lifecycle; region/SKU; negative
    support; preview; creation-only behavior, transitions, reversibility; and for a current-to-target change, lost or
    incompatible features, restart/redeploy needs, defaults/side effects, billing/cost, permissions, and management scope.
-   Treat headings and notes as conditions; surface source-internal conflicts instead of harmonizing them. An exclusive or
+   Treat headings and notes as conditions; match the failure trigger and recovery mechanism, not just similar symptoms. Surface source-internal conflicts instead of harmonizing them. An exclusive or
    negative claim needs an explicit prohibition or must be labeled as synthesis from the documented ownership/API surface.
    Ensure every material answer claim maps to the ledger, and every material ledger fact maps to the answer or an explicit
    unresolved statement. Mark mutable facts time-sensitive and require deployment-time revalidation when retrieval time is unavailable.
