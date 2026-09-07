@@ -50,8 +50,8 @@ Use one kickoff and an explicit agent callback for every deep child:
    resend the task. A send acknowledgment proves acceptance, not recipient receipt or consumption.
    Recover an exact correlated result from the expected child's durable transcript when available;
    label it recovered delivery, preserve its body, and do not infer that the callback was received.
-7. Ignore duplicate or stale callbacks. Validate the complete normalized result before archiving.
-   Close notification-only turns with a brief nonempty acknowledgment; never restart completed work.
+7. Ignore duplicate or stale callbacks. Reconcile late errors against retained results before retrying.
+   Validate the complete normalized result before archiving. Close notification-only turns with a brief nonempty acknowledgment; never restart completed work.
 8. Use `context_tier: default`. Escalate to `long_context` only for evaluation/A-B packets over 15,000
    characters, more than 30 fixed atoms, multi-answer comparison, or a recorded default-context run that
    reaches 120,000 input tokens or shows context loss. Record every escalation.

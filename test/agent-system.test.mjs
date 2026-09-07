@@ -372,6 +372,7 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Recover an exact correlated result from the expected child's durable transcript/i);
     assert.match(contract, /label it recovered delivery.*do not infer that the callback was received/i);
     assert.match(contract, /notification-only turns with a brief nonempty acknowledgment/i);
+    assert.match(contract, /Reconcile late errors against retained results before retrying/i);
     assert.match(contract, /Use `context_tier: default`/i);
     assert.match(contract, /packets? over 15,000 characters/i);
     assert.match(contract, /more than 30 fixed atoms/i);
