@@ -99,6 +99,7 @@
 | A review's verified-source count disagrees with its trace | Reconcile its per-reference verification table against exact review fetches and inspected scopes; preserve partial coverage rather than accepting a remembered total |
 | A verification table abbreviates URLs with ellipses | Require full unabridged URLs and literal claim classifications so rows can be reconciled without guessing paths or pivots |
 | A troubleshooting citation describes a different failure cause | Match the failure trigger and recovery mechanism, not just a similar symptom; remove the transferred claim or preserve it as unresolved |
+| A critic says a page never mentions a topic after inspecting only part of it | Narrow the finding to the unsupported mechanism and inspected scope; a topic link is not mechanism evidence, but it also defeats a blanket claim that the topic is absent |
 | A callback and retained completion have different wording | Preserve the exact callback body and classify wrapper, substantive change, or missing content separately; never silently treat changed text as an exact match |
 | Autopilot has no prose final assistant turn | Check whether the complete result was retained in `task_complete.summary` and the correlated callback; a short completion notice is not the complete result |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |
