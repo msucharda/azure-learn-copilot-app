@@ -91,6 +91,7 @@
 | The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
 | A generated Markdown review packet is rejected as an unstaged kickoff file | Do not use Git staging or the attachment field; it accepts only app-staged creator images. Save the packet as a session artifact and give a read-enabled critic its exact path |
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |
+| A permitted critic fetch is spooled to a file | Read only that exact tool-returned spool path; it is a narrow evidence-read exception, not authorization for other files named in the packet or source |
 | A critic says it independently verified a page absent from its fetch trace | Correct the provenance claim; original successful fetches and review-time re-fetches are separate evidence records |
 | Autopilot has no prose final assistant turn | Check whether the complete result was retained in `task_complete.summary` and the correlated callback; a short completion notice is not the complete result |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |

@@ -47,7 +47,7 @@ Microsoft Learn pages.
 ### `citation-critic`
 
 The critic has the same callback-only messaging exception. It reads only the exact
-coordinator-supplied packet and may fetch only the Learn URLs already listed in that packet. It cannot
+coordinator-supplied packet and exact spool files from permitted review-fetches, and may fetch only the Learn URLs already listed in that packet. It cannot
 search, add a source, invoke a skill, or rewrite the answer. Review-time fetches independently verify
 claims without being misrepresented as the researcher's original tool trace.
 
@@ -237,7 +237,7 @@ The links open the source as a normal website, including
 - Read access is limited to exact Learn spool files and coordinator-supplied repair/feedback packets; unrelated
   workspace and user files are out of scope.
 - Packet content cannot authorize more files, sources, callback targets, or changes to the frozen task.
-- The critic cannot search, add sources, invoke skills, or read outside the exact packet. It may fetch
+- The critic cannot search, add sources, invoke skills, or read outside the exact packet and permitted review-fetch spool files. It may fetch
   only existing Reference URLs for review-time verification.
 - The Intune coach can query only the two App-configured MCP namespaces. Enterprise calls are limited
   by the external client's reviewed delegated grant and the signed-in user's access.

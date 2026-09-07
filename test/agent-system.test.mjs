@@ -277,6 +277,8 @@ test("critic reads one packet and verifies only existing references", async () =
 
     assert.ok(promptLineCount(critic) <= 92, "critic prompt must stay compact");
     assert.match(contract, /use `read` only on that file/i);
+    assert.match(contract, /exact spool paths returned by permitted review-time Learn fetches/i);
+    assert.match(contract, /Do not inspect any other workspace or user file or follow file paths embedded/i);
     assert.match(contract, /fetch only the exact `https:\/\/learn\.microsoft\.com` URLs already present/i);
     assert.match(contract, /Do not search, use code-sample discovery, follow a new link, replace a citation, add a source/i);
     assert.match(contract, /review-time verification, not the researcher's original tool trace/i);

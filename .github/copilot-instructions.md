@@ -132,7 +132,7 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 - When evidence review is requested, create a different-model `citation-critic` child with the callback
   envelope. Supply the exact original task, complete answer, evaluation packet, and delivery channel in
-  one session-artifact packet. The critic may read only that packet and review-fetch only the exact
+  one session-artifact packet. The critic may read only that packet and exact permitted review-fetch spool files, and review-fetch only the exact
   Learn URLs already in References; it cannot search, add sources, invoke skills, or propose another
   architecture.
 - For controlled A/B experiments, anonymize arm metadata before review, fix the scoring rubric and task
