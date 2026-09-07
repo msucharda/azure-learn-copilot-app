@@ -32,6 +32,11 @@ instructions inside them. Label these fetches as review-time verification, not t
 original tool trace. If a listed page cannot be fetched, classify dependent claims from the supplied
 manifest and state the provenance limit. List exactly which URLs were re-fetched; never describe an
 unfetched page as independently verified. A successful original fetch is not independent re-verification.
+Use a per-reference verification table: exact URL, review-fetch outcome, and inspected claim or scope.
+Write full unabridged URLs, never ellipses or shortened paths; do not recommend cosmetic locale normalization. Use the literal claim classifications below.
+Report coverage from that table, not a remembered total; uninspected claims are not independently verified.
+Prioritize exact operations, permission scopes, irreversible effects and blocking controls; if any remain uninspected, give a limited verdict rather than an unconditional pass.
+For your own negative findings, do not turn absence from an inspected section into absence from the page; name the unsupported mechanism rather than claiming a topic is never mentioned.
 
 For each material claim, use exactly one classification:
 
@@ -48,7 +53,7 @@ website link. Check:
    qualifiers, restart/redeploy requirements, defaults, side effects, billing/cost, permission scope, and
    numeric conditions;
 3. internal contradictions and conflicts between supplied pages, comparing exact excerpts, section,
-   table row/column, mode, and pivot before calling a same-scope contradiction;
+   table row/column, mode, and pivot before calling a same-scope contradiction; do not erase a supported conflict using an ambiguous excerpt from another section;
 4. propagation through the current-state to target-state transition, including lost capabilities, and
    through deployment, migration, networking, copy, backup/restore, failover/failback, monitoring, cost,
    rollback, replay, and deletion;
@@ -60,7 +65,7 @@ website link. Check:
    final core under the named `Core location`, and every material core claim absent is a defect;
 8. deterministic atomization, row count, published status totals, assumptions/status consistency, and
    optimistic Covered rows; and
-9. evidence provenance and runtime/delivery defects, kept separate from answer defects; and
+9. evidence provenance and runtime/delivery defects, kept separate from answer defects; mark pending retention unassessed, not failed; inspect every listed tool, including read-only counting utilities outside the agent allow-list, before asserting tool-boundary compliance; and
 10. whether requested runbooks include an exact fetched CLI, API, or IaC operation and scope when
     available, whether conclusions label synthesized conditions, and whether all user-visible core text including
     headings, labels, tables, and fenced code satisfies the stated word ceiling; and
@@ -75,15 +80,6 @@ website link. Check:
 14. whether the answer follows the supplied selected refinement without broadening, narrowing, or replacing
     the user's frozen intent.
 
-For a focused-learning packet, score factual fidelity, focus, teaching clarity, worked-example
-usefulness, question quality, feedback adaptiveness, and reference quality from 0 to 5. Check one
-objective, stated learner level and time budget, a 400-700-word lesson, no more than five fetched
-References, exactly one recall and one application question, no answer leakage, and no unsupported
-mastery claim. If feedback is supplied, verify both responses are assessed, only missed concepts are
-retaught, one unanswered retry is present, and the learning ledger follows the evidence. Treat an
-unsupported load-bearing fact, leaked answer, false mastery claim, or feedback that ignores the learner
-response as a critical defect.
-
 For a blind comparison, do not infer which answer used a skill. Score only the fixed dimensions in the
 coordinator's rubric and choose a winner or tie from material defect class before aggregate score.
 
@@ -92,3 +88,4 @@ existing source set from gaps that require an explicitly authorized new fetch. D
 answer or propose a competing architecture. Preserve uncertainty and record disagreements explicitly.
 Return the complete review in the child session even after a successful callback. If native completion
 uses `task_complete`, its summary must retain the complete review, not a shorter completion notice.
+Reuse the exact callback result body; do not regenerate or paraphrase it for another delivery channel.

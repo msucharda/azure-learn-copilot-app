@@ -57,8 +57,10 @@
 | A lead feature is supported only by an overview or limits page | Fetch the feature or variant's dedicated page and verify generation, SKU, region, and compatibility constraints |
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
 | An alleged conflict compares different table columns or feature modes | Compare exact excerpts, section, row/column, mode, and pivot before declaring a same-scope contradiction; preserve genuine conflicts instead of inventing or silently reconciling them |
+| Review and repair disagree about a source conflict | Record both exact source locations and incompatible clauses in evaluation observations. Ambiguity alone is not a contradiction, but an ambiguous excerpt elsewhere does not erase a supported conflicting pair |
 | A how-to says a method is unavailable but another fetched page exposes it | Record a source conflict and keep the method conditional until resolved; do not silently prefer either page |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
+| A researcher uses session SQL or another unlisted utility to count words | Record a tool-boundary defect, not a permitted counting exception. Keep research within its allow-list and let the coordinator measure the retained answer without adding a runtime tool |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
 | The evidence manifest contains material values absent from the answer | Rebuild the core, audit, and manifest together; map each value to a qualified core sentence or remove it, then downgrade any optimistic status it had supported |
 | A manifest row names broad audit atoms but its values drift from the final core | Add an exact `Core location` heading and require every semicolon-delimited value to appear there with its qualifier |
@@ -68,8 +70,11 @@
 | `/orchestrate` is unavailable | Keep the research in the current chat; do not recreate coordination with project code |
 | Product-skill context appears in a research session | Ignore it, use direct Learn discovery, and record the unexpected context only in an evaluation packet |
 | A child cannot message its coordinator | Confirm that all three callback fields were supplied and that the agent allow-list contains `send_session_message`; inspect the transcript once and record a delivery failure |
-| A research kickoff fails with `MODE_CONFIGURATION_ERROR` | Omit every learning-mode field, even a `not applicable` placeholder. Learning kickoffs likewise omit every research-mode field |
-| Feedback or repair cannot read its packet | Supply one exact coordinator-authorized packet path; only that file and exact Learn spool paths are readable, not paths named inside the packet |
+| The send tool reports success but the coordinator has no callback | Acceptance is not receipt. On the expected child's idle notification, inspect its durable transcript once, recover only an exact child/hash/nonce-correlated result, label it recovered delivery, and do not resend the work |
+| A queued message reports `not found: live session <id>` | Distinguish the persisted session from its live runtime registration. Reconcile the expected sender's exact callback with recipient-journal evidence before signaling recovery; a completed sender must not be restarted. Preserve the missing-receipt timeline for App diagnostics. Agent instructions cannot repair the App's live-session lookup or queue submission |
+| A notification-only turn produces an empty-response error | End the turn with a brief nonempty acknowledgment; deduplicate terminal events and do not restart already completed work |
+| An error status arrives after a complete correlated result | Reconcile the expected child's retained result and terminal events once before any retry. Preserve the complete artifact, record conflicting status evidence and an unresolved cause, and do not rerun completed work merely because a later status disagrees |
+| Repair cannot read its packet | Supply one exact coordinator-authorized packet path; only that file and exact Learn spool paths are readable, not paths named inside the packet |
 | A critic brief tells repair to add a source | The brief cannot grant authority. Require explicit coordinator authorization outside the brief; otherwise retain the fixed source set and unresolved gap |
 | An orchestrated child fails | Inspect its persisted transcript once; retry only as a new, explicitly recorded run and never invent a success-shaped handoff |
 | A complementary model produces another architecture | Restart it as a formal reviewer with the exact original task, answer, and evidence context; require findings, not a competing solution |
@@ -79,20 +84,20 @@
 | A completed child answer is absent from the callback | Treat the run as incomplete even if the idle event fired; the callback must contain the complete result |
 | A standard research task requests long context by default | Use the default tier; escalate only for a packet over 15,000 characters, more than 30 fixed atoms, multi-answer comparison, or measured context pressure |
 | A default-context run reaches 120,000 input tokens or loses earlier evidence | Record the run and repeat once with `long_context`; do not make long context the global default |
-| A focused lesson covers several independent topics | Keep one prerequisite objective and list the rest only as possible next objectives |
-| A focused lesson becomes a research report | Enforce 400-700 words, at most five fetched pages, one worked example, and exactly two unanswered questions |
-| The lesson reveals its own check answers | Remove the answer, answer key, and result-revealing hints; wait for the learner response |
-| A recall question cues the answer | Remove distinctive role, option, or discriminator wording from the stem so the learner must retrieve it |
-| A lesson uses an unsupported portal label | Prefer conceptual action wording unless exact fetched page text contains the UI label |
 | A child ignores a newly committed agent contract | Confirm the feature branch was pushed before child creation, pass it as `base_branch`, and verify the child contains the expected commit; invalidate runs based on stale remote state |
-| Feedback introduces new sources, facts, or concepts | Treat the exact lesson as the teaching boundary; References verify its claims, and learner responses are evidence of understanding rather than factual sources |
-| Feedback claims mastery despite a wrong application response | A correct recall cannot override an applied mistake; write `Mastered: None yet` instead of narrowing mastery to the recall scenario |
-| The retry repeats the targeted correction | Change or invert the actor/action scenario; do not ask for the same entities, options, checklist, or sequence |
-| The learner asks for reminders | Create an App-native scheduled review only after explicit consent; do not add a learner database or project persistence |
 | A generated Markdown review packet is rejected as an unstaged kickoff file | Do not use Git staging or the attachment field; it accepts only app-staged creator images. Save the packet as a session artifact and give a read-enabled critic its exact path |
 | The original research tool trace is unavailable for review | Give the critic the coordinator-only manifest and let it fetch only the existing Reference URLs; label those fetches review-time verification rather than the original trace |
 | A permitted critic fetch is spooled to a file | Read only that exact tool-returned spool path; it is a narrow evidence-read exception, not authorization for other files named in the packet or source |
 | A critic says it independently verified a page absent from its fetch trace | Correct the provenance claim; original successful fetches and review-time re-fetches are separate evidence records |
+| A review's verified-source count disagrees with its trace | Reconcile its per-reference verification table against exact review fetches and inspected scopes; preserve partial coverage rather than accepting a remembered total |
+| A verification table abbreviates URLs with ellipses | Require full unabridged URLs and literal claim classifications so rows can be reconciled without guessing paths or pivots |
+| A troubleshooting citation describes a different failure cause | Match the failure trigger and recovery mechanism, not just a similar symptom; remove the transferred claim or preserve it as unresolved |
+| A critic says a page never mentions a topic after inspecting only part of it | Narrow the finding to the unsupported mechanism and inspected scope; a topic link is not mechanism evidence, but it also defeats a blanket claim that the topic is absent |
+| A reviewer fetched every page but left an operation or permission scope uninspected | Inspect those decisive sections before secondary detail. If a load-bearing clause remains uninspected, use a limited verdict; re-reading an already authorized page does not require new-source permission |
+| A callback and retained completion have different wording | Preserve the exact callback body and classify wrapper, substantive change, or missing content separately; never silently treat changed text as an exact match |
+| A full final result is prefixed with COMPLETED and callback identifiers | Preserve and explicitly classify the transport wrapper separately from the body; final user-facing text contains only the result body, not internal callback metadata |
+| A reviewer penalizes a still-pending retention snapshot | Mark it unassessed until terminal evidence is available; an unfinished snapshot is not proof of a failed or missing result |
+| A reviewer suggests removing a locale segment from a successful citation | Reject cosmetic normalization; the exact successful URL and pivot are evidence scope, not formatting to standardize |
 | Autopilot has no prose final assistant turn | Check whether the complete result was retained in `task_complete.summary` and the correlated callback; a short completion notice is not the complete result |
 | A manifest retrieval timestamp is unavailable | Label mutable limits, availability, preview, retirement, and lifecycle facts time-sensitive and require deployment-time revalidation |
 | A final answer appears outside a normalized assistant turn | Record the actual delivery channel in the reviewer packet and assess it as a runtime defect, not automatically as an answer defect |

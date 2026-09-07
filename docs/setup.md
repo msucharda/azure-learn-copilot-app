@@ -106,26 +106,13 @@ do not change the App-wide default or an already-running session's model.
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
 
-For focused learning, provide one objective, your current level, and a time budget. The coordinator
-asks one short diagnostic question unless you request an immediate lesson. It then launches:
-
-- `Learning mode: focused`;
-- `Learning phase: lesson`;
-- `Learning objective`, `Learner level`, `Time budget`, and `Diagnostic response`;
-- the same callback envelope and default context tier used by research.
-
-Answer the lesson's recall and application questions in the project chat. A fresh
-`Learning phase: feedback` child receives the exact lesson and your responses, reuses only the lesson's
-References, and returns targeted correction plus a learning ledger.
-
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
 - model: `gpt-6-astra` (use `claude-sonnet-5` for `citation-critic`);
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
-- omit inactive mode-family fields entirely; `Learning mode: not applicable` is still a learning field
-  and must not accompany a research kickoff;
+- omit inactive phase fields entirely; include only those needed by the selected research mode;
 - coordination: `coordinate_with_creator: true`;
 - notification: `notify_on_idle: always`, used only to diagnose missing callbacks;
 - context: `context_tier: default`. Use `long_context` only for a packet over 15,000 characters, more
