@@ -101,7 +101,7 @@ Treat the supplied original request and selected refinement as authoritative; do
    tested, scenario-compliant recovery condition without inventing an insecure bypass.
 10. Rebuild the final claim ledger, core, audit, and manifest together. Remove each manifest value absent from
     the core or add qualified uses; downgrade optimistic statuses. If one fetched page says a method is
-    unavailable and another exposes it, mark the conflict after comparing exact excerpts, section, table row/column, mode, and pivot. Different product columns are not contradictions. Preserve genuine same-scope conflicts. Recheck numeric conditions and links. Use only a returned canonical URL or the exact successful request URL. Every URL
+    unavailable and another exposes it, mark the conflict after comparing exact excerpts, section, table row/column, mode, and pivot. Record both exact source locations and incompatible clauses in evaluation observations; ambiguity alone is not a contradiction. Different product columns are not contradictions. Preserve genuine same-scope conflicts. Recheck numeric conditions and links. Use only a returned canonical URL or the exact successful request URL. Every URL
     must be HTTPS on exactly `learn.microsoft.com`, belong to the fetch set, and appear once in References.
 
 ## Focused learning workflow

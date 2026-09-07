@@ -204,6 +204,7 @@ test("researcher separates research and focused learning behavior", async () => 
     assert.match(contract, /`Pre-rollout commitments` Markdown table with Choice, Fixation point, Acceptance check, and Evidence or unresolved status columns/i);
     assert.match(contract, /`Protective-control interactions` Markdown table with Control, Affected action, Blocking effect, Safe sequence or recovery condition, and Evidence or unresolved status columns/i);
     assert.match(contract, /Different product columns are not contradictions.*Preserve genuine same-scope conflicts/i);
+    assert.match(contract, /Record both exact source locations and incompatible clauses in evaluation observations/i);
     assert.match(contract, /repair preserves and rebuilds it when the supplied answer contains one/i);
     assert.match(contract, /For each mandatory scenario verb.*check the dedicated operations page/i);
     assert.match(contract, /Do not restate coexisting routes or topologies as recommended traffic sharing/i);
@@ -295,6 +296,7 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /Prioritize exact operations, permission scopes, irreversible effects and blocking controls/i);
     assert.match(contract, /if any remain uninspected, give a limited verdict rather than an unconditional pass/i);
     assert.match(contract, /comparing exact excerpts, section, table row\/column, mode, and pivot/i);
+    assert.match(contract, /do not erase a supported conflict using an ambiguous excerpt from another section/i);
     assert.match(contract, /summary must retain the complete review, not a shorter completion notice/i);
     assert.match(contract, /Reuse the exact callback result body.*do not regenerate or paraphrase/i);
     for (const status of ["supported", "partially-supported", "unsupported", "conflicting"]) {

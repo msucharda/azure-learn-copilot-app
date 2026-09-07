@@ -53,7 +53,7 @@ website link. Check:
    qualifiers, restart/redeploy requirements, defaults, side effects, billing/cost, permission scope, and
    numeric conditions;
 3. internal contradictions and conflicts between supplied pages, comparing exact excerpts, section,
-   table row/column, mode, and pivot before calling a same-scope contradiction;
+   table row/column, mode, and pivot before calling a same-scope contradiction; do not erase a supported conflict using an ambiguous excerpt from another section;
 4. propagation through the current-state to target-state transition, including lost capabilities, and
    through deployment, migration, networking, copy, backup/restore, failover/failback, monitoring, cost,
    rollback, replay, and deletion;

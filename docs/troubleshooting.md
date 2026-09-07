@@ -57,6 +57,7 @@
 | A lead feature is supported only by an overview or limits page | Fetch the feature or variant's dedicated page and verify generation, SKU, region, and compatibility constraints |
 | Fetched pages conflict on a lead recommendation | Surface the conflict and keep the choice conditional; do not choose silently |
 | An alleged conflict compares different table columns or feature modes | Compare exact excerpts, section, row/column, mode, and pivot before declaring a same-scope contradiction; preserve genuine conflicts instead of inventing or silently reconciling them |
+| Review and repair disagree about a source conflict | Record both exact source locations and incompatible clauses in evaluation observations. Ambiguity alone is not a contradiction, but an ambiguous excerpt elsewhere does not erase a supported conflicting pair |
 | A how-to says a method is unavailable but another fetched page exposes it | Record a source conflict and keep the method conditional until resolved; do not silently prefer either page |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
 | A researcher uses session SQL or another unlisted utility to count words | Record a tool-boundary defect, not a permitted counting exception. Keep research within its allow-list and let the coordinator measure the retained answer without adding a runtime tool |
