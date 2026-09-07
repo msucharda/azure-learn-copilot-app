@@ -127,6 +127,14 @@ answer and brief in one exact packet. The brief is analysis rather than evidence
 re-verified against the fixed source set. The coordinator records runtime failures, repair results, and
 evidence-backed system changes in an uncommitted Copilot session artifact.
 
+Reliability review separates callback acceptance, recipient receipt, and retained result content.
+Late error statuses are reconciled against exact correlated results before any retry. Evidence review
+records full source URLs and inspected clauses, prioritizes operations and permissions, and uses a
+limited verdict when material clauses remain uninspected. Repairs preserve exact conflicting
+source-location pairs rather than treating critic advice as evidence. Word-count utilities remain
+coordinator-owned; researchers cannot broaden their tool boundary to satisfy an output constraint.
+These are agent safeguards, not fixes to Copilot App's delivery infrastructure.
+
 ## Validate
 
 ```sh
