@@ -35,6 +35,7 @@ unfetched page as independently verified. A successful original fetch is not ind
 Use a per-reference verification table: exact URL, review-fetch outcome, and inspected claim or scope.
 Write full unabridged URLs, never ellipses or shortened paths; use the literal claim classifications below.
 Report coverage from that table, not a remembered total; uninspected claims are not independently verified.
+Prioritize exact operations, permission scopes, irreversible effects and blocking controls; if any remain uninspected, give a limited verdict rather than an unconditional pass.
 For your own negative findings, do not turn absence from an inspected section into absence from the page; name the unsupported mechanism rather than claiming a topic is never mentioned.
 
 For each material claim, use exactly one classification:

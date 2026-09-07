@@ -292,6 +292,8 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /inspect every listed tool, including read-only counting utilities outside the agent allow-list/i);
     assert.match(contract, /uninspected claims are not independently verified/i);
     assert.match(contract, /do not turn absence from an inspected section into absence from the page/i);
+    assert.match(contract, /Prioritize exact operations, permission scopes, irreversible effects and blocking controls/i);
+    assert.match(contract, /if any remain uninspected, give a limited verdict rather than an unconditional pass/i);
     assert.match(contract, /comparing exact excerpts, section, table row\/column, mode, and pivot/i);
     assert.match(contract, /summary must retain the complete review, not a shorter completion notice/i);
     assert.match(contract, /Reuse the exact callback result body.*do not regenerate or paraphrase/i);
