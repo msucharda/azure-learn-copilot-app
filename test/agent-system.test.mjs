@@ -166,6 +166,8 @@ test("researcher separates research and focused learning behavior", async () => 
     const contract = compact(researcher);
 
     assert.ok(promptLineCount(researcher) <= 172, "researcher prompt must stay compact");
+    assert.match(contract, /do not edit files, run shell commands, use session SQL or other unlisted utilities/i);
+    assert.match(contract, /leave deterministic measurement to the coordinator.*do not report an estimated number/i);
     for (const mode of ["standard", "evaluation", "repair"]) {
         assert.match(contract, new RegExp(`Research mode: ${mode}`, "i"));
     }

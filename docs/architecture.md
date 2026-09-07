@@ -43,6 +43,9 @@ tool capabilities:
 The researcher does not load installed product skills or a product-skill catalog. It searches Learn
 directly in every mode, and every material claim must be checked against the bounded set of fetched
 Microsoft Learn pages.
+Word-count requirements do not authorize session SQL, shell commands, or unlisted utilities. If the
+allowed tools cannot compute an exact count, the researcher omits numeric estimates and the coordinator
+measures the retained answer with a session-artifact check.
 
 ### `citation-critic`
 

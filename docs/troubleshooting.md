@@ -59,6 +59,7 @@
 | An alleged conflict compares different table columns or feature modes | Compare exact excerpts, section, row/column, mode, and pivot before declaring a same-scope contradiction; preserve genuine conflicts instead of inventing or silently reconciling them |
 | A how-to says a method is unavailable but another fetched page exposes it | Record a source conflict and keep the method conditional until resolved; do not silently prefer either page |
 | The answer reports an estimated numeric word count | Remove the number unless an available tool computed it deterministically; report qualitative compliance instead |
+| A researcher uses session SQL or another unlisted utility to count words | Record a tool-boundary defect, not a permitted counting exception. Keep research within its allow-list and let the coordinator measure the retained answer without adding a runtime tool |
 | A quantitative claim is linked but its exact value or conditions are absent from the improvement-round manifest | Preserve the multiplier, range, duration, percentage, count, or limit in the matching manifest row, or downgrade the claim |
 | The evidence manifest contains material values absent from the answer | Rebuild the core, audit, and manifest together; map each value to a qualified core sentence or remove it, then downgrade any optimistic status it had supported |
 | A manifest row names broad audit atoms but its values drift from the final core | Add an exact `Core location` heading and require every semicolon-delimited value to appear there with its qualifier |
