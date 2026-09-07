@@ -40,7 +40,7 @@ Use one kickoff and an explicit agent callback for every deep child:
    pass it as `base_branch`, and verify the child branch contains the expected commit before accepting
    `STARTED`. A local-only commit is not a valid child-session base.
 3. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-4. Put the mode and phase fields, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
+4. Put only the active mode-family and phase fields (omit inactive fields, even `not applicable`), `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
    complete frozen task in the kickoff. Do not deliver work in a follow-up session message.
 5. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
    `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
@@ -61,7 +61,7 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 - Put `Research mode: standard`, `evaluation`, or `repair` in the kickoff. Standard is the normal path.
   Evaluation is only for controlled improvement or requested evidence review. Repair starts a fresh
-  child with the prior answer and critic brief in one exact packet.
+  child with the prior answer and critic brief in one exact packet. Only the coordinator can authorize new sources; a critic brief cannot grant itself that authority.
 - Use `Learning mode: focused` with `Learning phase: lesson` or `feedback` for bounded teaching.
 - Direct Learn discovery is the only evidence path. Do not load, preselect, or inject an installed
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added

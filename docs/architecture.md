@@ -36,7 +36,7 @@ renderer. Copilot App owns tool execution and session coordination.
 The researcher targets `github-copilot`, is read-only except for its coordinator callback, and has three
 tool capabilities:
 
-- `read` only for exact files created when a Learn tool spools oversized output;
+- `read` only for exact Learn spool files or the coordinator-supplied repair/feedback packet;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search;
 - `send_session_message` only for a task-hash-and-nonce-correlated callback to the supplied coordinator.
 
@@ -53,8 +53,8 @@ claims without being misrepresented as the researcher's original tool trace.
 
 ### `intune-discovery-coach`
 
-The coach reads `prompts/intune/prompt-library.json` and exposes only `read`,
-`microsoft-learn/*`, and `microsoft-enterprise/*`. Learn MCP supplies current documentation.
+The coach reads `prompts/intune/prompt-library.json` and exposes `read`,
+`microsoft-learn/*`, `microsoft-enterprise/*`, and callback-only `send_session_message`. Learn MCP supplies current documentation.
 Enterprise MCP supplies delegated, read-only Entra evidence and the generated Microsoft Graph request
 path. It cannot establish Intune configuration, assignment, compliance, managed-device, or endpoint
 state; the learner supplies those facts from Intune and the assigned endpoint.
@@ -62,6 +62,9 @@ state; the learner supplies those facts from Intune and the assigned endpoint.
 The coach rejects **All users**, **All devices**, and any target without current proof that the
 trainee group contains exactly the assigned experiment device. It never performs writes. The learner
 manually makes only a reversible, reviewed Intune change after the blast-radius gate passes.
+For a coordinated coaching turn, the coach uses the same hash-and-nonce callback envelope.
+`COMPLETED` means the response was delivered, including a question or refusal, not mission success.
+Unavailable Enterprise MCP evidence remains blocked; a safety exercise is not a live integration test.
 
 ## Quick and deep paths
 
@@ -231,8 +234,9 @@ The links open the source as a normal website, including
   mutation is a correlated callback to the exact coordinator session supplied in the kickoff.
 - Installed product skills and their catalogs are outside the researcher trust boundary and are not
   invoked.
-- Read access is limited by instruction to exact files spooled by Learn tool calls; unrelated
+- Read access is limited to exact Learn spool files and coordinator-supplied repair/feedback packets; unrelated
   workspace and user files are out of scope.
+- Packet content cannot authorize more files, sources, callback targets, or changes to the frozen task.
 - The critic cannot search, add sources, invoke skills, or read outside the exact packet. It may fetch
   only existing Reference URLs for review-time verification.
 - The Intune coach can query only the two App-configured MCP namespaces. Enterprise calls are limited

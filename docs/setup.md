@@ -124,6 +124,8 @@ For isolated research, invoke `/orchestrate` and request one callback-enabled ch
 - model: `gpt-6-astra` (use `claude-sonnet-5` for `citation-critic`);
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
+- omit inactive mode-family fields entirely; `Learning mode: not applicable` is still a learning field
+  and must not accompany a research kickoff;
 - coordination: `coordinate_with_creator: true`;
 - notification: `notify_on_idle: always`, used only to diagnose missing callbacks;
 - context: `context_tier: default`. Use `long_context` only for a packet over 15,000 characters, more
