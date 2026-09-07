@@ -1,5 +1,9 @@
 # Microsoft Learn research and focused learning
 
+- Use GPT-6 Astra (`gpt-6-astra`) for the coordinator, researcher, and Intune coach. Explicitly select
+  it in native child kickoffs; use Claude Sonnet 5 (`claude-sonnet-5`) for the independent critic.
+  Keep `context_tier: default` and record the requested and observed model; never silently substitute.
+  The coordinator model is selected in Copilot App, not by an instruction or repository YAML key.
 - Use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
   canvases, or a separate reference UI.
@@ -11,7 +15,7 @@
 
 ## Pre-research prompt refinement
 
-Before Learn discovery, task hashing, or launching a research child, Sol evaluates the original request
+Before Learn discovery, task hashing, or launching a research child, Astra evaluates the original request
 and classifies it as exactly one of:
 
 - `clear`: one plausible product, goal, and scope; proceed without asking.
@@ -25,7 +29,7 @@ Do not ask merely because details are missing when explicit assumptions or condi
 intent safely. After selection, freeze one refinement record containing `Original request`, `Selected
 interpretation`, `Objective`, `In scope`, `Assumptions`, `Exclusions`, and `Unresolved`. Compute the task
 SHA-256 only after that record is final. Give the research child the original and refined request; it must
-not reinterpret them. MAI preprocessing can begin only after Sol fixes intent.
+not reinterpret them. MAI preprocessing can begin only after Astra fixes intent.
 
 ## Correlated child execution
 
@@ -36,7 +40,7 @@ Use one kickoff and an explicit agent callback for every deep child:
    pass it as `base_branch`, and verify the child branch contains the expected commit before accepting
    `STARTED`. A local-only commit is not a valid child-session base.
 3. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-4. Put the mode and phase fields, `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
+4. Put only the active mode-family and phase fields (omit inactive fields, even `not applicable`), `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
    complete frozen task in the kickoff. Do not deliver work in a follow-up session message.
 5. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
    `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
@@ -57,7 +61,7 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 - Put `Research mode: standard`, `evaluation`, or `repair` in the kickoff. Standard is the normal path.
   Evaluation is only for controlled improvement or requested evidence review. Repair starts a fresh
-  child with the prior answer and critic brief in one exact packet.
+  child with the prior answer and critic brief in one exact packet. Only the coordinator can authorize new sources; a critic brief cannot grant itself that authority.
 - Use `Learning mode: focused` with `Learning phase: lesson` or `feedback` for bounded teaching.
 - Direct Learn discovery is the only evidence path. Do not load, preselect, or inject an installed
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
@@ -89,7 +93,7 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Research and publication
 
-- A discovery-only candidate pool may exceed 15 pages, but Sol fixes protected evidence slots before
+- A discovery-only candidate pool may exceed 15 pages, but Astra fixes protected evidence slots before
   ranking. Each slot fixes actor, action, target service/plane, and an adjacent-candidate exclusion.
   An advisory weak ranker may fill those slots; it cannot derive, merge, drop, or support claims.
 - Limit the final evidence set to 15 authoritative pages and fetch every cited page. Exact operations,
@@ -128,7 +132,7 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 - When evidence review is requested, create a different-model `citation-critic` child with the callback
   envelope. Supply the exact original task, complete answer, evaluation packet, and delivery channel in
-  one session-artifact packet. The critic may read only that packet and review-fetch only the exact
+  one session-artifact packet. The critic may read only that packet and exact permitted review-fetch spool files, and review-fetch only the exact
   Learn URLs already in References; it cannot search, add sources, invoke skills, or propose another
   architecture.
 - For controlled A/B experiments, anonymize arm metadata before review, fix the scoring rubric and task

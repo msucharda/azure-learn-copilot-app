@@ -17,7 +17,7 @@ The Intune workshop adds delegated, read-only Entra evidence from Microsoft MCP 
 
 ## Flow
 
-1. Before research, Sol classifies the request as clear, exploratory, or materially ambiguous. It preserves
+1. Before research, Astra classifies the request as clear, exploratory, or materially ambiguous. It preserves
    useful breadth, but when interpretations would change the product, evidence, decision, or risk, it uses
    one `ask_user` question with two or three differentiated choices.
 2. Freeze the selected interpretation with the original request, objective, scope, assumptions, exclusions,
@@ -84,6 +84,11 @@ and link contract. See GitHub's documentation for
 
 ## Improvement loop
 
+The base model is GPT-6 Astra (`gpt-6-astra`) for coordination, research, lessons, feedback, and Intune
+coaching. The independent critic uses Claude Sonnet 5 (`claude-sonnet-5`). Agent profiles pin their
+models, and coordinated kickoffs select them explicitly. Select Astra for the main chat in Copilot App;
+repository instructions cannot change an already-running model or the App-wide default.
+
 Each iteration runs a different Azure architecture scenario in a fresh coordinated
 `learn-researcher` session. Controlled experiments hold the task, model, and rubric fixed and anonymize
 answers before blind review. The core answer is bounded to
@@ -129,5 +134,10 @@ node --test
 ```
 
 The tests enforce the agent-only file layout, native tool allow-lists, and linked-reference contract.
+They are structural contract tests, not model-quality or live-integration tests. Model migrations also
+need fresh native-session cases for research, lesson/feedback, critique/repair, mode refusal, and
+workshop safety. Keep exact tasks, callback identities, observed models, source traces, and independent
+reviews in session artifacts; a passed synthetic safety case does not establish Enterprise MCP access
+or completion of the seven live workshop missions.
 See [architecture](docs/architecture.md), [setup](docs/setup.md), and
 [troubleshooting](docs/troubleshooting.md).
