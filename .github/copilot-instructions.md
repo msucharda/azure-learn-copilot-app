@@ -1,4 +1,4 @@
-# Microsoft Learn research and focused learning
+# Microsoft Learn research
 
 - Use GPT-6 Astra (`gpt-6-astra`) for the coordinator, researcher, and Intune coach. Explicitly select
   it in native child kickoffs; use Claude Sonnet 5 (`claude-sonnet-5`) for the independent critic.
@@ -40,7 +40,8 @@ Use one kickoff and an explicit agent callback for every deep child:
    pass it as `base_branch`, and verify the child branch contains the expected commit before accepting
    `STARTED`. A local-only commit is not a valid child-session base.
 3. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-4. Put only the active mode-family and phase fields (omit inactive fields, even `not applicable`), `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
+4. Put the research mode and applicable phase fields (omit inactive fields, even `not applicable`),
+   `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
    complete frozen task in the kickoff. Do not deliver work in a follow-up session message.
 5. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
    `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
@@ -65,7 +66,6 @@ review packet in the session artifact directory and give a read-enabled reviewer
 - Put `Research mode: standard`, `evaluation`, or `repair` in the kickoff. Standard is the normal path.
   Evaluation is only for controlled improvement or requested evidence review. Repair starts a fresh
   child with the prior answer and critic brief in one exact packet. Only the coordinator can authorize new sources; a critic brief cannot grant itself that authority.
-- Use `Learning mode: focused` with `Learning phase: lesson` or `feedback` for bounded teaching.
 - Direct Learn discovery is the only evidence path. Do not load, preselect, or inject an installed
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
   startup complexity; factual premises come only from successfully fetched Learn pages.
@@ -74,25 +74,6 @@ review packet in the session artifact directory and give a read-enabled reviewer
   read-only Entra evidence. Enterprise MCP is not an Intune configuration or managed-device API.
   `All users` and `All devices` are prohibited targets; require current proof that the trainee group
   contains exactly the assigned experiment device.
-
-## Focused learning loop
-
-1. Establish one learning objective, learner level, and time budget. If no baseline is available, ask
-   one short diagnostic question; use `Diagnostic response: Not supplied` only when the user wants the
-   lesson immediately.
-2. Start one callback-enabled lesson child with the objective, level, budget, and diagnostic response.
-   Require 400-700 words, at most five fetched Learn pages, one worked example, one recall question, and
-   one application question without answers. Do not cue the recall answer or use an exact portal label
-   unless fetched page text supports it.
-3. Publish the lesson and stop for the learner's responses.
-4. Put the exact lesson, References, and learner responses in one packet for a fresh feedback child.
-   Feedback reuses only those References, corrects missed concepts, asks one unanswered transfer retry
-   in a novel scenario, and ends with a `Mastered` / `Practicing` / `Next objective` ledger. A concept
-   contradicted by any applied response remains `Practicing`; use `Mastered: None yet` rather than
-   narrowing mastery to recall. The exact lesson is the teaching boundary; References verify it and
-   learner responses are not factual sources.
-5. Do not create a learner database or schedule review automatically. Use current conversation context;
-   create an App-native scheduled review only when the learner explicitly requests it.
 
 ## Research and publication
 

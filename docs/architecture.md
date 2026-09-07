@@ -12,12 +12,10 @@ flowchart LR
     O -->|One kickoff: task plus callback envelope| R[learn-researcher]
     R --> L[Native Microsoft Learn tools]
     L --> R
-    R -->|Correlated callback| A[Research answer or focused lesson]
-    A --> C[citation-critic on request]
-    C -->|Repair brief| R
-    A -->|Learner response| O
-    O -->|Fresh feedback phase| R
     R -->|Correlated callback| O
+    O -->|Evaluation packet on review request| C[citation-critic]
+    C -->|Repair brief| O
+    O -->|Fresh repair packet| R
     O -->|User-facing answer and website links| U
     U --> I[Intune discovery coach]
     I --> M[Seven-mission prompt library]
@@ -36,7 +34,8 @@ renderer. Copilot App owns tool execution and session coordination.
 The researcher targets `github-copilot`, is read-only except for its coordinator callback, and has three
 tool capabilities:
 
-- `read` only for exact Learn spool files or the coordinator-supplied repair/feedback packet;
+- `read` only for an exact coordinator-supplied repair-packet path or an exact file path returned when a
+  Learn tool spools output; unrelated workspace and user files remain forbidden;
 - `microsoft-learn/*` for native documentation search, page fetch, and code-sample search;
 - `send_session_message` only for a task-hash-and-nonce-correlated callback to the supplied coordinator.
 
@@ -99,13 +98,6 @@ coordinator-only packet. The coordinator stores that packet as a session artifac
 different-model critic review it, starts a fresh repair-mode researcher with the exact prior answer and
 repair brief, and publishes only the corrected user-facing portion. Markdown artifacts are read by
 exact path rather than passed as kickoff attachments, which accept only app-staged creator images.
-
-Focused learning has two fresh-child phases. A lesson receives one objective, learner level, time
-budget, and optional diagnostic response; it uses at most five fetched pages and stops after one recall
-and one application question. Feedback receives the exact lesson and learner responses, performs no new
-discovery, corrects only missed concepts, asks one retry question, and returns a small learning ledger.
-Conversation context is the only learner state unless the user explicitly requests a native scheduled
-review.
 
 GitHub's documented deep-research workflow investigates a repository. The custom researcher remains
 the appropriate policy boundary for external Microsoft Learn research and its stricter citation
@@ -253,7 +245,7 @@ The links open the source as a normal website, including
   mutation is a correlated callback to the exact coordinator session supplied in the kickoff.
 - Installed product skills and their catalogs are outside the researcher trust boundary and are not
   invoked.
-- Read access is limited to exact Learn spool files and coordinator-supplied repair/feedback packets; unrelated
+- Read access is limited to exact Learn spool files and coordinator-supplied repair packets; unrelated
   workspace and user files are out of scope.
 - Packet content cannot authorize more files, sources, callback targets, or changes to the frozen task.
 - The critic cannot search, add sources, invoke skills, or read outside the exact packet and permitted review-fetch spool files. It may fetch

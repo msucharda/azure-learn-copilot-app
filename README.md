@@ -1,18 +1,18 @@
 # Azure Learn Copilot agent system
 
-An agent-only Microsoft Learn research, focused-learning, and Intune discovery workflow for Copilot
-App. The repository contains no project extensions, custom runtime tools, persistence layer, or
-separate reference UI. Research and lessons use the Microsoft Learn tools configured in Copilot App.
+An agent-only Microsoft Learn research and Intune discovery workflow for Copilot App. The repository
+contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
+Research uses the Microsoft Learn tools configured in Copilot App and returns normal website links.
 The Intune workshop adds delegated, read-only Entra evidence from Microsoft MCP Server for Enterprise.
 
 ## Components
 
 | Path | Purpose |
 | --- | --- |
-| `.github/agents/learn-researcher.agent.md` | Produces evidence-backed research answers, focused lessons, and learner-response feedback |
-| `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research or learning contracts |
+| `.github/agents/learn-researcher.agent.md` | Produces evidence-backed standard, evaluation, and repair answers |
+| `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research contracts |
 | `.github/agents/intune-discovery-coach.agent.md` | Coaches bounded Intune discovery with Learn documentation and read-only Entra evidence |
-| `.github/copilot-instructions.md` | Coordinates research and focused learning through native orchestration |
+| `.github/copilot-instructions.md` | Coordinates prompt refinement, research, source triage, and citation review through native orchestration |
 | `prompts/intune/prompt-library.json` | Defines the ordered seven-mission workshop, evidence gates, and safety guardrails |
 
 ## Flow
@@ -40,21 +40,6 @@ The separate Intune coach reads the mission library, uses Microsoft Learn MCP fo
 uses Enterprise MCP only for Entra users, groups, group membership, devices, licenses, organization,
 and directory-role evidence. Enterprise MCP is read-only and does not expose Intune configuration or
 managed-device APIs. Workshop assignments must never target **All users** or **All devices**.
-
-## Focused learning
-
-Focused learning uses the same direct Learn evidence and callback transport, but a smaller teaching
-contract:
-
-1. Establish one learning objective, learner level, time budget, and optional diagnostic response.
-2. Generate a 400-700-word lesson from at most five fetched Learn pages.
-3. Include one worked example, one recall question, and one application question without answers.
-4. After the learner responds, start a fresh feedback phase with the exact lesson and responses.
-5. Correct only missed concepts, ask one unanswered retry, and record `Mastered`, `Practicing`, and
-   `Next objective`.
-
-The current conversation carries the loop. The system does not create a learner database or schedule
-review unless the learner explicitly requests an App-native workflow.
 
 No project skill router, installed product skill, or product-skill catalog is loaded into the
 researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole
@@ -84,7 +69,7 @@ and link contract. See GitHub's documentation for
 
 ## Improvement loop
 
-The base model is GPT-6 Astra (`gpt-6-astra`) for coordination, research, lessons, feedback, and Intune
+The base model is GPT-6 Astra (`gpt-6-astra`) for coordination, research, and Intune
 coaching. The independent critic uses Claude Sonnet 5 (`claude-sonnet-5`). Agent profiles pin their
 models, and coordinated kickoffs select them explicitly. Select Astra for the main chat in Copilot App;
 repository instructions cannot change an already-running model or the App-wide default.
@@ -143,7 +128,7 @@ node --test
 
 The tests enforce the agent-only file layout, native tool allow-lists, and linked-reference contract.
 They are structural contract tests, not model-quality or live-integration tests. Model migrations also
-need fresh native-session cases for research, lesson/feedback, critique/repair, mode refusal, and
+need fresh native-session cases for research, critique/repair, callback delivery, and
 workshop safety. Keep exact tasks, callback identities, observed models, source traces, and independent
 reviews in session artifacts; a passed synthetic safety case does not establish Enterprise MCP access
 or completion of the seven live workshop missions.
