@@ -1,9 +1,10 @@
 # Microsoft Learn research
 
-- Use GPT-6 Astra (`gpt-6-astra`) for the coordinator, researcher, and Intune coach. Explicitly select
-  it in native child kickoffs; use Claude Sonnet 5 (`claude-sonnet-5`) for the independent critic.
-  Keep `context_tier: default` and record the requested and observed model; never silently substitute.
-  The coordinator model is selected in Copilot App, not by an instruction or repository YAML key.
+- Deep-research and repair `learn-researcher` children inherit the coordinator's currently active model.
+  Leave the researcher model unset in agent frontmatter and explicitly pass the parent's exact model ID
+  in native child kickoffs. Keep `context_tier: default`, record the parent, requested, and observed child
+  models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for the Intune coach and Claude
+  Sonnet 5 (`claude-sonnet-5`) for the independent critic.
 - Use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
   canvases, or a separate reference UI.
@@ -15,7 +16,7 @@
 
 ## Pre-research prompt refinement
 
-Before Learn discovery, task hashing, or launching a research child, Astra evaluates the original request
+Before Learn discovery, task hashing, or launching a research child, the coordinator evaluates the original request
 and classifies it as exactly one of:
 
 - `clear`: one plausible product, goal, and scope; proceed without asking.
@@ -29,7 +30,7 @@ Do not ask merely because details are missing when explicit assumptions or condi
 intent safely. After selection, freeze one refinement record containing `Original request`, `Selected
 interpretation`, `Objective`, `In scope`, `Assumptions`, `Exclusions`, and `Unresolved`. Compute the task
 SHA-256 only after that record is final. Give the research child the original and refined request; it must
-not reinterpret them. MAI preprocessing can begin only after Astra fixes intent.
+not reinterpret them. MAI preprocessing can begin only after the coordinator fixes intent.
 
 ## Correlated child execution
 
@@ -77,7 +78,7 @@ review packet in the session artifact directory and give a read-enabled reviewer
 
 ## Research and publication
 
-- A discovery-only candidate pool may exceed 15 pages, but Astra fixes protected evidence slots before
+- A discovery-only candidate pool may exceed 15 pages, but the coordinator fixes protected evidence slots before
   ranking. Each slot fixes actor, action, target service/plane, and an adjacent-candidate exclusion.
   An advisory weak ranker may fill those slots; it cannot derive, merge, drop, or support claims.
 - Limit the final evidence set to 15 authoritative pages and fetch every cited page. Exact operations,

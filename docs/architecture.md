@@ -6,7 +6,7 @@ The system is prompt-defined and agent-only:
 
 ```mermaid
 flowchart LR
-    U[User or parent session] --> P[Astra prompt-refinement gate]
+    U[User or parent session] --> P[Coordinator prompt-refinement gate]
     P -->|One ask_user choice when materially ambiguous| U
     P -->|Frozen original plus selected interpretation| O[Built-in orchestrate skill]
     O -->|One kickoff: task plus callback envelope| R[learn-researcher]
@@ -70,18 +70,19 @@ Unavailable Enterprise MCP evidence remains blocked; a safety exercise is not a 
 
 ## Quick and deep paths
 
-A quick question stays in the current chat. Before either path, Astra classifies the request as clear,
+A quick question stays in the current chat. Before either path, the coordinator classifies the request as clear,
 exploratory, or materially ambiguous. Exploratory breadth is preserved; material ambiguity triggers one
 `ask_user` choice among two or three interpretations that would produce different evidence or decisions.
 The refinement record keeps the original request, selected interpretation, objective, scope, assumptions,
 exclusions, and unresolved items. Only then is the task hashed.
 
 Deep research invokes Copilot App's built-in `/orchestrate` skill with one kickoff containing the mode,
-original and refined request, complete frozen task, task hash, callback
-nonce, and coordinator session ID. The child sends correlated `STARTED` and `COMPLETED` or `FAILED`
-messages. Idle notifications are diagnostic only. Direct discovery is the only research path. The
-default context tier is sufficient for standard research; long context is an explicit escalation for
-large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
+original and refined request, complete frozen task, task hash, callback nonce, coordinator session ID,
+and the coordinator's exact active model ID. The researcher profile leaves `model` unset, and standard
+and repair children receive that parent model explicitly. The child sends correlated `STARTED` and
+`COMPLETED` or `FAILED` messages. Idle notifications are diagnostic only. Direct discovery is the only
+research path. The default context tier is sufficient for standard research; long context is an explicit
+escalation for large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
 
 A send acknowledgment proves acceptance, not recipient receipt or consumption. If an expected child
 becomes idle without a terminal callback, inspect its durable transcript once. Preserve an exact
@@ -91,7 +92,7 @@ content; never silently normalize differences. Notification-only turns end with 
 acknowledgment rather than an empty response. These are coordinator safeguards, not a native queue fix.
 
 The coordinator owns intent. The research child does not reinterpret the frozen task, and weak-model
-preprocessing starts only after Astra has fixed the interpretation.
+preprocessing starts only after the coordinator has fixed the interpretation.
 
 Standard mode returns only the user-facing answer and References. Evaluation mode appends a
 coordinator-only packet. The coordinator stores that packet as a session artifact, has a

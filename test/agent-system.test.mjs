@@ -120,7 +120,7 @@ test("Intune prompt library preserves mission and safety contracts", async () =>
     assert.match(library.guardrails.join(" "), /exactly the assigned current endpoint/i);
 });
 
-test("base roles pin Astra and retain an independent critic", async () => {
+test("researcher inherits the parent model and retains an independent critic", async () => {
     const [researcher, critic, coach, instructions, setup] = await Promise.all([
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
@@ -128,12 +128,13 @@ test("base roles pin Astra and retain an independent critic", async () => {
         text(INSTRUCTIONS_PATH),
         text("docs/setup.md"),
     ]);
-    assert.equal(property(researcher, "model"), "gpt-6-astra");
+    assert.doesNotMatch(frontmatter(researcher), /^model:/m);
     assert.equal(property(coach, "model"), "gpt-6-astra");
     assert.equal(property(critic, "model"), "claude-sonnet-5");
-    assert.notEqual(property(researcher, "model"), property(critic, "model"));
-    assert.match(compact(instructions), /Explicitly select it in native child kickoffs/i);
-    assert.match(compact(instructions), /requested and observed model.*never silently substitute/i);
+    assert.match(compact(instructions), /inherit the coordinator's currently active model/i);
+    assert.match(compact(instructions), /pass the parent's exact model ID in native child kickoffs/i);
+    assert.match(compact(instructions), /parent, requested, and observed child models.*never silently substitute/i);
+    assert.match(compact(setup), /pass the coordinator's exact active model ID/i);
     assert.match(compact(setup), /do not change the App-wide default/i);
     assert.doesNotMatch(instructions, /\bSol\b/);
 });
@@ -344,7 +345,7 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /`Assumptions`.*`Exclusions`.*`Unresolved`/i);
     assert.match(contract, /Compute the task SHA-256 only after that record is final/i);
     assert.match(contract, /research child.*must not reinterpret/i);
-    assert.match(contract, /MAI preprocessing can begin only after Astra fixes intent/i);
+    assert.match(contract, /MAI preprocessing can begin only after the coordinator fixes intent/i);
     assert.match(contract, /built-in `\/orchestrate` skill/i);
     assert.match(contract, /freeze the complete task and compute its SHA-256/i);
     assert.match(contract, /generate a unique callback nonce/i);
@@ -371,7 +372,7 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /Direct Learn discovery is the only evidence path/i);
     assert.match(contract, /Do not load, preselect, or inject an installed product skill/i);
     assert.match(contract, /discovery-only candidate pool may exceed 15 pages/i);
-    assert.match(contract, /Astra fixes protected evidence slots before ranking/i);
+    assert.match(contract, /coordinator fixes protected evidence slots before ranking/i);
     assert.match(contract, /slot fixes actor, action, target service\/plane, and an adjacent-candidate exclusion/i);
     assert.match(contract, /advisory weak ranker may fill those slots.*cannot derive, merge, drop, or support claims/i);
     assert.match(contract, /final evidence set to 15 authoritative pages/i);

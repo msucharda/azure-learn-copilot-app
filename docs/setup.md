@@ -96,12 +96,13 @@ come from the Intune admin center or assigned endpoint.
 
 ## Use
 
-Select GPT-6 Astra (`gpt-6-astra`) for the coordinator in Copilot App. The researcher and Intune coach
-also pin Astra in their agent frontmatter; the critic pins Claude Sonnet 5 (`claude-sonnet-5`) to retain
-independent review. Pass the matching model explicitly when starting a coordinated child and record
-the requested and observed model. Stop and report model unavailability rather than substituting.
-There is no documented repository model-default key in `.github/github-app.yml`; these instructions
-do not change the App-wide default or an already-running session's model.
+Select the coordinator model in Copilot App. The researcher leaves `model` unset in its agent frontmatter;
+when starting a coordinated deep-research or repair child, pass the coordinator's exact active model ID
+so the child inherits it rather than resolving a different default. Record the parent, requested, and
+observed child models, and stop on model unavailability rather than substituting. The Intune coach pins
+GPT-6 Astra (`gpt-6-astra`), while the critic pins Claude Sonnet 5 (`claude-sonnet-5`) for independent
+review. There is no documented repository model-default key in `.github/github-app.yml`; these
+instructions do not change the App-wide default or an already-running session's model.
 
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
@@ -109,7 +110,7 @@ use native Microsoft Learn tools and return clickable Markdown references.
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
-- model: `gpt-6-astra` (use `claude-sonnet-5` for `citation-critic`);
+- model: the coordinator's exact active model ID (use `claude-sonnet-5` for `citation-critic`);
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
 - omit inactive phase fields entirely; include only those needed by the selected research mode;
