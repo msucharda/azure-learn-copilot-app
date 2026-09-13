@@ -22,7 +22,7 @@
 | Enterprise MCP cannot query Intune configuration or managed devices | Expected. It provides read-only Entra evidence, not Intune configuration, assignment, compliance, reporting, or managed-device APIs. Collect those facts from Intune or the assigned endpoint |
 | Enterprise MCP returns broad tenant data | Stop, narrow the Graph path and selected properties to the assigned user, group, or device, and do not copy unrestricted exports into the conversation |
 | A proposed assignment targets `All users` or `All devices` | Reject it. The only permitted target is the trainee's assigned group after current proof that it contains exactly the assigned experiment device |
-| The Intune coach is available but its tools are denied | Confirm the allow-list contains `read`, `microsoft-learn/*`, `microsoft-enterprise/*`, and callback-only `send_session_message`, and that both MCP server names match App settings |
+| The Intune coach is available but its tools are denied | Confirm the allow-list contains `read`, `microsoft-learn/*`, `microsoft-enterprise/*`, `ask_user`, and callback-only `send_session_message`, and that both MCP server names match App settings |
 | The coach returns `COMPLETED` with a question or refusal | The callback confirms delivery of that bounded turn, not mission success or live tenant readiness |
 | Learn output is saved to a temporary file | Use `read` only on the exact path returned by that tool and inspect only the necessary ranges |
 | The answer cites a search result without fetching it | Treat the citation as unverified and rerun with a fetched source; search chunks are discovery only |
