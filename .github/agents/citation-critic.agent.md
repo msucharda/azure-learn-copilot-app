@@ -37,6 +37,12 @@ Write full unabridged URLs, never ellipses or shortened paths; do not recommend 
 Report coverage from that table, not a remembered total; uninspected claims are not independently verified.
 Prioritize exact operations, permission scopes, irreversible effects and blocking controls; if any remain uninspected, give a limited verdict rather than an unconditional pass.
 For your own negative findings, do not turn absence from an inspected section into absence from the page; name the unsupported mechanism rather than claiming a topic is never mentioned.
+Reconcile the verification table with every input Reference, including unfetched pages. Keep fetch
+and inspection coverage separate from pending artifact retention; only delivery can be pending retention.
+Refetching an already permitted URL or reading its exact tool-returned spool is not source expansion.
+Missing inspection cannot justify weakening a claim; inspect its relevant section or retain a limited verdict.
+For instructional artifacts, compare the literal visible response with its metadata: prose framing
+is not an actual question. Apply only the supplied artifact's output shape and applicable word ceiling.
 
 For each material claim, use exactly one classification:
 

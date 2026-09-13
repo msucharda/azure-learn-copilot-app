@@ -221,6 +221,9 @@ test("generic coaching shares evidence gates without weakening Intune", async ()
     assert.match(shared, /never requires a subscription, paid resource, tenant inspection, installation, or deployment/i);
     assert.match(shared, /standalone coaching use `ask_user`/i);
     assert.match(shared, /coordinated bounded turn.*coordinator to relay with `ask_user`/i);
+    assert.match(shared, /actual coaching question in ordinary prose before any Progress checkpoint/i);
+    assert.match(shared, /mirror that same question in `next_question`/i);
+    assert.match(shared, /concise prior evidence for review.*fresh attempt.*do not automatically force a full curriculum restart/i);
     assert.match(shared, /learner performs any approved change manually/i);
     assert.match(shared, /Reject production or shared targets.*unbounded costs/i);
     assert.match(shared, /library_sha256.*otherwise null/i);
@@ -371,6 +374,10 @@ test("critic reads one packet and verifies only existing references", async () =
     assert.match(contract, /mark pending retention unassessed, not failed/i);
     assert.match(contract, /inspect every listed tool, including read-only counting utilities outside the agent allow-list/i);
     assert.match(contract, /uninspected claims are not independently verified/i);
+    assert.match(contract, /verification table with every input Reference, including unfetched pages/i);
+    assert.match(contract, /inspection coverage separate from pending artifact retention/i);
+    assert.match(contract, /already permitted URL.*not source expansion/i);
+    assert.match(contract, /prose framing is not an actual question/i);
     assert.match(contract, /do not turn absence from an inspected section into absence from the page/i);
     assert.match(contract, /Prioritize exact operations, permission scopes, irreversible effects and blocking controls/i);
     assert.match(contract, /if any remain uninspected, give a limited verdict rather than an unconditional pass/i);

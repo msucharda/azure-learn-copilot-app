@@ -108,6 +108,8 @@ The coach returns a `Progress checkpoint` at each mission boundary or pause. Nat
 persists the conversation. The learner can copy a checkpoint; a coordinator can retain it as a
 separate session artifact when asked. A read-only coach must not claim that it wrote a progress file.
 Keep evidence summaries minimal and sanitized, not raw tenant data or secrets.
+In coordinated turns, the actual next question appears in ordinary prose before the checkpoint, with
+the same question in `next_question`; it must not be hidden only in JSON.
 
 To resume in the existing coach session, ask it to continue from the last checkpoint. To resume in a
 new session, give the coordinator the exact library and checkpoint paths. The coordinator recomputes
@@ -116,6 +118,8 @@ in one new coach kickoff. Inline JSON is the alternative for a remote session. T
 identity, mission IDs/order, claimed evidence, and current safety proof; stale or inconsistent progress
 cannot unlock a mission. Missing or mismatched digests require re-establishing evidence, not trusting
 a pasted `passed` flag.
+The coach offers concise prior evidence for review or a fresh attempt at the first unproved criterion,
+rather than automatically making the learner repeat the whole curriculum.
 
 Changing subject, objectives, or conceptual/sandbox preference creates a revised library in a new
 artifact. Do not copy passed states across changed objectives. A library cannot grant privileges or
@@ -142,3 +146,6 @@ its exact local JSON path and run `node --test .\test\prompt-library.test.mjs`. 
 development validation, not a runtime service; without that variable the live-artifact case is skipped.
 Synthetic fixtures test shape and rejection paths only. Generation quality, callback delivery,
 interactive behavior, and safety still require native-session evidence.
+For an active coordinated coaching response, set `COACHING_RESPONSE_ARTIFACT` to its saved Markdown
+and run `node --test .\test\coaching-response.test.mjs` to check that the actual question is visible
+before, and agrees with, its checkpoint. This does not assess the answer's factual or teaching quality.

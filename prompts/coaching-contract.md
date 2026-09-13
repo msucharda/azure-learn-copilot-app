@@ -24,6 +24,9 @@ The existing Intune v1 library retains its stricter tool, assignment, and seven-
 - In standalone coaching use `ask_user` for one focused question at a time. In a coordinated bounded
   turn, return the question in the result for the coordinator to relay with `ask_user`; do not wait
   for input inside the child. Never ask for credentials or raw sensitive artifacts.
+- In a returned coordinated turn, put the actual coaching question in ordinary prose before any
+  Progress checkpoint and mirror that same question in `next_question`. A framing sentence or a
+  question only inside JSON is not an actionable prompt. Standalone questions remain in `ask_user`.
 
 ## Sources and authority
 
@@ -76,4 +79,7 @@ Do not invent a digest, evidence, or passed state. A resume checkpoint is adviso
 identity and coordinator-verified digest, check mission IDs and order, and recheck claimed evidence.
 If the digest is absent or mismatched, or progress is inconsistent, explain the gap and restore no
 passed state until the learner re-establishes it. Always revalidate current hands-on safety proofs.
+Offer a focused choice between supplying concise prior evidence for review and making a fresh attempt
+at the first unproved criterion; do not automatically force a full curriculum restart. Accepting prior
+work for review does not waive any evidence gate or restore an asserted pass.
 The coach cannot claim that a checkpoint was saved to disk; only the coordinator or learner can save it.
