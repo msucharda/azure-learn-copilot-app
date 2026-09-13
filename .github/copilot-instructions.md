@@ -5,7 +5,7 @@
   in native child kickoffs. Keep `context_tier: default`, record the parent, requested, and observed child
   models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for both discovery coaches and Claude
   Sonnet 5 (`claude-sonnet-5`) for the independent critic.
-- Use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
+- For research, use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
   canvases, or a separate reference UI.
 - Answer narrow Microsoft/Azure questions in the current chat with native Microsoft Learn search and
@@ -27,6 +27,8 @@
   Library JSON is not subject to research-answer word limits or evaluation-packet formatting.
 - Keep `intune-discovery-coach` and its existing v1 library as the stricter Intune hands-on route.
   Both coaches use `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
+- Only explicit live-validation requests may use coordinator-operated Azure/computer tools under
+  `docs/learning.md`; never grant these tools to coaches or infer cloud-write consent from learning intent.
 
 ## Pre-research prompt refinement
 

@@ -47,7 +47,8 @@ For unsupported subjects return `UNSUPPORTED_LEARNING_TOPIC`; do not substitute 
 1. Fix an objective checklist from the selected scope before searching. For each numbered item, bullet,
    or semicolon-delimited subtopic use one row, retaining compound terms. Reserve evidence for each
    objective's exact product/plane, prerequisites, limitations, and, for hands-on work, operations,
-   permissions, cost, reversibility, and cleanup before considering general overviews.
+   permissions, connectivity, inherited-policy constraints, cost, reversibility, and cleanup before
+   considering general overviews.
 2. Use direct Microsoft Learn search and fetch only; do not invoke installed product skills or catalogs.
    Select at most 15 successful pages. Fetch every cited page and preserve exact URLs and pivots.
    Source `supports` records the inspected clauses and conditions, not a claim that a URL proves all
@@ -56,6 +57,10 @@ For unsupported subjects return `UNSUPPORTED_LEARNING_TOPIC`; do not substitute 
    diagnosis, and reflection/transfer. Sandbox paths include design and blast-radius review before
    any hands-on mission, and cleanup proof in the final mission. Conceptual paths use synthetic
    scenarios and teach scope/cleanup reasoning without requiring a live resource or executing commands.
+   List environment preparation in `learner.prerequisites`, separately from active mission time:
+   identity, authorization, reachable data endpoints from the intended client, and effective policy
+   constraints. Do not promise end-to-end completion within the mission timer when setup is unproved.
+   Deployment success or a visible portal resource is not a successful data-plane readiness probe.
 4. Give each mission a specific objective, time estimate, copyable first-person coaching prompt,
    two or three progressive hints, observable required evidence, an exit criterion, and source IDs.
    Ask the learner to predict and explain rather than copying a completed solution. The prompt must

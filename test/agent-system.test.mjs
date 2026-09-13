@@ -262,6 +262,28 @@ test("learning requests route through retained artifacts into interactive native
     assert.match(readme, /discovery-coach\.agent\.md/);
 });
 
+test("live validation separates cloud readiness from curriculum and deployment success", async () => {
+    const [shared, factory, learning, instructions] = await Promise.all([
+        text("prompts/coaching-contract.md").then(compact),
+        text(FACTORY_PATH).then(compact),
+        text("docs/learning.md").then(compact),
+        text(INSTRUCTIONS_PATH).then(compact),
+    ]);
+    assert.match(shared, /successful what-if preview is not data-plane readiness/i);
+    assert.match(shared, /authorized, bounded read-only metadata probe from the intended client to the exact target/i);
+    assert.match(shared, /effective post-policy configuration/i);
+    assert.match(shared, /portal hint, token claim, or management-plane log does not prove the source address/i);
+    assert.match(shared, /probe still fails.*retain the blocked state and revise the hypothesis/i);
+    assert.match(factory, /connectivity, inherited-policy constraints/i);
+    assert.match(factory, /environment preparation in `learner\.prerequisites`, separately from active mission time/i);
+    assert.match(learning, /factory and coaches remain read-only; do not expand their tool lists/i);
+    assert.match(learning, /separate approval for resource creation, access\/network configuration, budget, payload bounds, and teardown/i);
+    assert.match(learning, /inherited policies can reject or modify configuration/i);
+    assert.match(learning, /Never report a completed round trip when upload, read-back, or cleanup was not observed/i);
+    assert.match(learning, /verify their removal/i);
+    assert.match(instructions, /Only explicit live-validation requests may use coordinator-operated Azure\/computer tools/i);
+});
+
 test("researcher enforces research-only behavior", async () => {
     const [researcher, architecture] = await Promise.all([
         text(RESEARCHER_PATH),

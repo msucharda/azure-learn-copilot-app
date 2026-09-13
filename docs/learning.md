@@ -138,6 +138,37 @@ device proof, **All users**/**All devices** prohibition, and manual-change gates
 The generic coach can support conceptual Intune discussion without Enterprise access, but it must not
 approximate the specialized workshop's live evidence.
 
+## Live validation (explicit opt-in)
+
+A request to generate a library never authorizes cloud access. When the user explicitly requests
+validation against actual Azure behavior, the coordinator may act as the test operator with approved
+Azure or computer-use tools. The factory and coaches remain read-only; do not expand their tool lists.
+
+Confirm the requested identity and tenant before connecting, then select an approved subscription
+and exact disposable scope. Start read-only. Obtain separate approval for resource creation,
+access/network configuration, budget, payload bounds, and teardown; never reuse a shared resource
+merely because an administrator can access it. Keep credentials and raw sensitive data out of artifacts.
+
+Record expected versus observed behavior and the evidence plane for each tested step. Resource
+visibility in the portal, deployment success, and what-if output do not establish data-plane access.
+Compare actual post-deployment settings with the plan: inherited policies can reject or modify
+configuration. Test a bounded metadata read from the intended client before an upload or other write.
+Separate authentication/RBAC from endpoint, DNS, network/perimeter, and policy failures.
+
+Portal hints and token or control-plane telemetry are not proof of the data request's source address.
+Do not follow generic suggestions to allow all networks, use keys, or exempt policy to clear an error.
+Correct only the approved scope; if access still fails, revise the hypothesis and report the remaining
+blocker. Never report a completed round trip when upload, read-back, or cleanup was not observed.
+
+Environment setup, authentication delays, connectivity preparation, and policy remediation are outside
+the active mission timer and must be visible as prerequisites, not hidden extra work. Operator tests
+do not prove that a learner passed a mission or that the advertised time budget was met.
+
+Retain sanitized observations and relevant errors in session artifacts. Teardown requires its own
+approved scope: remove only the operator-created lab and temporary grants, then verify their removal.
+Distinguish fixture teardown from the mission's rollback or retained-data proof. State billing
+uncertainty rather than claiming zero cost from an empty listing or an unavailable billing record.
+
 ## Contract checks
 
 `node --test` covers both the preserved Intune v1 library and generic v2 structural contracts.

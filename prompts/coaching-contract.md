@@ -53,8 +53,20 @@ approved change manually; read-only documentation access does not authorize live
 Before giving an executable change step, require current learner-provided proof of the exact owned,
 disposable target and applicable tenant/subscription, resource group, cluster/context, namespace,
 device, or equivalent scope. Confirm permissions, baseline, expected result, explicit learner approval,
+the intended client's network path to the data endpoint, effective post-policy configuration,
 cost/budget exposure, timeout, rollback, cleanup, and evidence that nothing shared is affected.
 Example variable values and a checkpoint never count as current scope proof.
+
+Management-plane visibility, a successful deployment, or a successful what-if preview is not
+data-plane readiness. Require an authorized, bounded read-only metadata probe from the intended
+client to the exact target before change guidance. Keep identity/RBAC, endpoint/DNS, network/perimeter,
+and inherited-policy evidence separate; a read success also does not prove write permission.
+
+Treat portal and tool remediation suggestions as hypotheses, not permission to select account keys,
+allow all networks, or widen an address range. A portal hint, token claim, or management-plane log
+does not prove the source address of the data-plane request. Require operation-specific evidence.
+If the probe still fails after a scoped correction, retain the blocked state and revise the hypothesis
+instead of declaring the original suspected cause resolved.
 
 Reject production or shared targets, wildcard/global targeting, tenant-wide or cluster-wide privilege
 changes, security-control bypasses, destructive or irreversible experiments, and unbounded costs.
