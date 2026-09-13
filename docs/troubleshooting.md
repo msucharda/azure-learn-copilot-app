@@ -3,6 +3,18 @@
 | Symptom | Response |
 | --- | --- |
 | `learn-researcher` is not available | Start a new project turn or session so Copilot reloads project agents |
+| The generic coach or factory is missing | Start a fresh project turn/session and select `discovery-coach` or `prompt-library-factory`; these are project agents, not installed skills or registered runtime factories |
+| "I want to learn AKS" returns only a research essay | Use the [learning protocol](learning.md); create a library through the factory and start the generic coach rather than using the research-answer path |
+| `PROMPT_LIBRARY_CONFIGURATION_ERROR` | Supply the complete v2 JSON library; check schema fields, mission/source IDs, placeholder declarations, duration, and conceptual/sandbox consistency. Do not silently repair or fall back to Intune |
+| `PROMPT_LIBRARY_EVIDENCE_ERROR` | Keep the missing-source or unsafe-curriculum gap explicit; do not publish a partial library as ready or treat search snippets as fetched evidence |
+| `UNSUPPORTED_LEARNING_TOPIC` | This factory supports Microsoft/Azure topics backed by Learn. Do not silently replace the requested subject or add general-web tools |
+| `SPECIALIZED_WORKSHOP_REQUIRED` | Route Intune hands-on work to the existing `intune-discovery-coach` and v1 library; a generated curriculum cannot relax the workshop gates |
+| Factory output exists but no library file was saved | The factory is read-only. Have the coordinator retain the exact JSON in session artifacts and compute its digest before a path-based handoff |
+| A coach cannot read a library from another machine | Put the full JSON inline in the native kickoff, or supply a genuinely accessible exact path; generated JSON/Markdown is not a staged image attachment |
+| A checkpoint claims completion for a changed library | Compare the recomputed library digest and mission identities, restore no passed state until evidence is re-established, and always revalidate current safety proofs |
+| No subscription or sandbox is available | Use the conceptual profile; an explicitly selected hands-on mission remains blocked until proved safe or the coordinator creates a revised conceptual library |
+| A learning request starts a deployment or asks for kubeconfig | Stop. The agents have documentation-only tools and must not request secrets or perform resource writes; all approved sandbox changes are learner-executed |
+| The learner's coach session was archived after its first callback | A bounded turn's callback is not journey completion. Keep the interactive session available for direct follow-ups and native-history progress |
 | `microsoft-learn/*` is unavailable | Configure the Learn MCP server in App settings under the exact `microsoft-learn` name, then start a fresh session |
 | `microsoft-enterprise/*` is unavailable | Configure `https://mcp.svc.cloud.microsoft/enterprise` in App settings under the exact `microsoft-enterprise` name, then start a fresh session |
 | The Enterprise server service principal exists but sign-in fails | The server app ID `e8c77dc2-69b3-43f4-bc51-3213c9d915b4` is not the external client. Verify the dedicated client app registration, service principal, redirect URI, interactive delegated flow, admin consent, Conditional Access, and endpoint egress |

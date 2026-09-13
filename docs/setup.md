@@ -4,7 +4,8 @@
 
 - Copilot App with project custom-agent discovery.
 - The Microsoft Learn MCP server configured in Copilot App and exposed as `microsoft-learn/*`.
-- Microsoft MCP Server for Enterprise configured as `microsoft-enterprise/*` for the Intune workshop.
+- Microsoft MCP Server for Enterprise configured as `microsoft-enterprise/*` only for the Intune workshop;
+  the generic factory and coach do not require it.
 
 No project extension, SDK package, local service, storage root, environment variable, or committed
 MCP configuration is required.
@@ -99,13 +100,23 @@ come from the Intune admin center or assigned endpoint.
 Select the coordinator model in Copilot App. The researcher leaves `model` unset in its agent frontmatter;
 when starting a coordinated deep-research or repair child, pass the coordinator's exact active model ID
 so the child inherits it rather than resolving a different default. Record the parent, requested, and
-observed child models, and stop on model unavailability rather than substituting. The Intune coach pins
+observed child models, and stop on model unavailability rather than substituting. Both discovery coaches pin
 GPT-6 Astra (`gpt-6-astra`), while the critic pins Claude Sonnet 5 (`claude-sonnet-5`) for independent
 review. There is no documented repository model-default key in `.github/github-app.yml`; these
 instructions do not change the App-wide default or an already-running session's model.
 
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
+
+For a learning journey, ask **"I want to learn AKS"** in a normal project chat. The coordinator follows
+[self-directed discovery](learning.md): a `prompt-library-factory` child generates the library, the
+coordinator saves it as a session artifact, and an interactive `discovery-coach` session starts with
+one mission. The factory inherits the coordinator's exact model; the coach uses `gpt-6-astra`.
+Neither needs Azure credentials or Enterprise MCP for the default conceptual path.
+
+You can also select `prompt-library-factory` directly, describe your objective, and pass its complete
+JSON result to `discovery-coach`. Direct selection does not automatically save a file or launch another
+agent. For the established Intune hands-on workshop, continue selecting `intune-discovery-coach`.
 
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 

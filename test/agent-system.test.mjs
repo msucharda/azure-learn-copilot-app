@@ -15,6 +15,7 @@ const DOCUMENTATION_PATHS = [
     "docs/architecture.md",
     "docs/setup.md",
     "docs/troubleshooting.md",
+    "docs/learning.md",
 ];
 const AGENT_SYSTEM_PATHS = [
     RESEARCHER_PATH,
@@ -232,6 +233,30 @@ test("generic coaching shares evidence gates without weakening Intune", async ()
         assert.match(contract, /CALLBACK_CONFIGURATION_ERROR/);
         assert.match(contract, /Send each callback at most once/i);
     }
+});
+
+test("learning requests route through retained artifacts into interactive native coaching", async () => {
+    const [instructions, learning, readme] = await Promise.all([
+        text(INSTRUCTIONS_PATH).then(compact),
+        text("docs/learning.md").then(compact),
+        text("README.md"),
+    ]);
+    assert.match(instructions, /I want to learn AKS.*docs\/learning\.md.*before the research-answer path/i);
+    assert.match(instructions, /factory inherits the parent's exact active model/i);
+    assert.match(instructions, /never auto-commit them/i);
+    assert.match(learning, /one `prompt-library-factory` child.*entire task in one kickoff/i);
+    assert.match(learning, /coordinate_with_creator: true.*notify_on_idle: always/i);
+    assert.match(learning, /parent, requested, and observed child models.*stop rather than substitute/i);
+    assert.match(learning, /child trace for successful fetches/i);
+    assert.match(learning, /Compute its SHA-256 from the saved bytes/i);
+    assert.match(learning, /`discovery-coach` native session in \*\*interactive\*\* mode/i);
+    assert.match(learning, /Do not automatically archive this session/i);
+    assert.match(learning, /Direct follow-ups omit callback fields/i);
+    assert.match(learning, /remote child.*complete JSON inline/i);
+    assert.match(learning, /coordinator recomputes the library digest/i);
+    assert.match(learning, /Do not copy passed states across changed objectives/i);
+    assert.match(readme, /prompt-library-factory\.agent\.md/);
+    assert.match(readme, /discovery-coach\.agent\.md/);
 });
 
 test("researcher enforces research-only behavior", async () => {

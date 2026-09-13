@@ -3,7 +3,7 @@
 - Deep-research and repair `learn-researcher` children inherit the coordinator's currently active model.
   Leave the researcher model unset in agent frontmatter and explicitly pass the parent's exact model ID
   in native child kickoffs. Keep `context_tier: default`, record the parent, requested, and observed child
-  models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for the Intune coach and Claude
+  models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for both discovery coaches and Claude
   Sonnet 5 (`claude-sonnet-5`) for the independent critic.
 - Use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
@@ -13,6 +13,20 @@
   list.
 - For deep work, invoke the built-in `/orchestrate` skill and use one `learn-researcher` child. Do not
   recreate orchestration or handoff logic in project code.
+
+## Self-directed learning
+
+- Route requests such as "I want to learn AKS" to `docs/learning.md` before the research-answer path.
+  Use the reusable `prompt-library-factory` project agent, not a registered runtime factory, followed
+  by `discovery-coach` through native sessions. The factory inherits the parent's exact active model.
+- Preserve exploratory breadth and freeze intent before discovery. Default to beginner, seven
+  30-minute conceptual missions with no live resources, recording assumptions rather than asking
+  for every missing preference. Explicit sandbox requests still require current scope and safety proof.
+- Read `docs/learning.md` for the complete generation, validation, artifact, handoff, and resume
+  protocol. Keep generated libraries and checkpoints in session artifacts, never auto-commit them.
+  Library JSON is not subject to research-answer word limits or evaluation-packet formatting.
+- Keep `intune-discovery-coach` and its existing v1 library as the stricter Intune hands-on route.
+  Both coaches use `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
 
 ## Pre-research prompt refinement
 

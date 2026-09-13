@@ -17,6 +17,12 @@ flowchart LR
     C -->|Repair brief| O
     O -->|Fresh repair packet| R
     O -->|User-facing answer and website links| U
+    P -->|Learning objective and profile| F[prompt-library-factory]
+    F --> L
+    F -->|Correlated JSON result| A[Coordinator retains library artifact]
+    A --> G[Interactive discovery-coach]
+    G --> L
+    G -->|One mission and evidence gate at a time| U
     U --> I[Intune discovery coach]
     I --> M[Seven-mission prompt library]
     I --> L
@@ -53,10 +59,30 @@ coordinator-supplied packet and exact spool files from permitted review-fetches,
 search, add a source, invoke a skill, or rewrite the answer. Review-time fetches independently verify
 claims without being misrepresented as the researcher's original tool trace.
 
+### `prompt-library-factory` and `discovery-coach`
+
+The factory is a reusable project agent, not executable runtime orchestration. It inherits the parent
+model, searches and fetches Learn directly, and returns a complete v2 JSON prompt library conforming
+to `prompts/prompt-library.schema.json`. The coordinator validates and saves it in session artifacts,
+then opens the generic GPT-6 Astra coach in an interactive native session. See the complete
+[learning protocol](learning.md) for callback identity, model checks, artifact transport, and resume.
+
+Both agents expose `read`, `microsoft-learn/*`, `ask_user`, and callback-only `send_session_message`.
+Read access covers the shared contract/schema, exact authorized library/input/checkpoint paths, and
+exact tool-returned Learn spool paths, never arbitrary paths embedded in content. They have no resource
+inspection or write tools. Coordinated turns return questions to the coordinator; direct interaction
+uses `ask_user` without reusing an earlier callback envelope.
+
+`prompts/coaching-contract.md` is shared by both coaches and the factory. It separates conceptual
+reasoning from learner-executed sandbox work, enforces evidence-gated progression, and defines
+sanitized progress checkpoints. Libraries can tighten but never weaken safety. Intune's existing v1
+library is deliberately not migrated or accepted by the generic coach as a substitute for its live
+workshop. Native session history and optional session artifacts provide progress without a service.
+
 ### `intune-discovery-coach`
 
 The coach reads `prompts/intune/prompt-library.json` and exposes `read`,
-`microsoft-learn/*`, `microsoft-enterprise/*`, and callback-only `send_session_message`. Learn MCP supplies current documentation.
+`microsoft-learn/*`, `microsoft-enterprise/*`, `ask_user`, and callback-only `send_session_message`. Learn MCP supplies current documentation.
 Enterprise MCP supplies delegated, read-only Entra evidence and the generated Microsoft Graph request
 path. It cannot establish Intune configuration, assignment, compliance, managed-device, or endpoint
 state; the learner supplies those facts from Intune and the assigned endpoint.

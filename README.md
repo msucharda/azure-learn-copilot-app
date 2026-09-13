@@ -1,9 +1,14 @@
 # Azure Learn Copilot agent system
 
-An agent-only Microsoft Learn research and Intune discovery workflow for Copilot App. The repository
+An agent-only Microsoft Learn research and self-directed discovery workflow for Copilot App. The repository
 contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
 Research uses the Microsoft Learn tools configured in Copilot App and returns normal website links.
 The Intune workshop adds delegated, read-only Entra evidence from Microsoft MCP Server for Enterprise.
+
+Ask **"I want to learn AKS"** in a project chat to generate a personalized prompt library and start
+an AI-assisted journey with `discovery-coach`. The default is seven beginner-friendly, 30-minute
+conceptual missions with no live resources. Include your experience, goal, available time, or sandbox
+preference to tailor the journey. See [self-directed discovery](docs/learning.md) for start and resume.
 
 ## Components
 
@@ -11,11 +16,20 @@ The Intune workshop adds delegated, read-only Entra evidence from Microsoft MCP 
 | --- | --- |
 | `.github/agents/learn-researcher.agent.md` | Produces evidence-backed standard, evaluation, and repair answers |
 | `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research contracts |
+| `.github/agents/prompt-library-factory.agent.md` | Generates personalized, Learn-backed mission libraries as a reusable project agent |
+| `.github/agents/discovery-coach.agent.md` | Coaches any supported Microsoft/Azure topic from a generated library |
 | `.github/agents/intune-discovery-coach.agent.md` | Coaches bounded Intune discovery with Learn documentation and read-only Entra evidence |
 | `.github/copilot-instructions.md` | Coordinates prompt refinement, research, source triage, and citation review through native orchestration |
 | `prompts/intune/prompt-library.json` | Defines the ordered seven-mission workshop, evidence gates, and safety guardrails |
+| `prompts/prompt-library.schema.json` | Defines the generic v2 library format |
+| `prompts/coaching-contract.md` | Shares discovery, evidence, safety, and resume rules between coaches |
 
 ## Flow
+
+Learning requests take the [factory-to-coach path](docs/learning.md): freeze the objective, generate
+and validate a library, retain it in session artifacts, and open an interactive coach session.
+The factory inherits the coordinator model; both coaches use GPT-6 Astra. No registered runtime factory,
+resource writes, or learner-data commits are introduced. The following path remains for research answers.
 
 1. Before research, the coordinator classifies the request as clear, exploratory, or materially ambiguous. It preserves
    useful breadth, but when interpretations would change the product, evidence, decision, or risk, it uses
@@ -71,7 +85,7 @@ and link contract. See GitHub's documentation for
 
 Deep-research and repair children use the coordinator's currently active model. The researcher profile
 leaves `model` unset, and each coordinated kickoff passes the parent's exact model ID so the child does
-not drift to a different default. The Intune coach pins GPT-6 Astra (`gpt-6-astra`), while the independent
+not drift to a different default. Both discovery coaches pin GPT-6 Astra (`gpt-6-astra`), while the independent
 critic pins Claude Sonnet 5 (`claude-sonnet-5`). Repository instructions cannot change an already-running
 model or the App-wide default.
 
