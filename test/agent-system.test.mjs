@@ -6,6 +6,8 @@ const ROOT = new URL("../", import.meta.url);
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
 const INTUNE_COACH_PATH = ".github/agents/intune-discovery-coach.agent.md";
+const COACH_PATH = ".github/agents/discovery-coach.agent.md";
+const FACTORY_PATH = ".github/agents/prompt-library-factory.agent.md";
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
 const INTUNE_LIBRARY_PATH = "prompts/intune/prompt-library.json";
 const DOCUMENTATION_PATHS = [
@@ -69,10 +71,12 @@ test("repository exposes only the native agent system", async () => {
         assertMissing(".github/skills"),
     ]);
 
-    const [researcher, critic, intuneCoach] = await Promise.all([
+    const [researcher, critic, intuneCoach, coach, factory] = await Promise.all([
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
         text(INTUNE_COACH_PATH),
+        text(COACH_PATH),
+        text(FACTORY_PATH),
     ]);
 
     const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
@@ -82,11 +86,20 @@ test("repository exposes only the native agent system", async () => {
         "read",
         "microsoft-learn/*",
         "microsoft-enterprise/*",
+        "ask_user",
         "send_session_message",
     ]);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
     assert.equal(property(intuneCoach, "target"), "github-copilot");
+    for (const agent of [coach, factory]) {
+        assert.deepEqual(tools(agent), ["read", "microsoft-learn/*", "ask_user", "send_session_message"]);
+        assert.equal(property(agent, "target"), "github-copilot");
+        assert.equal(property(agent, "user-invocable"), "true");
+        assert.equal(property(agent, "disable-model-invocation"), "true");
+    }
+    assert.equal(property(coach, "model"), "gpt-6-astra");
+    assert.doesNotMatch(frontmatter(factory), /^model:/m);
 });
 
 test("Intune prompt library preserves mission and safety contracts", async () => {
@@ -166,6 +179,59 @@ test("Intune coach enforces source and target boundaries", async () => {
     assert.match(contract, /Partial fields require `CALLBACK_CONFIGURATION_ERROR` without tenant inspection/i);
     assert.match(contract, /do not fabricate a Graph path or infer readiness/i);
     assert.match(contract, /refusal exercise is not a live tenant integration result/i);
+    assert.match(contract, /prompts\/coaching-contract\.md/);
+    assert.match(contract, /Intune-specific gates below take precedence wherever stricter/i);
+    assert.match(contract, /Do not accept a generated library as a replacement/i);
+});
+
+test("factory generates bounded portable libraries without runtime privileges", async () => {
+    const factory = compact(await text(FACTORY_PATH));
+    assert.match(factory, /not a deployment agent or runtime factory/i);
+    assert.match(factory, /Do not edit files, run commands, deploy, inspect live resources, install tools, or create sessions/i);
+    assert.match(factory, /prompts\/coaching-contract\.md.*prompts\/prompt-library\.schema\.json/i);
+    assert.match(factory, /original request and frozen refinement without reinterpreting/i);
+    assert.match(factory, /Default unspecified experience to beginner.*30 minutes per mission.*conceptual.*seven/i);
+    assert.match(factory, /UNSUPPORTED_LEARNING_TOPIC/);
+    assert.match(factory, /Select at most 15 successful pages.*Fetch every cited page/i);
+    assert.match(factory, /tool-exposed retrieval timestamp or null/i);
+    assert.match(factory, /SPECIALIZED_WORKSHOP_REQUIRED/);
+    assert.match(factory, /single `json` fence conforming to schema version 2/i);
+    assert.match(factory, /unique mission\/source IDs and source URLs/i);
+    assert.match(factory, /every source ID resolves and every source is used/i);
+    assert.match(factory, /PROMPT_LIBRARY_EVIDENCE_ERROR/);
+    assert.match(factory, /Do not claim the library is saved or a coach session started/i);
+});
+
+test("generic coaching shares evidence gates without weakening Intune", async () => {
+    const [coach, shared] = await Promise.all([
+        text(COACH_PATH).then(compact),
+        text("prompts/coaching-contract.md").then(compact),
+    ]);
+    assert.match(coach, /Require schema version 2.*3-12 ordered missions/i);
+    assert.match(coach, /PROMPT_LIBRARY_CONFIGURATION_ERROR/);
+    assert.match(coach, /never reuse an earlier turn's envelope/i);
+    assert.match(coach, /Intune hands-on objective.*SPECIALIZED_WORKSHOP_REQUIRED/i);
+    assert.match(coach, /generic coach has no Enterprise MCP access/i);
+    assert.match(coach, /coordinator-verified|shared resumption checks/i);
+    assert.match(coach, /unknown values into executable commands/i);
+    assert.match(coach, /Re-fetch the relevant referenced pages before citing/i);
+    assert.match(shared, /one mission at a time in library order/i);
+    assert.match(shared, /not-started.*in-progress.*blocked.*passed/i);
+    assert.match(shared, /never requires a subscription, paid resource, tenant inspection, installation, or deployment/i);
+    assert.match(shared, /standalone coaching use `ask_user`/i);
+    assert.match(shared, /coordinated bounded turn.*coordinator to relay with `ask_user`/i);
+    assert.match(shared, /learner performs any approved change manually/i);
+    assert.match(shared, /Reject production or shared targets.*unbounded costs/i);
+    assert.match(shared, /library_sha256.*otherwise null/i);
+    assert.match(shared, /digest is absent or mismatched.*restore no passed state/i);
+    assert.match(shared, /Always revalidate current hands-on safety proofs/i);
+    for (const contract of [coach, compact(await text(FACTORY_PATH))]) {
+        for (const status of ["STARTED", "COMPLETED", "FAILED"]) {
+            assert.match(contract, new RegExp(`${status} <task-sha-256> <callback-nonce>`));
+        }
+        assert.match(contract, /CALLBACK_CONFIGURATION_ERROR/);
+        assert.match(contract, /Send each callback at most once/i);
+    }
 });
 
 test("researcher enforces research-only behavior", async () => {

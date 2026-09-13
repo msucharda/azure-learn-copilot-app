@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Microsoft Learn discovery prompt library",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "library_id", "title", "topic", "description", "refinement",
+    "learner", "variables", "guardrails", "sources", "missions"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "library_id": { "$ref": "#/$defs/id" },
+    "title": { "$ref": "#/$defs/text" },
+    "topic": { "$ref": "#/$defs/text" },
+    "description": { "$ref": "#/$defs/text" },
+    "refinement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "original_request", "selected_interpretation", "objective", "in_scope",
+        "assumptions", "exclusions", "unresolved"
+      ],
+      "properties": {
+        "original_request": { "$ref": "#/$defs/text" },
+        "selected_interpretation": { "$ref": "#/$defs/text" },
+        "objective": { "$ref": "#/$defs/text" },
+        "in_scope": { "$ref": "#/$defs/nonemptyTexts" },
+        "assumptions": { "$ref": "#/$defs/texts" },
+        "exclusions": { "$ref": "#/$defs/texts" },
+        "unresolved": { "$ref": "#/$defs/texts" }
+      }
+    },
+    "learner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["experience", "goal", "session_minutes", "practice_mode", "prerequisites"],
+      "properties": {
+        "experience": { "enum": ["beginner", "intermediate", "advanced"] },
+        "goal": { "$ref": "#/$defs/text" },
+        "session_minutes": { "type": "integer", "minimum": 5, "maximum": 180 },
+        "practice_mode": { "enum": ["conceptual", "sandbox"] },
+        "prerequisites": { "$ref": "#/$defs/texts" }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "value"],
+        "properties": {
+          "description": { "$ref": "#/$defs/text" },
+          "value": { "type": ["string", "null"], "minLength": 1 }
+        }
+      }
+    },
+    "guardrails": { "$ref": "#/$defs/nonemptyTexts" },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 15,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "url", "supports", "retrieved_at"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "title": { "$ref": "#/$defs/text" },
+          "url": { "type": "string", "pattern": "^https://learn\\.microsoft\\.com/[^\\s]+$" },
+          "supports": { "$ref": "#/$defs/nonemptyTexts" },
+          "retrieved_at": { "type": ["string", "null"], "format": "date-time" }
+        }
+      }
+    },
+    "missions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "title", "objective", "kind", "estimated_minutes", "prompt",
+          "hints", "evidence_required", "exit_criteria", "source_ids"
+        ],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "title": { "$ref": "#/$defs/text" },
+          "objective": { "$ref": "#/$defs/text" },
+          "kind": { "enum": ["conceptual", "hands-on"] },
+          "estimated_minutes": { "type": "integer", "minimum": 5, "maximum": 180 },
+          "prompt": { "$ref": "#/$defs/text" },
+          "hints": { "type": "array", "minItems": 2, "maxItems": 3, "items": { "$ref": "#/$defs/text" } },
+          "evidence_required": { "$ref": "#/$defs/nonemptyTexts" },
+          "exit_criteria": { "$ref": "#/$defs/text" },
+          "source_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "texts": { "type": "array", "items": { "$ref": "#/$defs/text" } },
+    "nonemptyTexts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } }
+  }
+}
