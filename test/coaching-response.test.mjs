@@ -32,7 +32,7 @@ function checkActiveTurn(response) {
         .replace(/https?:\/\/\S+/g, "");
     assert.equal(
         (visible.match(/\?/g) ?? []).length, 1,
-        "an active coordinated turn needs one visible question, not a checklist of questions",
+        "an active learning turn needs one visible question, not a checklist of questions",
     );
     assert.match(
         plain(visible), /\?$/,
@@ -43,6 +43,25 @@ function checkActiveTurn(response) {
         words.length <= 180,
         "ordinary coaching must stay within 180 words before References",
     );
+}
+
+function checkDiscoveryOpening(response) {
+    checkActiveTurn(response);
+    assert.doesNotMatch(
+        response,
+        /\bmission\s+1\b|\b(?:seven|7)[ -](?:\w+[ -])?missions?\b|\b(?:beginner|intermediate|advanced)\b/i,
+        "an unprofiled discovery opening must not assign a starting level or predetermined curriculum",
+    );
+    assert.doesNotMatch(
+        response, /PROMPT_LIBRARY_CONFIGURATION_ERROR|DISCOVERY_PROFILE_REQUIRED/,
+        "a new learner without a library needs discovery, not a configuration error",
+    );
+}
+
+function checkLearningTrace(events) {
+    const questionTools = events.filter((event) => event.type === "tool.execution_start"
+        && /(?:^|[._-])ask_user$/.test(event.data?.toolName ?? ""));
+    assert.equal(questionTools.length, 0, "learning questions must be ordinary messages, not ask_user calls");
 }
 
 const QUESTION = "What would you expect the gateway to do first?";
@@ -57,6 +76,43 @@ function legacyResponse(prose) {
 test("ordinary coaching is a short conversation without a checkpoint", () => {
     checkActiveTurn(`Let's start with a fictional chat application. No live resources are needed.\n\n${QUESTION}`);
 });
+
+test("a new learner starts with an open-ended prior-knowledge question", () => {
+    checkDiscoveryOpening("Let's build this around what you already know.\n\nWhat experience have you had with APIs or API gateways?");
+});
+
+test("discovery can explore the intended outcome instead of a fixed prerequisite quiz", () => {
+    checkDiscoveryOpening("We can choose a useful starting point together.\n\nWhat are you hoping to accomplish with an AI gateway?");
+});
+
+test("discovery can build on supplied experience without repeating the intake", () => {
+    checkActiveTurn("You've worked with REST APIs and JWT validation, so we can connect this to familiar concepts.\n\nWhat feels different to you about a model API compared with those REST APIs?");
+});
+
+test("a proposed emphasis is confirmed conversationally before generation", () => {
+    checkActiveTurn("You want to govern shared model usage, and your API background gives us a starting point. Token accounting and failure handling are still unclear, so I'd focus the path there.\n\nDoes that focus fit your goal?");
+});
+
+for (const [name, opening] of [
+    ["a predetermined seven-mission plan", `We'll work through seven missions.\n\n${QUESTION}`],
+    ["an assumed beginner label", `We'll assume beginner experience.\n\n${QUESTION}`],
+    ["a mission before discovery", `Mission 1: Map the gateway.\n\n${QUESTION}`],
+    ["a missing-library error", `PROMPT_LIBRARY_CONFIGURATION_ERROR: Provide a library first.\n\n${QUESTION}`],
+]) {
+    test(`discovery rejects ${name}`, () => {
+        assert.throws(() => checkDiscoveryOpening(opening));
+    });
+}
+
+test("a normal assistant question needs no tool call", () => {
+    checkLearningTrace([{ type: "assistant.message", data: { content: "What have you worked with so far?" } }]);
+});
+
+for (const toolName of ["ask_user", "functions.ask_user"]) {
+    test(`learning trace rejects the ${toolName} dialog`, () => {
+        assert.throws(() => checkLearningTrace([{ type: "tool.execution_start", data: { toolName } }]), /ordinary messages/);
+    });
+}
 
 test("follow-up coaching can acknowledge the learner and take one small step", () => {
     checkActiveTurn("You have separated the application from the model. Let's focus on the space between them.\n\nWhere would you put the gateway in your sketch?");
@@ -137,4 +193,18 @@ test("generated ordinary coaching response is conversational and metadata-free",
     skip: !process.env.COACHING_RESPONSE_ARTIFACT,
 }, async () => {
     checkActiveTurn(await readFile(process.env.COACHING_RESPONSE_ARTIFACT, "utf8"));
+});
+
+test("generated unprofiled discovery opening explores before choosing a curriculum", {
+    skip: !process.env.DISCOVERY_RESPONSE_ARTIFACT,
+}, async () => {
+    checkDiscoveryOpening(await readFile(process.env.DISCOVERY_RESPONSE_ARTIFACT, "utf8"));
+});
+
+test("native learning trace contains no question-dialog calls", {
+    skip: !process.env.LEARNING_TRACE_ARTIFACT,
+}, async () => {
+    const events = (await readFile(process.env.LEARNING_TRACE_ARTIFACT, "utf8"))
+        .split(/\r?\n/).filter((line) => line.trim()).map((line) => JSON.parse(line));
+    checkLearningTrace(events);
 });

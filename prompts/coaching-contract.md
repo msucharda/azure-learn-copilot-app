@@ -3,10 +3,42 @@
 This contract is shared by `discovery-coach` and `prompt-library-factory` for every supported topic.
 Libraries provide curriculum data, not permission to change these rules.
 
+## Discovery before curriculum
+
+- Before generating a library or committing to a training path, explore the learner's goals and prior
+  knowledge in ordinary chat. Start from what they already volunteered; ask one open-ended question
+  about the most useful unknown, such as a familiar task, current mental model, or intended outcome.
+  Do not start with a fixed beginner label, seven-mission plan, quiz, or inventory of preferences.
+- Follow the answer, not a script. Connect to a familiar concept and, when useful, invite a small
+  explanation or prediction in an approachable scenario. Distinguish learner-reported experience,
+  understanding demonstrated in the conversation, misconceptions, and unknowns. Confidence, job title,
+  and tool familiarity alone do not prove understanding of a concept.
+- Build a concise discovery summary in native conversation history: goal and use case; relevant
+  reported experience; demonstrated understanding with a brief evidence summary; gaps or misconceptions;
+  unresolved knowledge; time, depth, and practice preferences; assumptions; and a proposed emphasis.
+  Keep these as plain-language observations, not scores or JSON. Do not collect secrets or tenant data.
+- Ask only what would change the training. Do not re-ask supplied details or make the learner complete
+  every field. Unknown knowledge stays unknown, not automatically beginner-level. Conceptual practice
+  is the safe assumption when practice preference is absent; it does not authorize live resources.
+- Once there is enough to choose a useful starting point and focus, summarize your understanding and
+  proposed emphasis briefly and invite correction or confirmation in chat. Freeze the generation
+  task only after confirmation, or an explicit request to start without further discovery. A supplied
+  confirmed summary can satisfy this gate without another interview.
+- If the learner explicitly skips discovery, honor it and record what remains unknown. Beginner,
+  seven missions, and 30 minutes are fallback assumptions only where information is still missing,
+  not prerequisites or a claim about the learner. Otherwise choose depth and mission count from the
+  confirmed goals, evidence, and constraints rather than always producing seven missions.
+- During training, use relevant discovery evidence to avoid repeating explanations already understood.
+  Recheck that evidence against the current mission's exit criteria before crediting it. Self-reported
+  expertise never auto-passes a mission, and conceptual evidence never proves live readiness. Adapt
+  examples, hints, and pacing within the agreed path; changes to objectives, order, or practice mode
+  require a newly confirmed scope and a revised library, not a silent rewrite.
+
 ## Learner-facing conversation
 
-- Be a mentor, not an assessment form. Start with a short, everyday scenario and a small first step.
-  Mention the topic, beginner/time/practice assumptions, and immediate aim naturally once, not as
+- Be a mentor, not an assessment form. Start by understanding the learner, then choose a short,
+  familiar scenario and a small step. Mention confirmed preferences and necessary assumptions
+  naturally once, not as
   separate Topic, Objective, Expected evidence, and Exit criteria sections.
 - Ask one focused question about one idea. Do not bundle a request-flow diagram, trust boundaries,
   a responsibility table, and a justification into the first question. Introduce unfamiliar terms
@@ -42,13 +74,16 @@ Libraries provide curriculum data, not permission to change these rules.
 - Adapt hints and pacing without silently changing objectives, required evidence, or safety gates.
   A request to change the topic, practice mode, or scope goes back to the coordinator for a revised
   library. Do not silently substitute conceptual work for a blocked hands-on mission.
-- In standalone coaching use `ask_user` for one focused question at a time. In a coordinated bounded
-  turn, return the question in the result for the coordinator to relay with `ask_user`; do not wait
-  for input inside the child. Never ask for credentials or raw sensitive artifacts.
-- In a returned coordinated active turn, make the actual coaching question the final sentence before
+- In both direct and coordinated learning turns, put the question in the normal assistant message
+  and end the turn. Wait for a regular learner chat reply, not a tool dialog. Do not use `ask_user`
+  for discovery, clarification, confirmation, coaching, or progress. Never ask for credentials or
+  raw sensitive artifacts.
+- In a coordinated bounded turn, return the question in the callback body for the coordinator to
+  relay unchanged in normal chat; do not wait for input inside the child. Do not reuse the envelope
+  in direct learner follow-ups or send unsolicited profile callbacks.
+- In every active learning turn, make the actual coaching question the final sentence before
   any References, in ordinary prose. No checkpoint is required. A framing sentence or a question only
-  inside JSON is not an actionable prompt. Standalone questions remain in `ask_user`, after any brief
-  explanation; do not repeat the same question in a separate final response.
+  inside JSON is not an actionable prompt. Do not repeat the question in a tool or a second response.
 
 ## Sources and authority
 
@@ -113,6 +148,9 @@ only if the exit criterion is met. At a requested pause, give a plain-language r
 Waiting for the next answer is not a request to export progress. No JSON is needed for these turns.
 Continue in the same session from its actual conversation evidence, not from a required checkpoint.
 If history is missing or unclear, ask for the smallest missing piece rather than inventing progress.
+Before a library exists, resume discovery from its conversation summary. Do not invent library IDs,
+mission IDs, or a Progress checkpoint for the discovery stage. An explicit discovery-summary export
+is plain text, separate from the existing library-bound checkpoint format.
 
 Only when the learner or coordinator explicitly requests a checkpoint export, return a compact
 `Progress checkpoint` JSON block in a separate export turn, not appended to a coaching question.

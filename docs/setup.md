@@ -33,14 +33,18 @@ For a quick question, ask in the current project chat. The project instructions 
 use native Microsoft Learn tools and return clickable Markdown references.
 
 For a learning journey, ask **"I want to learn AKS"** in a normal project chat. The coordinator follows
-[self-directed discovery](learning.md): a `prompt-library-factory` child generates the library, the
-coordinator saves it as a session artifact, and an interactive `discovery-coach` session starts with
-one mission. The factory inherits the coordinator's active model and reasoning effort; the coach uses
-`gpt-6-astra`. Neither needs Azure credentials for the default conceptual path.
+[self-directed discovery](learning.md): first explore goals and prior knowledge in ordinary chat,
+confirm a short summary and focus, then let a `prompt-library-factory` child generate the tailored
+library. The coordinator saves it as a session artifact and passes the discovery context to an
+interactive `discovery-coach`. The factory inherits the coordinator's active model and reasoning
+effort; the coach uses `gpt-6-astra`. Neither needs Azure credentials for the default conceptual path.
 
-You can also select `prompt-library-factory` directly, describe your objective, and pass its complete
-JSON result to `discovery-coach`. Direct selection does not automatically save a file or launch another
-agent. All supported learning topics use this same factory-to-coach path.
+You can also select `discovery-coach` without a library to explore your starting point. Pass its
+confirmed summary to the coordinator or directly to `prompt-library-factory`; the factory also conducts
+discovery if selected without a summary, unless you explicitly opt out. After generation, pass the
+complete JSON and confirmed summary to the coach. Direct selection does not automatically save a file
+or launch another agent. Both learning agents ask questions in ordinary chat and do not expose
+`ask_user`. All supported topics use this same discovery-to-factory-to-coach path.
 
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 

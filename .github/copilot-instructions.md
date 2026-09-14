@@ -19,17 +19,17 @@
 ## Self-directed learning
 
 - Route requests such as "I want to learn AKS" to `docs/learning.md` before the research-answer path.
-  Use the reusable `prompt-library-factory` project agent, not a registered runtime factory, followed
-  by `discovery-coach` through native sessions. The factory inherits the parent's active model and
-  reasoning effort through the same omission-based native session defaults.
-- Preserve exploratory breadth and freeze intent before discovery. Default to beginner, seven
-  30-minute conceptual missions with no live resources, recording assumptions rather than asking
-  for every missing preference. Explicit sandbox requests still require current scope and safety proof.
-- Read `docs/learning.md` for the complete generation, validation, artifact, handoff, and resume
-  protocol. Keep generated libraries and checkpoints in session artifacts, never auto-commit them.
-  Library JSON is not subject to research-answer word limits or evaluation-packet formatting.
-- Keep coaching conversational: one small step and one focused question, not a rubric or JSON dump. Use native conversation history for progress; export checkpoints only on explicit request.
-- Use the same factory-to-coach path for every supported topic. The factory and coach share `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
+  Read `prompts/coaching-contract.md` and conduct discovery in the current chat before generating a library.
+- Keep coaching conversational: one small step and one focused question, not a rubric or JSON dump.
+  Learning discovery, clarification, and coaching use ordinary chat, not `ask_user`; explore goals and prior knowledge before choosing a path.
+- Distinguish reported familiarity, demonstrated understanding, gaps, and unknowns. Confirm the discovery summary and emphasis, or record explicit opt-out, before freezing generation.
+- Then use the reusable `prompt-library-factory` project agent, not a registered runtime factory, followed by `discovery-coach` through native sessions.
+  The factory inherits the parent's active model and reasoning effort through the same omission-based native session defaults.
+- Choose depth and mission count from confirmed discovery; beginner, seven 30-minute missions are fallback assumptions only for missing information after explicit opt-out.
+  Conceptual practice remains the safe default. Explicit sandbox requests still require current scope and safety proof.
+- Follow `docs/learning.md` for generation, validation, artifact, handoff, and resume. Keep libraries and exported checkpoints in session artifacts, never auto-commit them.
+  Preserve the discovery summary in both handoffs; use native history for progress and export checkpoints only on explicit request. Library JSON has no research-answer word ceiling.
+- Use this discovery-to-factory-to-coach path for every supported topic; the shared contract cannot be weakened by a library.
 - Only explicit live-validation requests may use coordinator-operated Azure/computer tools under
   `docs/learning.md`; never grant these tools to the factory or coach or infer cloud-write consent from learning intent.
 

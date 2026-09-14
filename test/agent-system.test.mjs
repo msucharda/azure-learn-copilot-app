@@ -91,7 +91,7 @@ test("repository exposes only the native agent system", async () => {
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
     for (const agent of [coach, factory]) {
-        assert.deepEqual(tools(agent), ["read", "microsoft-learn/*", "ask_user", "send_session_message"]);
+        assert.deepEqual(tools(agent), nativeAgentTools);
         assert.equal(property(agent, "target"), "github-copilot");
         assert.equal(property(agent, "user-invocable"), "true");
         assert.equal(property(agent, "disable-model-invocation"), "true");
@@ -141,7 +141,7 @@ test("factory generates bounded portable libraries without runtime privileges", 
     assert.match(factory, /Do not edit files, run commands, deploy, inspect live resources, install tools, or create sessions/i);
     assert.match(factory, /prompts\/coaching-contract\.md.*prompts\/prompt-library\.schema\.json/i);
     assert.match(factory, /original request and frozen refinement without reinterpreting/i);
-    assert.match(factory, /Default unspecified experience to beginner.*30 minutes per mission.*conceptual.*seven/i);
+    assert.match(factory, /Only for an explicit discovery opt-out with missing information.*beginner, seven missions, and 30 minutes/i);
     assert.match(factory, /UNSUPPORTED_LEARNING_TOPIC/);
     assert.match(factory, /Select at most 15 successful pages.*Fetch every cited page/i);
     assert.match(factory, /tool-exposed retrieval timestamp or null/i);
@@ -152,7 +152,7 @@ test("factory generates bounded portable libraries without runtime privileges", 
     assert.match(factory, /every source ID resolves and every source is used/i);
     assert.match(factory, /PROMPT_LIBRARY_EVIDENCE_ERROR/);
     assert.match(factory, /Do not claim the library is saved or a coach session started/i);
-    assert.match(factory, /conversation across several turns.*one small, beginner-readable question/i);
+    assert.match(factory, /conversation across several turns.*one small, learner-appropriate question/i);
     assert.match(factory, /cumulative rubric, not an opening assignment/i);
     assert.match(factory, /Do not require checkpoint JSON in normal coaching replies/i);
 });
@@ -173,8 +173,9 @@ test("generic coaching applies shared evidence gates to every supported topic", 
     assert.match(shared, /one mission at a time in library order/i);
     assert.match(shared, /not-started.*in-progress.*blocked.*passed/i);
     assert.match(shared, /never requires a subscription, paid resource, tenant inspection, installation, or deployment/i);
-    assert.match(shared, /standalone coaching use `ask_user`/i);
-    assert.match(shared, /coordinated bounded turn.*coordinator to relay with `ask_user`/i);
+    assert.match(shared, /both direct and coordinated learning turns.*normal assistant message/i);
+    assert.match(shared, /Do not use `ask_user` for discovery, clarification, confirmation, coaching, or progress/i);
+    assert.match(shared, /coordinated bounded turn.*relay unchanged in normal chat/i);
     assert.match(shared, /actual coaching question the final sentence before any References, in ordinary prose/i);
     assert.match(shared, /No checkpoint is required/i);
     assert.match(shared, /concise prior evidence for review.*fresh attempt.*do not automatically force a full curriculum restart/i);
@@ -230,6 +231,80 @@ test("coaching is conversational while portable progress remains explicit and ev
     for (const contract of [coach, shared, learning]) {
         assert.doesNotMatch(contract, /(?:At each|At a) mission boundary or pause, (?:emit|return).*Progress checkpoint/i);
     }
+});
+
+test("discovery precedes generation without assuming the learner's starting level", async () => {
+    const [shared, instructions, learning] = await Promise.all([
+        text("prompts/coaching-contract.md").then(compact),
+        text(INSTRUCTIONS_PATH).then(compact),
+        text("docs/learning.md").then(compact),
+    ]);
+    assert.match(shared, /Before generating a library.*explore the learner's goals and prior knowledge in ordinary chat/i);
+    assert.match(shared, /Start from what they already volunteered.*one open-ended question/i);
+    assert.match(shared, /Follow the answer, not a script/i);
+    assert.match(shared, /learner-reported experience.*demonstrated in the conversation.*misconceptions.*unknowns/i);
+    assert.match(shared, /Confidence, job title, and tool familiarity alone do not prove understanding/i);
+    assert.match(shared, /Unknown knowledge stays unknown, not automatically beginner-level/i);
+    assert.match(shared, /Freeze the generation task only after confirmation.*explicit request to start without further discovery/i);
+    assert.match(shared, /supplied confirmed summary can satisfy this gate without another interview/i);
+    assert.match(shared, /choose depth and mission count from the confirmed goals, evidence, and constraints/i);
+    assert.match(shared, /Self-reported expertise never auto-passes a mission/i);
+    assert.match(shared, /objectives, order, or practice mode require a newly confirmed scope and a revised library/i);
+    assert.match(instructions, /conduct discovery in the current chat before generating a library/i);
+    assert.match(instructions, /Preserve the discovery summary in both handoffs/i);
+    assert.ok(
+        learning.indexOf("## Discovery before generation") < learning.indexOf("## Coordinator generation protocol"),
+        "the documented entry path must collect discovery before launching generation",
+    );
+    assert.match(learning, /confirmation\/opt-out evidence/i);
+    assert.match(learning, /same complete continuation task.*fresh envelope/i);
+});
+
+test("coach routes new learners to discovery and preserves library and resume errors", async () => {
+    const coach = compact(await text(COACH_PATH));
+    assert.match(coach, /With no library and no resume request, begin its discovery conversation/i);
+    assert.match(coach, /absence of a library is not a configuration error/i);
+    assert.match(coach, /End the turn after one question; never block on a question tool/i);
+    assert.match(coach, /Use supplied history or a confirmed discovery summary rather than repeating the interview/i);
+    assert.match(coach, /missing requested library file, missing library on resume/i);
+    assert.match(coach, /disguise an invalid resume as fresh discovery/i);
+    assert.match(coach, /Older v2 libraries and checkpoints remain valid/i);
+    assert.match(coach, /must not erase actual mission evidence/i);
+    assert.match(coach, /Prior explanations may satisfy a mission criterion only after rechecking/i);
+    assert.match(coach, /self-reported familiarity alone does not unlock missions/i);
+    assert.doesNotMatch(coach, /If no library was supplied, tell.*factory.*first/i);
+});
+
+test("factory requires confirmed discovery and maps knowledge to the curriculum", async () => {
+    const factory = compact(await text(FACTORY_PATH));
+    assert.match(factory, /For standalone use, follow the shared discovery conversation before generation/i);
+    assert.match(factory, /Ask one open-ended question in ordinary chat, then end the turn; do not use `ask_user`/i);
+    assert.match(factory, /For coordinated generation, require the confirmed discovery summary or explicit discovery opt-out/i);
+    assert.match(factory, /DISCOVERY_PROFILE_REQUIRED.*through FAILED before Learn search/i);
+    assert.match(factory, /do not interview the learner inside a coordinated generation turn/i);
+    assert.match(factory, /Map the confirmed discovery summary to the curriculum/i);
+    assert.match(factory, /build on demonstrated concepts.*target gaps and misconceptions/i);
+    assert.match(factory, /Do not fill seven slots with generic basics/i);
+    assert.match(factory, /every confirmed priority has a mission or explicit unresolved gap/i);
+    assert.match(factory, /reported familiarity is not recorded as a passed mission/i);
+    assert.match(factory, /Keep schema version 2 unchanged/i);
+    assert.match(factory, /discovery summary remains in the generation packet\/record and coach handoff/i);
+});
+
+test("learning agents cannot call question dialogs and discovery needs no fake checkpoint", async () => {
+    const [coach, factory, shared] = await Promise.all([
+        text(COACH_PATH),
+        text(FACTORY_PATH),
+        text("prompts/coaching-contract.md").then(compact),
+    ]);
+    for (const agent of [coach, factory]) {
+        assert.equal(tools(agent).includes("ask_user"), false);
+        assert.match(compact(agent), /(?:not|never) (?:use|block on).*question tool|not `ask_user`|do not use `ask_user`/i);
+    }
+    assert.match(shared, /end the turn.*regular learner chat reply, not a tool dialog/i);
+    assert.match(shared, /Before a library exists, resume discovery from its conversation summary/i);
+    assert.match(shared, /Do not invent library IDs, mission IDs, or a Progress checkpoint for the discovery stage/i);
+    assert.match(shared, /discovery-summary export is plain text/i);
 });
 
 test("learning requests route through retained artifacts into interactive native coaching", async () => {

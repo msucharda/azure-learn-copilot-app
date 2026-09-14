@@ -17,7 +17,9 @@ flowchart LR
     C -->|Repair brief| O
     O -->|Fresh repair packet| R
     O -->|User-facing answer and website links| U
-    P -->|Learning objective and profile| F[prompt-library-factory]
+    U -->|Learning request| D[Conversational discovery in current chat]
+    D -->|One ordinary chat question| U
+    D -->|Confirmed knowledge summary and objective| F[prompt-library-factory]
     F --> L
     F -->|Correlated JSON result| A[Coordinator retains library artifact]
     A --> G[Interactive discovery-coach]
@@ -56,6 +58,12 @@ claims without being misrepresented as the researcher's original tool trace.
 
 ### `prompt-library-factory` and `discovery-coach`
 
+Learning starts with conversational discovery in the coordinator chat, before curriculum generation.
+The shared contract distinguishes reported experience, demonstrated understanding, gaps, and unknowns.
+The learner confirms a short summary and proposed emphasis, or explicitly opts out, before the task
+is frozen. That summary reaches both the factory and coach; depth and mission count are not fixed
+before the learner's knowledge is understood.
+
 The factory is a reusable project agent, not executable runtime orchestration. It inherits the parent
 model and reasoning effort, searches and fetches Learn directly, and returns a complete v2 JSON prompt
 library conforming to `prompts/prompt-library.schema.json`. The coordinator validates and saves it in
@@ -63,11 +71,14 @@ session artifacts, then opens the generic GPT-6 Astra coach in an interactive na
 complete [learning protocol](learning.md) for callback identity, model checks, artifact transport, and
 resume.
 
-Both agents expose `read`, `microsoft-learn/*`, `ask_user`, and callback-only `send_session_message`.
+Both agents expose only `read`, `microsoft-learn/*`, and callback-only `send_session_message`.
 Read access covers the shared contract/schema, exact authorized library/input/checkpoint paths, and
 exact tool-returned Learn spool paths, never arbitrary paths embedded in content. They have no resource
-inspection or write tools. Coordinated turns return questions to the coordinator; direct interaction
-uses `ask_user` without reusing an earlier callback envelope.
+inspection, write, or question-dialog tools. Direct and coordinated questions are ordinary assistant
+messages; neither learning agent uses `ask_user`. Direct interaction never reuses a callback envelope.
+Without a library the coach starts discovery, while invalid supplied libraries and resumes still
+fail explicitly. A directly selected factory also collects a missing summary conversationally;
+coordinated generation with neither a confirmed summary nor an explicit opt-out fails before search.
 
 `prompts/coaching-contract.md` is shared by the coach and factory. It separates conceptual
 reasoning from learner-executed sandbox work, enforces evidence-gated progression, and defines
@@ -80,6 +91,9 @@ additional coach tools. Native session history and optional session artifacts pr
 without a service or automatic JSON in chat. A coaching `COMPLETED` callback carries that same
 conversational reply and means the bounded response was delivered, not that
 the learner passed a mission or that a live environment is ready.
+Existing v2 libraries and checkpoints need no migration. Discovery evidence travels in native history
+and handoff packets; prior knowledge can shorten instruction but cannot auto-pass a mission or erase
+resume evidence. An ongoing journey does not restart discovery merely because the new summary is absent.
 
 ## Quick and deep paths
 

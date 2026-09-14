@@ -4,10 +4,11 @@ An agent-only Microsoft Learn research and self-directed discovery workflow for 
 contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
 Research uses the Microsoft Learn tools configured in Copilot App and returns normal website links.
 
-Ask **"I want to learn AKS"** in a project chat to generate a personalized prompt library and start
-an AI-assisted journey with `discovery-coach`. The default is seven beginner-friendly, 30-minute
-conceptual missions with no live resources. Include your experience, goal, available time, or sandbox
-preference to tailor the journey. See [self-directed discovery](docs/learning.md) for start and resume.
+Ask **"I want to learn AKS"** in a project chat to start an exploratory conversation about your goals
+and existing knowledge. After you confirm the focus, the factory builds a personalized prompt library
+and `discovery-coach` guides the journey. Questions appear in ordinary chat, not tool dialogs. The
+path follows your knowledge and goals; beginner/seven-mission defaults apply only to missing details
+when you explicitly skip discovery. See [self-directed discovery](docs/learning.md) for start and resume.
 The coach guides one small step at a time, responds to your reasoning, and keeps progress in the
 conversation rather than dumping checkpoint JSON. Portable checkpoint exports are available on request.
 
@@ -25,8 +26,9 @@ conversation rather than dumping checkpoint JSON. Portable checkpoint exports ar
 
 ## Flow
 
-Learning requests take the [factory-to-coach path](docs/learning.md): freeze the objective, generate
-and validate a library, retain it in session artifacts, and open an interactive coach session.
+Learning requests take the [discovery-to-factory-to-coach path](docs/learning.md): explore prior knowledge,
+confirm the focus, freeze the objective and discovery summary, generate and validate a tailored library,
+retain it in session artifacts, and open an interactive coach session with the same discovery context.
 The factory inherits the coordinator model and reasoning effort; the coach uses GPT-6 Astra. No
 registered runtime factory, resource writes, or learner-data commits are introduced. The following path
 remains for research answers.

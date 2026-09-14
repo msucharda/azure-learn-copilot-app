@@ -4,7 +4,11 @@
 | --- | --- |
 | `learn-researcher` is not available | Start a new project turn or session so Copilot reloads project agents |
 | The generic coach or factory is missing | Start a fresh project turn/session and select `discovery-coach` or `prompt-library-factory`; these are project agents, not installed skills or registered runtime factories |
-| "I want to learn AKS" returns only a research essay | Use the [learning protocol](learning.md); create a library through the factory and start the generic coach rather than using the research-answer path |
+| "I want to learn AKS" returns only a research essay | Use the [learning protocol](learning.md); explore prior knowledge first, confirm the focus, then generate the library and coach rather than using the research-answer path |
+| The coach immediately assumes beginner level or announces seven missions | Start discovery before curriculum generation. Reuse volunteered context, explore the learner's mental model, and confirm the focus. Defaults require an explicit discovery opt-out where details remain missing |
+| `DISCOVERY_PROFILE_REQUIRED` | Supply the confirmed discovery summary or evidence of an explicit opt-out in the complete factory task. Do not retry with invented learner knowledge |
+| The coach has no library yet | Start an ordinary discovery conversation for a new journey. A missing requested file or a resume without its library remains a configuration error, not a reason to discard progress |
+| Learning questions appear in `ask_user` dialogs | Load the updated learning agents, whose allow-lists omit `ask_user`. Discovery, clarification, confirmation, and coaching all use ordinary assistant messages. Remove question-tool instructions from old kickoffs |
 | `PROMPT_LIBRARY_CONFIGURATION_ERROR` | Supply the complete v2 JSON library; check schema fields, mission/source IDs, placeholder declarations, duration, and conceptual/sandbox consistency. Do not silently repair or substitute another library |
 | `PROMPT_LIBRARY_EVIDENCE_ERROR` | Keep the missing-source or unsafe-curriculum gap explicit; do not publish a partial library as ready or treat search snippets as fetched evidence |
 | `UNSUPPORTED_LEARNING_TOPIC` | This factory supports Microsoft/Azure topics backed by Learn. Do not silently replace the requested subject or add general-web tools |
@@ -19,7 +23,7 @@
 | A completed research child remains active | Confirm that its correlated terminal result was retained and validated and that the child is idle. If no persistent work, open PR, active Agent Merge, or session automation remains, archive it; never delete it automatically |
 | `microsoft-learn/*` is unavailable | Configure the Learn MCP server in App settings under the exact `microsoft-learn` name, then start a fresh session |
 | A proposed assignment targets `All users` or `All devices` | Reject it. The only permitted target is the trainee's assigned group after current proof that it contains exactly the assigned experiment device |
-| The coach is available but its tools are denied | Confirm the allow-list contains `read`, `microsoft-learn/*`, `ask_user`, and callback-only `send_session_message`, and that the Learn server name matches App settings |
+| The coach is available but its tools are denied | Confirm the allow-list contains only `read`, `microsoft-learn/*`, and callback-only `send_session_message`, and that the Learn server name matches App settings. Do not add a question-dialog or resource-access tool |
 | The coach returns `COMPLETED` with a question or refusal | The callback confirms delivery of that bounded turn, not mission success or live tenant readiness |
 | Learn output is saved to a temporary file | Use `read` only on the exact path returned by that tool and inspect only the necessary ranges |
 | The answer cites a search result without fetching it | Treat the citation as unverified and rerun with a fetched source; search chunks are discovery only |
