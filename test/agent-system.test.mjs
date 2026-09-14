@@ -152,6 +152,9 @@ test("factory generates bounded portable libraries without runtime privileges", 
     assert.match(factory, /every source ID resolves and every source is used/i);
     assert.match(factory, /PROMPT_LIBRARY_EVIDENCE_ERROR/);
     assert.match(factory, /Do not claim the library is saved or a coach session started/i);
+    assert.match(factory, /conversation across several turns.*one small, beginner-readable question/i);
+    assert.match(factory, /cumulative rubric, not an opening assignment/i);
+    assert.match(factory, /Do not require checkpoint JSON in normal coaching replies/i);
 });
 
 test("generic coaching applies shared evidence gates to every supported topic", async () => {
@@ -172,8 +175,8 @@ test("generic coaching applies shared evidence gates to every supported topic", 
     assert.match(shared, /never requires a subscription, paid resource, tenant inspection, installation, or deployment/i);
     assert.match(shared, /standalone coaching use `ask_user`/i);
     assert.match(shared, /coordinated bounded turn.*coordinator to relay with `ask_user`/i);
-    assert.match(shared, /actual coaching question in ordinary prose before any Progress checkpoint/i);
-    assert.match(shared, /mirror that same question in `next_question`/i);
+    assert.match(shared, /actual coaching question the final sentence before any References, in ordinary prose/i);
+    assert.match(shared, /No checkpoint is required/i);
     assert.match(shared, /concise prior evidence for review.*fresh attempt.*do not automatically force a full curriculum restart/i);
     assert.match(shared, /learner performs any approved change manually/i);
     assert.match(shared, /Reject production or shared targets.*unbounded costs/i);
@@ -186,6 +189,46 @@ test("generic coaching applies shared evidence gates to every supported topic", 
         }
         assert.match(contract, /CALLBACK_CONFIGURATION_ERROR/);
         assert.match(contract, /Send each callback at most once/i);
+    }
+});
+
+test("coaching is conversational while portable progress remains explicit and evidence-gated", async () => {
+    const [coach, shared, learning, instructions] = await Promise.all([
+        text(COACH_PATH).then(compact),
+        text("prompts/coaching-contract.md").then(compact),
+        text("docs/learning.md").then(compact),
+        text(INSTRUCTIONS_PATH).then(compact),
+    ]);
+    assert.match(shared, /Be a mentor, not an assessment form/i);
+    assert.match(shared, /one focused question about one idea/i);
+    assert.match(shared, /respond to what the learner actually said/i);
+    assert.match(shared, /ask for an explanation, teach first/i);
+    assert.match(shared, /Accumulate the mission's required evidence across conversational turns/i);
+    assert.match(shared, /at most 180 words before References/i);
+    assert.match(shared, /never truncate a safety condition/i);
+    assert.match(shared, /Keep library JSON, progress JSON.*out of normal replies/i);
+    assert.match(shared, /Do not hide them in HTML comments or collapsible sections/i);
+    assert.match(shared, /Technical JSON examples are allowed/i);
+    assert.match(shared, /Only when the learner or coordinator explicitly requests a checkpoint export/i);
+    assert.match(shared, /separate export turn, not appended to a coaching question/i);
+    assert.match(shared, /not implied by a callback envelope, a mission boundary, a pause, or a resume/i);
+    assert.match(shared, /actual conversation evidence, not from a required checkpoint/i);
+    assert.match(shared, /`next_question` \(the pending question, otherwise null\)/i);
+    for (const field of ["library_id", "schema_version", "library_sha256", "current_mission_id", "missions", "confirmed_variables"]) {
+        assert.ok(shared.includes(`\`${field}\``), `${field} remains available for portable exports`);
+    }
+    assert.match(coach, /callback body is the same conversational reply shown to the learner/i);
+    assert.match(coach, /A callback envelope does not request a checkpoint export/i);
+    assert.match(coach, /Older libraries may contain multi-part prompts; pace those across turns/i);
+    assert.match(coach, /continuing journey, use the conversation's actual evidence/i);
+    assert.match(coach, /brief plain-language progress recap/i);
+    assert.match(coach, /checkpoint only on explicit request, in a separate turn/i);
+    assert.match(learning, /Do not request an automatic Progress checkpoint or `next_question`/i);
+    assert.match(learning, /continue from the conversation; no export is required/i);
+    assert.match(learning, /misconception and a request for explanation/i);
+    assert.match(instructions, /Keep coaching conversational.*not a rubric or JSON dump/i);
+    for (const contract of [coach, shared, learning]) {
+        assert.doesNotMatch(contract, /(?:At each|At a) mission boundary or pause, (?:emit|return).*Progress checkpoint/i);
     }
 });
 

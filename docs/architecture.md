@@ -71,10 +71,14 @@ uses `ask_user` without reusing an earlier callback envelope.
 
 `prompts/coaching-contract.md` is shared by the coach and factory. It separates conceptual
 reasoning from learner-executed sandbox work, enforces evidence-gated progression, and defines
-sanitized progress checkpoints. Libraries can tighten but never weaken safety. All supported topics
+sanitized progress checkpoints on explicit export requests. The ordinary learner-facing output is a
+short conversation with one focused question, not a mission rubric or checkpoint payload. Evidence
+accumulates across turns; boundaries and pauses use plain-language recaps. Libraries can tighten but
+never weaken safety. All supported topics
 use the same v2 library-driven workflow; live state requires learner-provided evidence rather than
 additional coach tools. Native session history and optional session artifacts provide progress
-without a service. A coaching `COMPLETED` callback means the bounded response was delivered, not that
+without a service or automatic JSON in chat. A coaching `COMPLETED` callback carries that same
+conversational reply and means the bounded response was delivered, not that
 the learner passed a mission or that a live environment is ready.
 
 ## Quick and deep paths

@@ -8,6 +8,8 @@ Ask **"I want to learn AKS"** in a project chat to generate a personalized promp
 an AI-assisted journey with `discovery-coach`. The default is seven beginner-friendly, 30-minute
 conceptual missions with no live resources. Include your experience, goal, available time, or sandbox
 preference to tailor the journey. See [self-directed discovery](docs/learning.md) for start and resume.
+The coach guides one small step at a time, responds to your reasoning, and keeps progress in the
+conversation rather than dumping checkpoint JSON. Portable checkpoint exports are available on request.
 
 ## Components
 

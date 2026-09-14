@@ -65,6 +65,9 @@ For unsupported subjects return `UNSUPPORTED_LEARNING_TOPIC`; do not substitute 
    two or three progressive hints, observable required evidence, an exit criterion, and source IDs.
    Ask the learner to predict and explain rather than copying a completed solution. The prompt must
    work when pasted with this library into the coach; it cannot bypass earlier mission gates.
+   Design each prompt as a conversation across several turns, starting with one small, beginner-readable
+   question. Required evidence and exit criteria are the coach's cumulative rubric, not an opening
+   assignment to dump on the learner. Do not require checkpoint JSON in normal coaching replies.
 5. Use `{{variable_name}}` only for declared variables. Leave unknown values null, not fictitious
    resource IDs. A library is never proof of resource assignment. Product-specific guardrails may
    tighten but cannot weaken the shared contract. Use the same v2 library format and `discovery-coach`

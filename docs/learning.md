@@ -10,6 +10,11 @@ starts `discovery-coach` at the first mission. The default is beginner, seven mi
 assumptions, not answers attributed to the learner. Broad topic discovery is intentional; it does not
 need a questionnaire before starting.
 
+The coach guides a natural conversation: a small scenario, one focused question, then feedback on your
+answer. It builds toward the mission's goal over several turns instead of presenting a worksheet.
+Progress stays in native conversation history; ordinary replies contain no checkpoint JSON, internal
+IDs, or validation reports. Ask to export a checkpoint only when you need portable progress.
+
 To personalize the library, include your experience, outcome, time, and practice preference:
 
 > I know Kubernetes basics. Help me understand AKS operational responsibilities in five conceptual
@@ -88,10 +93,15 @@ when needed. Supply paths in the kickoff text, not generated Markdown attachment
 that cannot read a local artifact, put the complete JSON inline in the kickoff instead; do not send an
 unreachable local path or imply that an attachment was staged.
 
-The coach's first callback contains one bounded opening turn with the mission and first question.
+The coach's first callback contains one short conversational opening and one focused question, not a
+mission rubric or checkpoint. Specify the shared learner-facing conversation rules in the kickoff:
+introduce assumptions and the immediate aim naturally, start with one small scenario, and finish with
+the question before any References. Do not request an automatic Progress checkpoint or `next_question`.
 Retain that exact result, show the library location and opening turn, and navigate the learner to the
 coach session for direct interaction. Do not automatically archive this session: it is the learner's
 ongoing journey. Direct follow-ups omit callback fields; the agent must not reuse the first envelope.
+Keep the learner handoff brief: use a short library artifact link and the conversational opening, not
+the factory's JSON, validation log, model settings, hashes, or callback acknowledgments as a briefing.
 If the learner stays in the coordinator instead, relay the question with `ask_user` and send each
 subsequent bounded task with a fresh envelope. No child should wait on a learner question during a
 coordinated turn.
@@ -104,15 +114,22 @@ If native orchestration is unavailable, explain this manual path without claimin
 
 ## Progress, resumption, and changes
 
-The coach returns a `Progress checkpoint` at each mission boundary or pause. Native session history
-persists the conversation. The learner can copy a checkpoint; a coordinator can retain it as a
-separate session artifact when asked. A read-only coach must not claim that it wrote a progress file.
-Keep evidence summaries minimal and sanitized, not raw tenant data or secrets.
-In coordinated turns, the actual next question appears in ordinary prose before the checkpoint, with
-the same question in `next_question`; it must not be hidden only in JSON.
+Native session history persists the conversation and its evidence. At a mission boundary or requested
+pause, the coach gives a brief plain-language recap, not a `Progress checkpoint` JSON block. Waiting
+for an answer is not a pause/export request. In an active coordinated turn, the actual question is the
+final sentence before any References; direct follow-ups use `ask_user` after brief feedback.
 
-To resume in the existing coach session, ask it to continue from the last checkpoint. To resume in a
-new session, give the coordinator the exact library and checkpoint paths. The coordinator recomputes
+Only an explicit learner or coordinator request produces a checkpoint export, in a separate turn.
+The learner can copy it, or the coordinator can retain it as a separate session artifact without
+forwarding its JSON into normal coaching. Keep the shared checkpoint fields, including `next_question`
+(null if none is pending), verified digest, evidence, and unresolved items. A read-only coach must not
+claim that it wrote a progress file. Keep evidence summaries minimal and sanitized, not raw tenant data
+or secrets.
+
+To resume in the existing coach session, ask it to continue from the conversation; no export is
+required. If history is incomplete, recover the smallest missing evidence rather than guessing a pass.
+For a transfer to a new session, request an export and give the coordinator the exact library and
+checkpoint paths. The coordinator recomputes
 the library digest and supplies the verified digest, complete task, and separately authorized paths
 in one new coach kickoff. Inline JSON is the alternative for a remote session. The coach checks
 identity, mission IDs/order, claimed evidence, and current safety proof; stale or inconsistent progress
@@ -176,5 +193,9 @@ development validation, not a runtime service; without that variable the live-ar
 Synthetic fixtures test shape and rejection paths only. Generation quality, callback delivery,
 interactive behavior, and safety still require native-session evidence.
 For an active coordinated coaching response, set `COACHING_RESPONSE_ARTIFACT` to its saved Markdown
-and run `node --test .\test\coaching-response.test.mjs` to check that the actual question is visible
-before, and agrees with, its checkpoint. This does not assess the answer's factual or teaching quality.
+and run `node --test .\test\coaching-response.test.mjs`. The ordinary-turn check requires a short reply
+with one visible question at the end before References and rejects checkpoint/transport metadata,
+including the former question-plus-JSON shape. It does not ban relevant technical JSON examples.
+Explicit checkpoint exports and requested long explanations are different output shapes, not inputs
+to this check. Shape checks do not assess teaching quality, safety, or factual support: inspect a
+native opening and learner follow-ups, including a misconception and a request for explanation.

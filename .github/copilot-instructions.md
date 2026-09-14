@@ -28,8 +28,8 @@
 - Read `docs/learning.md` for the complete generation, validation, artifact, handoff, and resume
   protocol. Keep generated libraries and checkpoints in session artifacts, never auto-commit them.
   Library JSON is not subject to research-answer word limits or evaluation-packet formatting.
-- Use the same factory-to-coach path for every supported topic. The factory and coach share
-  `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
+- Keep coaching conversational: one small step and one focused question, not a rubric or JSON dump. Use native conversation history for progress; export checkpoints only on explicit request.
+- Use the same factory-to-coach path for every supported topic. The factory and coach share `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
 - Only explicit live-validation requests may use coordinator-operated Azure/computer tools under
   `docs/learning.md`; never grant these tools to the factory or coach or infer cloud-write consent from learning intent.
 
