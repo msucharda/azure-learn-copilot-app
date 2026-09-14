@@ -25,8 +25,9 @@ preference to tailor the journey. See [self-directed discovery](docs/learning.md
 
 Learning requests take the [factory-to-coach path](docs/learning.md): freeze the objective, generate
 and validate a library, retain it in session artifacts, and open an interactive coach session.
-The factory inherits the coordinator model; the coach uses GPT-6 Astra. No registered runtime factory,
-resource writes, or learner-data commits are introduced. The following path remains for research answers.
+The factory inherits the coordinator model and reasoning effort; the coach uses GPT-6 Astra. No
+registered runtime factory, resource writes, or learner-data commits are introduced. The following path
+remains for research answers.
 
 1. Before research, the coordinator classifies the request as clear, exploratory, or materially ambiguous. It preserves
    useful breadth, but when interpretations would change the product, evidence, decision, or risk, it uses
@@ -76,10 +77,11 @@ and link contract. See GitHub's documentation for
 ## Improvement loop
 
 Deep-research and repair children use the coordinator's currently active model and reasoning effort. The
-researcher profile leaves `model` unset, and each coordinated child-session launch passes the parent's
-exact `model` and `reasoning_effort` so the child does not drift to different defaults. The discovery coach
-pins GPT-6 Astra (`gpt-6-astra`), while the independent critic pins Claude Sonnet 5 (`claude-sonnet-5`).
-Repository instructions cannot change an already-running model or the App-wide default.
+researcher profile leaves `model` unset, and coordinated child-session launches omit both `model` and
+`reasoning_effort` so Copilot App inherits the creator's active settings without prompting the user to
+repeat them. The discovery coach pins GPT-6 Astra (`gpt-6-astra`), while the independent critic pins
+Claude Sonnet 5 (`claude-sonnet-5`). Repository instructions cannot change an already-running model or
+the App-wide default.
 
 Each iteration runs a different Azure architecture scenario in a fresh coordinated
 `learn-researcher` session. Controlled experiments hold the task, model, and rubric fixed and anonymize
