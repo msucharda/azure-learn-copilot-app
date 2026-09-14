@@ -1,10 +1,11 @@
 # Microsoft Learn research
 
-- Deep-research and repair `learn-researcher` children inherit the coordinator's currently active model.
-  Leave the researcher model unset in agent frontmatter and explicitly pass the parent's exact model ID
-  in native child kickoffs. Keep `context_tier: default`, record the parent, requested, and observed child
-  models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for `discovery-coach` and Claude
-  Sonnet 5 (`claude-sonnet-5`) for the independent critic.
+- Deep-research and repair `learn-researcher` children inherit the coordinator's currently active model
+  and reasoning effort. Leave the researcher model unset in agent frontmatter and explicitly pass the
+  parent's exact model ID as `model` and current reasoning effort as `reasoning_effort` in native child
+  session creation. Keep `context_tier: default`, record the parent, requested, and observed child models
+  and reasoning efforts, and never silently substitute or downgrade either setting. Use GPT-6 Astra
+  (`gpt-6-astra`) for `discovery-coach` and Claude Sonnet 5 (`claude-sonnet-5`) for the independent critic.
 - For research, use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
   canvases, or a separate reference UI.
@@ -57,20 +58,22 @@ Use one kickoff and an explicit agent callback for every deep child:
    pass it as `base_branch`, and verify the child branch contains the expected commit before accepting
    `STARTED`. A local-only commit is not a valid child-session base.
 3. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-4. Put the research mode and applicable phase fields (omit inactive fields, even `not applicable`),
+4. For a `learn-researcher` child, pass the coordinator's exact active `model` and `reasoning_effort`
+   as native child-session arguments.
+5. Put the research mode and applicable phase fields (omit inactive fields, even `not applicable`),
    `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
    complete frozen task in the kickoff. Do not deliver work in a follow-up session message.
-5. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
+6. Require the child to callback `STARTED` before research and `COMPLETED` with the complete result, or
    `FAILED` with a reason. Accept a callback only from the expected child project-session ID and only
    when both identifiers match.
-6. Treat idle notifications as diagnostics, never completion. If the child becomes idle without the
+7. Treat idle notifications as diagnostics, never completion. If the child becomes idle without the
    required callback, inspect its transcript once, record a delivery failure, and do not automatically
    resend the task. A send acknowledgment proves acceptance, not recipient receipt or consumption.
    Recover an exact correlated result from the expected child's durable transcript when available;
    label it recovered delivery, preserve its body, and do not infer that the callback was received.
-7. Ignore duplicate or stale callbacks. Reconcile late errors against retained results before retrying.
+8. Ignore duplicate or stale callbacks. Reconcile late errors against retained results before retrying.
    Validate the complete normalized result before archiving. Close notification-only turns with a brief nonempty acknowledgment; never restart completed work.
-8. Use `context_tier: default`. Escalate to `long_context` only for evaluation/A-B packets over 15,000
+9. Use `context_tier: default`. Escalate to `long_context` only for evaluation/A-B packets over 15,000
    characters, more than 30 fixed atoms, multi-answer comparison, or a recorded default-context run that
    reaches 120,000 input tokens or shows context loss. Record every escalation.
 

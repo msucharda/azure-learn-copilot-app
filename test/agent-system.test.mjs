@@ -100,21 +100,27 @@ test("repository exposes only the native agent system", async () => {
     assert.doesNotMatch(frontmatter(factory), /^model:/m);
 });
 
-test("researcher inherits the parent model and retains an independent critic", async () => {
-    const [researcher, critic, coach, instructions, setup] = await Promise.all([
+test("researcher inherits the parent model and reasoning effort and retains an independent critic", async () => {
+    const [researcher, critic, coach, instructions, setup, architecture, readme] = await Promise.all([
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
         text(COACH_PATH),
         text(INSTRUCTIONS_PATH),
         text("docs/setup.md"),
+        text("docs/architecture.md"),
+        text("README.md"),
     ]);
     assert.doesNotMatch(frontmatter(researcher), /^model:/m);
     assert.equal(property(coach, "model"), "gpt-6-astra");
     assert.equal(property(critic, "model"), "claude-sonnet-5");
-    assert.match(compact(instructions), /inherit the coordinator's currently active model/i);
-    assert.match(compact(instructions), /pass the parent's exact model ID in native child kickoffs/i);
-    assert.match(compact(instructions), /parent, requested, and observed child models.*never silently substitute/i);
-    assert.match(compact(setup), /pass the coordinator's exact active model ID/i);
+    assert.match(compact(instructions), /inherit the coordinator's currently active model and reasoning effort/i);
+    assert.match(compact(instructions), /pass the parent's exact model ID as `model` and current reasoning effort as `reasoning_effort`/i);
+    assert.match(compact(instructions), /parent, requested, and observed child models and reasoning efforts.*never silently substitute or downgrade/i);
+    assert.match(compact(instructions), /pass the coordinator's exact active `model` and `reasoning_effort` as native child-session arguments/i);
+    assert.match(compact(setup), /pass the coordinator's exact active `model` and `reasoning_effort` as native child-session arguments/i);
+    assert.match(compact(setup), /reasoning effort: the coordinator's exact active reasoning effort/i);
+    assert.match(compact(architecture), /child-session launches explicitly pass that parent `model` and `reasoning_effort`/i);
+    assert.match(compact(readme), /child-session launch passes the parent's exact `model` and `reasoning_effort`/i);
     assert.match(compact(setup), /do not change the App-wide default/i);
     assert.doesNotMatch(instructions, /\bSol\b/);
 });

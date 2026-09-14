@@ -21,12 +21,13 @@ citation evidence.
 ## Use
 
 Select the coordinator model in Copilot App. The researcher leaves `model` unset in its agent frontmatter;
-when starting a coordinated deep-research or repair child, pass the coordinator's exact active model ID
-so the child inherits it rather than resolving a different default. Record the parent, requested, and
-observed child models, and stop on model unavailability rather than substituting. The discovery coach pins
+when starting a coordinated deep-research or repair child, pass the coordinator's exact active `model`
+and `reasoning_effort` as native child-session arguments so the child inherits both rather than resolving
+different defaults. Record the parent, requested, and observed child models and reasoning efforts, and
+stop on unavailability rather than substituting or downgrading either setting. The discovery coach pins
 GPT-6 Astra (`gpt-6-astra`), while the critic pins Claude Sonnet 5 (`claude-sonnet-5`) for independent
-review. There is no documented repository model-default key in `.github/github-app.yml`; these
-instructions do not change the App-wide default or an already-running session's model.
+review. There is no documented repository model-default key in `.github/github-app.yml`; these instructions
+do not change the App-wide default or an already-running session's model.
 
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
@@ -44,7 +45,8 @@ agent. All supported learning topics use this same factory-to-coach path.
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
-- model: the coordinator's exact active model ID (use `claude-sonnet-5` for `citation-critic`);
+- model: the coordinator's exact active model ID;
+- reasoning effort: the coordinator's exact active reasoning effort;
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
 - omit inactive phase fields entirely; include only those needed by the selected research mode;

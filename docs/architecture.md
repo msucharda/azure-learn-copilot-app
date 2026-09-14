@@ -86,11 +86,12 @@ exclusions, and unresolved items. Only then is the task hashed.
 
 Deep research invokes Copilot App's built-in `/orchestrate` skill with one kickoff containing the mode,
 original and refined request, complete frozen task, task hash, callback nonce, coordinator session ID,
-and the coordinator's exact active model ID. The researcher profile leaves `model` unset, and standard
-and repair children receive that parent model explicitly. The child sends correlated `STARTED` and
-`COMPLETED` or `FAILED` messages. Idle notifications are diagnostic only. Direct discovery is the only
-research path. The default context tier is sufficient for standard research; long context is an explicit
-escalation for large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
+and the coordinator's exact active model ID and reasoning effort. The researcher profile leaves `model`
+unset, and standard and repair child-session launches explicitly pass that parent `model` and
+`reasoning_effort`. The child sends correlated `STARTED` and `COMPLETED` or `FAILED` messages. Idle
+notifications are diagnostic only. Direct discovery is the only research path. The default context tier
+is sufficient for standard research; long context is an explicit escalation for large evaluation/A-B
+packets, more than 30 atoms, or measured context pressure.
 
 A send acknowledgment proves acceptance, not recipient receipt or consumption. If an expected child
 becomes idle without a terminal callback, inspect its durable transcript once. Preserve an exact

@@ -75,11 +75,11 @@ and link contract. See GitHub's documentation for
 
 ## Improvement loop
 
-Deep-research and repair children use the coordinator's currently active model. The researcher profile
-leaves `model` unset, and each coordinated kickoff passes the parent's exact model ID so the child does
-not drift to a different default. The discovery coach pins GPT-6 Astra (`gpt-6-astra`), while the independent
-critic pins Claude Sonnet 5 (`claude-sonnet-5`). Repository instructions cannot change an already-running
-model or the App-wide default.
+Deep-research and repair children use the coordinator's currently active model and reasoning effort. The
+researcher profile leaves `model` unset, and each coordinated child-session launch passes the parent's
+exact `model` and `reasoning_effort` so the child does not drift to different defaults. The discovery coach
+pins GPT-6 Astra (`gpt-6-astra`), while the independent critic pins Claude Sonnet 5 (`claude-sonnet-5`).
+Repository instructions cannot change an already-running model or the App-wide default.
 
 Each iteration runs a different Azure architecture scenario in a fresh coordinated
 `learn-researcher` session. Controlled experiments hold the task, model, and rubric fixed and anonymize
