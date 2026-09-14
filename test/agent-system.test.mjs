@@ -114,13 +114,14 @@ test("researcher inherits the parent model and reasoning effort and retains an i
     assert.equal(property(coach, "model"), "gpt-6-astra");
     assert.equal(property(critic, "model"), "claude-sonnet-5");
     assert.match(compact(instructions), /inherit the coordinator's currently active model and reasoning effort/i);
-    assert.match(compact(instructions), /pass the parent's exact model ID as `model` and current reasoning effort as `reasoning_effort`/i);
-    assert.match(compact(instructions), /parent, requested, and observed child models and reasoning efforts.*never silently substitute or downgrade/i);
-    assert.match(compact(instructions), /pass the coordinator's exact active `model` and `reasoning_effort` as native child-session arguments/i);
-    assert.match(compact(setup), /pass the coordinator's exact active `model` and `reasoning_effort` as native child-session arguments/i);
-    assert.match(compact(setup), /reasoning effort: the coordinator's exact active reasoning effort/i);
-    assert.match(compact(architecture), /child-session launches explicitly pass that parent `model` and `reasoning_effort`/i);
-    assert.match(compact(readme), /child-session launch passes the parent's exact `model` and `reasoning_effort`/i);
+    assert.match(compact(instructions), /omit `model` and `reasoning_effort` when creating the child/i);
+    assert.match(compact(instructions), /Do not ask the user to restate either runtime setting/i);
+    assert.match(compact(instructions), /omit `model` and `reasoning_effort` so native child-session inheritance/i);
+    assert.match(compact(setup), /omit the native `model` and `reasoning_effort` arguments/i);
+    assert.match(compact(setup), /model and reasoning effort: omit both to use native inheritance/i);
+    assert.match(compact(architecture), /child-session launches omit `model` and `reasoning_effort`/i);
+    assert.match(compact(readme), /child-session launches omit both `model` and `reasoning_effort`/i);
+    assert.doesNotMatch(compact(instructions), /pass the coordinator's exact active `model` and `reasoning_effort`/i);
     assert.match(compact(setup), /do not change the App-wide default/i);
     assert.doesNotMatch(instructions, /\bSol\b/);
 });
@@ -195,11 +196,13 @@ test("learning requests route through retained artifacts into interactive native
         text("README.md"),
     ]);
     assert.match(instructions, /I want to learn AKS.*docs\/learning\.md.*before the research-answer path/i);
-    assert.match(instructions, /factory inherits the parent's exact active model/i);
+    assert.match(instructions, /factory inherits the parent's active model and reasoning effort.*omission-based native session defaults/i);
     assert.match(instructions, /never auto-commit them/i);
     assert.match(learning, /one `prompt-library-factory` child.*entire task in one kickoff/i);
     assert.match(learning, /coordinate_with_creator: true.*notify_on_idle: always/i);
-    assert.match(learning, /parent, requested, and observed child models.*stop rather than substitute/i);
+    assert.match(learning, /omit `model` and `reasoning_effort` so the child inherits/i);
+    assert.match(learning, /never ask the user to supply them/i);
+    assert.match(learning, /observed child settings.*stop if the runtime reports a mismatch/i);
     assert.match(learning, /child trace for successful fetches/i);
     assert.match(learning, /Compute its SHA-256 from the saved bytes/i);
     assert.match(learning, /`discovery-coach` native session in \*\*interactive\*\* mode/i);

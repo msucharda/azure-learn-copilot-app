@@ -57,10 +57,11 @@ claims without being misrepresented as the researcher's original tool trace.
 ### `prompt-library-factory` and `discovery-coach`
 
 The factory is a reusable project agent, not executable runtime orchestration. It inherits the parent
-model, searches and fetches Learn directly, and returns a complete v2 JSON prompt library conforming
-to `prompts/prompt-library.schema.json`. The coordinator validates and saves it in session artifacts,
-then opens the generic GPT-6 Astra coach in an interactive native session. See the complete
-[learning protocol](learning.md) for callback identity, model checks, artifact transport, and resume.
+model and reasoning effort, searches and fetches Learn directly, and returns a complete v2 JSON prompt
+library conforming to `prompts/prompt-library.schema.json`. The coordinator validates and saves it in
+session artifacts, then opens the generic GPT-6 Astra coach in an interactive native session. See the
+complete [learning protocol](learning.md) for callback identity, model checks, artifact transport, and
+resume.
 
 Both agents expose `read`, `microsoft-learn/*`, `ask_user`, and callback-only `send_session_message`.
 Read access covers the shared contract/schema, exact authorized library/input/checkpoint paths, and
@@ -85,13 +86,13 @@ The refinement record keeps the original request, selected interpretation, objec
 exclusions, and unresolved items. Only then is the task hashed.
 
 Deep research invokes Copilot App's built-in `/orchestrate` skill with one kickoff containing the mode,
-original and refined request, complete frozen task, task hash, callback nonce, coordinator session ID,
-and the coordinator's exact active model ID and reasoning effort. The researcher profile leaves `model`
-unset, and standard and repair child-session launches explicitly pass that parent `model` and
-`reasoning_effort`. The child sends correlated `STARTED` and `COMPLETED` or `FAILED` messages. Idle
-notifications are diagnostic only. Direct discovery is the only research path. The default context tier
-is sufficient for standard research; long context is an explicit escalation for large evaluation/A-B
-packets, more than 30 atoms, or measured context pressure.
+original and refined request, complete frozen task, task hash, callback nonce, and coordinator session ID.
+The researcher profile leaves `model` unset, and standard and repair child-session launches omit `model`
+and `reasoning_effort` so native session inheritance retains the coordinator's active settings. The
+coordinator does not ask the user to restate those runtime settings. The child sends correlated `STARTED`
+and `COMPLETED` or `FAILED` messages. Idle notifications are diagnostic only. Direct discovery is the
+only research path. The default context tier is sufficient for standard research; long context is an
+explicit escalation for large evaluation/A-B packets, more than 30 atoms, or measured context pressure.
 
 A send acknowledgment proves acceptance, not recipient receipt or consumption. If an expected child
 becomes idle without a terminal callback, inspect its durable transcript once. Preserve an exact

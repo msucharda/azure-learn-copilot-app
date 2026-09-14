@@ -51,10 +51,11 @@ and endpoint facts must come from narrowly scoped learner-provided evidence.
 3. Invoke `/orchestrate`. Freeze and hash the complete generation task, including the profile and
    original/refined request, and generate a unique callback nonce. Start one `prompt-library-factory`
    child with that entire task in one kickoff, callback session ID, task SHA-256, callback nonce,
-   `coordinate_with_creator: true`, and `notify_on_idle: always`. Use `context_tier: default` and pass
-   the coordinator's exact active model ID. Record parent, requested, and observed child models;
-   stop rather than substitute on a mismatch. Curriculum generation is not a `learn-researcher`
-   answer: omit research-only mode/phase fields and do not apply its word ceiling to JSON.
+   `coordinate_with_creator: true`, and `notify_on_idle: always`. Use `context_tier: default`; omit
+   `model` and `reasoning_effort` so the child inherits the coordinator's active settings, and never ask
+   the user to supply them. Record observed child settings when available and stop if the runtime reports
+   a mismatch rather than substituting. Curriculum generation is not a `learn-researcher` answer: omit
+   research-only mode/phase fields and do not apply its word ceiling to JSON.
 4. Apply the existing expected-child/hash/nonce checks for STARTED and COMPLETED/FAILED, branch
    inheritance, recovered delivery, and duplicate/idle handling. If the agent changes are unmerged,
    commit and push first, pass that feature branch as the base, and verify the expected commit.

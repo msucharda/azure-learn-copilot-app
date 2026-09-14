@@ -1,11 +1,12 @@
 # Microsoft Learn research
 
 - Deep-research and repair `learn-researcher` children inherit the coordinator's currently active model
-  and reasoning effort. Leave the researcher model unset in agent frontmatter and explicitly pass the
-  parent's exact model ID as `model` and current reasoning effort as `reasoning_effort` in native child
-  session creation. Keep `context_tier: default`, record the parent, requested, and observed child models
-  and reasoning efforts, and never silently substitute or downgrade either setting. Use GPT-6 Astra
-  (`gpt-6-astra`) for `discovery-coach` and Claude Sonnet 5 (`claude-sonnet-5`) for the independent critic.
+  and reasoning effort through native child-session defaults. Leave the researcher model unset in agent
+  frontmatter and omit `model` and `reasoning_effort` when creating the child. Do not ask the user to
+  restate either runtime setting. Keep `context_tier: default`, record observed child settings when
+  available, and stop if the runtime reports an inheritance mismatch rather than substituting or
+  downgrading. Use GPT-6 Astra (`gpt-6-astra`) for `discovery-coach` and Claude Sonnet 5
+  (`claude-sonnet-5`) for the independent critic.
 - For research, use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
   canvases, or a separate reference UI.
@@ -19,7 +20,8 @@
 
 - Route requests such as "I want to learn AKS" to `docs/learning.md` before the research-answer path.
   Use the reusable `prompt-library-factory` project agent, not a registered runtime factory, followed
-  by `discovery-coach` through native sessions. The factory inherits the parent's exact active model.
+  by `discovery-coach` through native sessions. The factory inherits the parent's active model and
+  reasoning effort through the same omission-based native session defaults.
 - Preserve exploratory breadth and freeze intent before discovery. Default to beginner, seven
   30-minute conceptual missions with no live resources, recording assumptions rather than asking
   for every missing preference. Explicit sandbox requests still require current scope and safety proof.
@@ -58,8 +60,8 @@ Use one kickoff and an explicit agent callback for every deep child:
    pass it as `base_branch`, and verify the child branch contains the expected commit before accepting
    `STARTED`. A local-only commit is not a valid child-session base.
 3. Request `coordinate_with_creator: true` and `notify_on_idle: always`.
-4. For a `learn-researcher` child, pass the coordinator's exact active `model` and `reasoning_effort`
-   as native child-session arguments.
+4. For a `learn-researcher` child, omit `model` and `reasoning_effort` so native child-session
+   inheritance retains the coordinator's active settings. Never ask the user to supply them.
 5. Put the research mode and applicable phase fields (omit inactive fields, even `not applicable`),
    `Callback session ID`, `Task SHA-256`, `Callback nonce`, and the
    complete frozen task in the kickoff. Do not deliver work in a follow-up session message.

@@ -21,13 +21,13 @@ citation evidence.
 ## Use
 
 Select the coordinator model in Copilot App. The researcher leaves `model` unset in its agent frontmatter;
-when starting a coordinated deep-research or repair child, pass the coordinator's exact active `model`
-and `reasoning_effort` as native child-session arguments so the child inherits both rather than resolving
-different defaults. Record the parent, requested, and observed child models and reasoning efforts, and
-stop on unavailability rather than substituting or downgrading either setting. The discovery coach pins
-GPT-6 Astra (`gpt-6-astra`), while the critic pins Claude Sonnet 5 (`claude-sonnet-5`) for independent
-review. There is no documented repository model-default key in `.github/github-app.yml`; these instructions
-do not change the App-wide default or an already-running session's model.
+when starting a coordinated deep-research or repair child, omit the native `model` and `reasoning_effort`
+arguments so Copilot App inherits the creator's active settings. Do not ask the user to restate either
+setting. Record observed child settings when available, and stop if the runtime reports an inheritance
+mismatch rather than substituting or downgrading. The discovery coach pins GPT-6 Astra
+(`gpt-6-astra`), while the critic pins Claude Sonnet 5 (`claude-sonnet-5`) for independent review. There
+is no documented repository model-default key in `.github/github-app.yml`; these instructions do not
+change the App-wide default or an already-running session's model.
 
 For a quick question, ask in the current project chat. The project instructions direct Copilot to
 use native Microsoft Learn tools and return clickable Markdown references.
@@ -35,8 +35,8 @@ use native Microsoft Learn tools and return clickable Markdown references.
 For a learning journey, ask **"I want to learn AKS"** in a normal project chat. The coordinator follows
 [self-directed discovery](learning.md): a `prompt-library-factory` child generates the library, the
 coordinator saves it as a session artifact, and an interactive `discovery-coach` session starts with
-one mission. The factory inherits the coordinator's exact model; the coach uses `gpt-6-astra`.
-Neither needs Azure credentials for the default conceptual path.
+one mission. The factory inherits the coordinator's active model and reasoning effort; the coach uses
+`gpt-6-astra`. Neither needs Azure credentials for the default conceptual path.
 
 You can also select `prompt-library-factory` directly, describe your objective, and pass its complete
 JSON result to `discovery-coach`. Direct selection does not automatically save a file or launch another
@@ -45,8 +45,7 @@ agent. All supported learning topics use this same factory-to-coach path.
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
 - agent: `learn-researcher`;
-- model: the coordinator's exact active model ID;
-- reasoning effort: the coordinator's exact active reasoning effort;
+- model and reasoning effort: omit both to use native inheritance from the coordinator;
 - kickoff: `Research mode: standard`, callback session ID, frozen-task SHA-256, unique callback nonce,
   and the complete research question, version/platform scope, and constraints;
 - omit inactive phase fields entirely; include only those needed by the selected research mode;
