@@ -14,6 +14,7 @@
 | No subscription or sandbox is available | Use the conceptual profile; an explicitly selected hands-on mission remains blocked until proved safe or the coordinator creates a revised conceptual library |
 | A learning request starts a deployment or asks for kubeconfig | Stop. The agents have documentation-only tools and must not request secrets or perform resource writes; all approved sandbox changes are learner-executed |
 | The learner's coach session was archived after its first callback | A bounded turn's callback is not journey completion. Keep the interactive session available for direct follow-ups and native-history progress |
+| A completed research child remains active | Confirm that its correlated terminal result was retained and validated and that the child is idle. If no persistent work, open PR, active Agent Merge, or session automation remains, archive it; never delete it automatically |
 | `microsoft-learn/*` is unavailable | Configure the Learn MCP server in App settings under the exact `microsoft-learn` name, then start a fresh session |
 | A proposed assignment targets `All users` or `All devices` | Reject it. The only permitted target is the trainee's assigned group after current proof that it contains exactly the assigned experiment device |
 | The coach is available but its tools are denied | Confirm the allow-list contains `read`, `microsoft-learn/*`, `ask_user`, and callback-only `send_session_message`, and that the Learn server name matches App settings |
