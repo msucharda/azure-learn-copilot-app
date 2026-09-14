@@ -56,8 +56,11 @@ For isolated research, invoke `/orchestrate` and request one callback-enabled ch
   tokens or exhibits context loss.
 
 Accept only `STARTED`, `COMPLETED`, or `FAILED` callbacks from the expected child with both exact
-identifiers. Verify a complete normalized answer before archiving the child. An idle child without a
-matching callback is a delivery failure and is not automatically retried. See the
+identifiers. Retain and verify a complete normalized answer, then wait for the completed child to become
+idle. Verify that no persistent work, open pull request, active Agent Merge, or attached session
+automation remains before calling `archive_session`. Archiving preserves the transcript; never delete a
+research session automatically. An idle child without a matching callback is a delivery failure and is
+not automatically retried. See the
 [built-in skills reference](https://docs.github.com/en/copilot/reference/github-copilot-app-reference/built-in-skills).
 
 When a child must test agent changes that are not on the default branch, commit and push the feature

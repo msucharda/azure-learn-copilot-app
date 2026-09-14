@@ -436,6 +436,10 @@ test("project instructions enforce a verified native-session pipeline", async ()
     assert.match(contract, /label it recovered delivery.*do not infer that the callback was received/i);
     assert.match(contract, /notification-only turns with a brief nonempty acknowledgment/i);
     assert.match(contract, /Reconcile late errors against retained results before retrying/i);
+    assert.match(contract, /Retain and validate the complete normalized result.*wait for the completed child to become idle/i);
+    assert.match(contract, /verify no persistent work, open PR, active Agent Merge, or session automation remains.*archive the research, critic, or repair child/i);
+    assert.match(contract, /Never delete it automatically/i);
+    assert.match(contract, /verification is uncertain or archival fails.*preserve the session/i);
     assert.match(contract, /Use `context_tier: default`/i);
     assert.match(contract, /packets? over 15,000 characters/i);
     assert.match(contract, /more than 30 fixed atoms/i);

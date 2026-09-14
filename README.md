@@ -47,6 +47,9 @@ remains for research answers.
    refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
    corrected user-facing answer.
+7. After retaining and validating each terminal result, the coordinator waits for the read-only child to
+   become idle, verifies that no persistent work or automation remains, and archives the child. Archiving
+   preserves its transcript; research sessions are never deleted automatically.
 
 No project skill router, installed product skill, or product-skill catalog is loaded into the
 researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole

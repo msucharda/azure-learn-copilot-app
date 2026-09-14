@@ -101,6 +101,12 @@ resend the task. Distinguish an exact result, a wrapper, a substantively changed
 content; never silently normalize differences. Notification-only turns end with a brief nonempty
 acknowledgment rather than an empty response. These are coordinator safeguards, not a native queue fix.
 
+After a correlated terminal result is retained and validated, the coordinator waits for the child to
+become idle, verifies that it has no persistent work, open pull request, active Agent Merge, or attached
+session automation, and archives it. Archiving removes the disposable worktree while preserving the
+transcript. The coordinator leaves the session intact when verification is uncertain and never deletes
+research sessions automatically.
+
 The coordinator owns intent. The research child does not reinterpret the frozen task, and weak-model
 preprocessing starts only after the coordinator has fixed the interpretation.
 
