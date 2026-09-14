@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
-import { readFile, stat } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import test from "node:test";
 
 const ROOT = new URL("../", import.meta.url);
 const RESEARCHER_PATH = ".github/agents/learn-researcher.agent.md";
 const CRITIC_PATH = ".github/agents/citation-critic.agent.md";
-const INTUNE_COACH_PATH = ".github/agents/intune-discovery-coach.agent.md";
 const COACH_PATH = ".github/agents/discovery-coach.agent.md";
 const FACTORY_PATH = ".github/agents/prompt-library-factory.agent.md";
+const AGENT_PATHS = [RESEARCHER_PATH, CRITIC_PATH, COACH_PATH, FACTORY_PATH];
 const INSTRUCTIONS_PATH = ".github/copilot-instructions.md";
-const INTUNE_LIBRARY_PATH = "prompts/intune/prompt-library.json";
 const DOCUMENTATION_PATHS = [
     "README.md",
     "docs/architecture.md",
@@ -66,33 +65,31 @@ async function assertMissing(path) {
     );
 }
 
+test("repository contains only the supported agents and reusable prompt contracts", async () => {
+    const [agents, prompts] = await Promise.all([
+        readdir(at(".github/agents/")),
+        readdir(at("prompts/"), { recursive: true }),
+    ]);
+    assert.deepEqual(agents.sort(), AGENT_PATHS.map((path) => path.split("/").at(-1)).sort());
+    assert.deepEqual(
+        prompts.filter((path) => /\.(?:md|json)$/.test(path)).map((path) => path.replaceAll("\\", "/")).sort(),
+        ["coaching-contract.md", "prompt-library.schema.json"],
+    );
+});
+
 test("repository exposes only the native agent system", async () => {
     await Promise.all([
         assertMissing(".github/extensions"),
         assertMissing(".github/skills"),
     ]);
 
-    const [researcher, critic, intuneCoach, coach, factory] = await Promise.all([
-        text(RESEARCHER_PATH),
-        text(CRITIC_PATH),
-        text(INTUNE_COACH_PATH),
-        text(COACH_PATH),
-        text(FACTORY_PATH),
-    ]);
+    const [researcher, critic, coach, factory] = await Promise.all(AGENT_PATHS.map(text));
 
     const nativeAgentTools = ["read", "microsoft-learn/*", "send_session_message"];
     assert.deepEqual(tools(researcher), nativeAgentTools);
     assert.deepEqual(tools(critic), nativeAgentTools);
-    assert.deepEqual(tools(intuneCoach), [
-        "read",
-        "microsoft-learn/*",
-        "microsoft-enterprise/*",
-        "ask_user",
-        "send_session_message",
-    ]);
     assert.equal(property(researcher, "target"), "github-copilot");
     assert.equal(property(critic, "target"), "github-copilot");
-    assert.equal(property(intuneCoach, "target"), "github-copilot");
     for (const agent of [coach, factory]) {
         assert.deepEqual(tools(agent), ["read", "microsoft-learn/*", "ask_user", "send_session_message"]);
         assert.equal(property(agent, "target"), "github-copilot");
@@ -103,42 +100,11 @@ test("repository exposes only the native agent system", async () => {
     assert.doesNotMatch(frontmatter(factory), /^model:/m);
 });
 
-test("Intune prompt library preserves mission and safety contracts", async () => {
-    const library = JSON.parse(await text(INTUNE_LIBRARY_PATH));
-    const missionIds = library.missions.map((mission) => mission.id);
-    const enterprise = library.mcp_sources.find((source) => source.id === "microsoft-enterprise");
-
-    assert.equal(library.schema_version, 1);
-    assert.equal(library.library_id, "intune-self-discovery");
-    assert.deepEqual(missionIds, [
-        "capability-map",
-        "prove-prerequisites",
-        "design-experiment",
-        "challenge-blast-radius",
-        "observe-change",
-        "diagnose-evidence",
-        "clean-and-reflect",
-    ]);
-    assert.equal(enterprise.endpoint, "https://mcp.svc.cloud.microsoft/enterprise");
-    assert.deepEqual(enterprise.recommended_scopes, [
-        "MCP.Device.Read.All",
-        "MCP.Group.Read.All",
-        "MCP.GroupMember.Read.All",
-        "MCP.LicenseAssignment.Read.All",
-        "MCP.Organization.Read.All",
-        "MCP.RoleManagement.Read.Directory",
-        "MCP.User.Read.All",
-    ]);
-    assert.match(enterprise.boundary, /read-only.*no Intune configuration or managed-device APIs/i);
-    assert.match(library.guardrails.join(" "), /Never target All users or All devices/i);
-    assert.match(library.guardrails.join(" "), /exactly the assigned current endpoint/i);
-});
-
 test("researcher inherits the parent model and retains an independent critic", async () => {
     const [researcher, critic, coach, instructions, setup] = await Promise.all([
         text(RESEARCHER_PATH),
         text(CRITIC_PATH),
-        text(INTUNE_COACH_PATH),
+        text(COACH_PATH),
         text(INSTRUCTIONS_PATH),
         text("docs/setup.md"),
     ]);
@@ -153,36 +119,13 @@ test("researcher inherits the parent model and retains an independent critic", a
     assert.doesNotMatch(instructions, /\bSol\b/);
 });
 
-test("Intune coach enforces source and target boundaries", async () => {
-    const coach = await text(INTUNE_COACH_PATH);
-    const contract = compact(coach);
-
-    assert.ok(promptLineCount(coach) <= 92, "Intune coach prompt must stay compact");
-    assert.match(contract, /read only `prompts\/intune\/prompt-library\.json`/i);
-    assert.match(contract, /other than seven missions/i);
-    assert.match(contract, /Run one mission at a time in library order/i);
-    assert.match(contract, /microsoft-learn\/\*.*current Microsoft product documentation/i);
-    assert.match(contract, /microsoft-enterprise\/\*.*delegated, read-only Microsoft Entra evidence/i);
-    assert.match(contract, /seven reviewed scopes listed in the library/i);
-    assert.match(contract, /exact Microsoft Graph request path/i);
-    assert.match(contract, /does not expose Intune configuration or Intune managed-device APIs/i);
-    assert.match(contract, /Never use either MCP server for a write/i);
-    assert.match(contract, /`All users` and `All devices` are prohibited targets/i);
-    assert.match(contract, /contains exactly the assigned experiment device/i);
-    assert.match(contract, /AVD control device stays outside the experiment plane/i);
-    assert.match(contract, /Ask the learner for a hypothesis before suggesting an inspection/i);
-    assert.match(contract, /Do not give a success-shaped conclusion/i);
-    assert.match(contract, /Completion means the turn was delivered, not that a mission passed/i);
-    assert.match(contract, /STARTED <task-sha-256> <callback-nonce>/i);
-    assert.match(contract, /COMPLETED <task-sha-256> <callback-nonce>/i);
-    assert.match(contract, /FAILED <task-sha-256> <callback-nonce>/i);
-    assert.match(contract, /Send each callback at most once/i);
-    assert.match(contract, /Partial fields require `CALLBACK_CONFIGURATION_ERROR` without tenant inspection/i);
-    assert.match(contract, /do not fabricate a Graph path or infer readiness/i);
-    assert.match(contract, /refusal exercise is not a live tenant integration result/i);
-    assert.match(contract, /prompts\/coaching-contract\.md/);
-    assert.match(contract, /Intune-specific gates below take precedence wherever stricter/i);
-    assert.match(contract, /Do not accept a generated library as a replacement/i);
+test("shared endpoint safety does not depend on a product-specific profile", async () => {
+    const shared = compact(await text("prompts/coaching-contract.md"));
+    assert.match(shared, /For endpoint-management experiments, `All users` and `All devices` are prohibited targets/i);
+    assert.match(shared, /current learner-provided proof.*contains exactly the assigned experiment device/i);
+    assert.match(shared, /keep the control device outside the experiment/i);
+    assert.match(shared, /Do not approve device wipe, retire, rename, or delete actions/i);
+    assert.match(shared, /enrollment restrictions, connectors, access-control policies, security baselines, or tenant-wide settings/i);
 });
 
 test("factory generates bounded portable libraries without runtime privileges", async () => {
@@ -195,7 +138,8 @@ test("factory generates bounded portable libraries without runtime privileges", 
     assert.match(factory, /UNSUPPORTED_LEARNING_TOPIC/);
     assert.match(factory, /Select at most 15 successful pages.*Fetch every cited page/i);
     assert.match(factory, /tool-exposed retrieval timestamp or null/i);
-    assert.match(factory, /SPECIALIZED_WORKSHOP_REQUIRED/);
+    assert.match(factory, /same v2 library format and `discovery-coach` handoff for every supported topic/i);
+    assert.match(factory, /leave unproved hands-on prerequisites explicitly blocked/i);
     assert.match(factory, /single `json` fence conforming to schema version 2/i);
     assert.match(factory, /unique mission\/source IDs and source URLs/i);
     assert.match(factory, /every source ID resolves and every source is used/i);
@@ -203,7 +147,7 @@ test("factory generates bounded portable libraries without runtime privileges", 
     assert.match(factory, /Do not claim the library is saved or a coach session started/i);
 });
 
-test("generic coaching shares evidence gates without weakening Intune", async () => {
+test("generic coaching applies shared evidence gates to every supported topic", async () => {
     const [coach, shared] = await Promise.all([
         text(COACH_PATH).then(compact),
         text("prompts/coaching-contract.md").then(compact),
@@ -211,8 +155,8 @@ test("generic coaching shares evidence gates without weakening Intune", async ()
     assert.match(coach, /Require schema version 2.*3-12 ordered missions/i);
     assert.match(coach, /PROMPT_LIBRARY_CONFIGURATION_ERROR/);
     assert.match(coach, /never reuse an earlier turn's envelope/i);
-    assert.match(coach, /Intune hands-on objective.*SPECIALIZED_WORKSHOP_REQUIRED/i);
-    assert.match(coach, /generic coach has no Enterprise MCP access/i);
+    assert.match(coach, /same library-driven workflow for every supported topic/i);
+    assert.match(coach, /Live environment and endpoint facts must come from narrowly scoped learner-provided evidence/i);
     assert.match(coach, /coordinator-verified|shared resumption checks/i);
     assert.match(coach, /unknown values into executable commands/i);
     assert.match(coach, /Re-fetch the relevant referenced pages before citing/i);
@@ -276,7 +220,7 @@ test("live validation separates cloud readiness from curriculum and deployment s
     assert.match(shared, /probe still fails.*retain the blocked state and revise the hypothesis/i);
     assert.match(factory, /connectivity, inherited-policy constraints/i);
     assert.match(factory, /environment preparation in `learner\.prerequisites`, separately from active mission time/i);
-    assert.match(learning, /factory and coaches remain read-only; do not expand their tool lists/i);
+    assert.match(learning, /factory and coach remain read-only; do not expand their tool lists/i);
     assert.match(learning, /separate approval for resource creation, access\/network configuration, budget, payload bounds, and teardown/i);
     assert.match(learning, /inherited policies can reject or modify configuration/i);
     assert.match(learning, /Never report a completed round trip when upload, read-back, or cleanup was not observed/i);
@@ -573,35 +517,19 @@ test("documentation links are safe websites", async () => {
     }
 });
 
-test("documentation defines Enterprise MCP setup and workshop boundaries", async () => {
-    const [readme, architecture, setup, troubleshooting] = await Promise.all(
-        DOCUMENTATION_PATHS.map(text),
-    );
-    const contract = compact([readme, architecture, setup, troubleshooting].join("\n"));
+test("documented agent and prompt paths resolve to existing files", async () => {
+    const documents = await Promise.all([
+        ...AGENT_PATHS,
+        INSTRUCTIONS_PATH,
+        "prompts/coaching-contract.md",
+        ...DOCUMENTATION_PATHS,
+    ].map(text));
+    const references = new Set(documents.flatMap((document) => [
+        ...document.matchAll(/`((?:\.github\/agents|prompts)\/[^`\s]+)`/g),
+    ].map((match) => match[1])));
 
-    assert.match(readme, /\.github\/agents\/intune-discovery-coach\.agent\.md/);
-    assert.match(readme, /prompts\/intune\/prompt-library\.json/);
-    assert.match(contract, /e8c77dc2-69b3-43f4-bc51-3213c9d915b4/);
-    assert.match(contract, /azure-learn-copilot-app-enterprise-mcp/);
-    assert.match(contract, /bb0f57f4-5880-404f-b331-9245e26145e2/);
-    assert.match(contract, /Public client/i);
-    assert.match(contract, /http:\/\/localhost/);
-    assert.match(contract, /AllPrincipals.*admin consent/i);
-    assert.match(contract, /https:\/\/mcp\.svc\.cloud\.microsoft\/enterprise/);
-    for (const scope of [
-        "MCP.Device.Read.All",
-        "MCP.Group.Read.All",
-        "MCP.GroupMember.Read.All",
-        "MCP.LicenseAssignment.Read.All",
-        "MCP.Organization.Read.All",
-        "MCP.RoleManagement.Read.Directory",
-        "MCP.User.Read.All",
-    ]) {
-        assert.match(contract, new RegExp(scope.replaceAll(".", "\\.")));
-    }
-    assert.doesNotMatch(setup, /Deployment blocker:/i);
-    assert.match(setup, /scope set must equal the seven reviewed scopes exactly/i);
-    assert.match(contract, /Enterprise MCP.*read-only.*not Intune configuration/i);
-    assert.match(contract, /All users.*All devices/i);
-    assert.match(contract, /contains exactly the assigned experiment device/i);
+    assert.ok(references.size >= AGENT_PATHS.length + 2, "agents and shared prompt contracts must be documented");
+    await Promise.all([...references].map(async (path) => {
+        assert.equal((await stat(at(path))).isFile(), true, `${path} must reference an existing file`);
+    }));
 });

@@ -19,8 +19,8 @@ To personalize the library, include your experience, outcome, time, and practice
 > sandbox, but do not deploy anything for me.
 
 Microsoft/Azure topics supported by fetched Learn documentation are the initial scope. This is not a
-general-web tutor. The factory and generic coach need only Microsoft Learn MCP; Enterprise MCP remains
-optional and exclusive to the existing Intune workshop.
+general-web tutor. The factory and generic coach need only Microsoft Learn MCP and use the same
+library-driven workflow for every supported topic.
 
 ## Components and contracts
 
@@ -30,13 +30,12 @@ optional and exclusive to the existing Intune workshop.
 | `discovery-coach` | Coach one mission at a time using GPT-6 Astra, without resource-access tools |
 | `prompts/prompt-library.schema.json` | Declarative version 2 library structure: profile, refinement, variables, sources, ordered missions |
 | `prompts/coaching-contract.md` | Shared learning loop, evidence gates, safety, and progress/resume contract |
-| `intune-discovery-coach` | Retain the specialized v1 workshop and its stricter Entra/Intune safety boundaries |
 
 The factory is a reusable project agent, not a registered Copilot factory or a project-defined runtime.
-Neither it nor the coaches can write files, run shell commands, deploy resources, or create sessions.
+Neither it nor the coach can write files, run shell commands, deploy resources, or create sessions.
 The normal coordinator uses Copilot App's built-in `/orchestrate` and native session tools; the agents
-have only read, documentation, learner-question, and correlated-callback capabilities. Intune alone
-retains its reviewed read-only Enterprise MCP access.
+have only read, documentation, learner-question, and correlated-callback capabilities. Live environment
+and endpoint facts must come from narrowly scoped learner-provided evidence.
 
 ## Coordinator generation protocol
 
@@ -132,17 +131,15 @@ disposable owned target, exact scope, permissions, baseline, cost exposure, appr
 timeout, and cleanup. Reject production/shared targets and irreversible changes. Generated variable
 values, broad administrator access, documentation, and past checkpoints are not proof of safety.
 
-For Intune hands-on requests, use `intune-discovery-coach` with
-`prompts/intune/prompt-library.json`, not a generated substitute. Its seven missions, single assigned
-device proof, **All users**/**All devices** prohibition, and manual-change gates remain unchanged.
-The generic coach can support conceptual Intune discussion without Enterprise access, but it must not
-approximate the specialized workshop's live evidence.
+The shared contract also applies endpoint-specific safeguards when relevant: single assigned-device
+proof, no **All users**/**All devices** assignments, no destructive device actions, and no tenant-wide
+changes. A generated library cannot override these restrictions or invent live evidence.
 
 ## Live validation (explicit opt-in)
 
 A request to generate a library never authorizes cloud access. When the user explicitly requests
 validation against actual Azure behavior, the coordinator may act as the test operator with approved
-Azure or computer-use tools. The factory and coaches remain read-only; do not expand their tool lists.
+Azure or computer-use tools. The factory and coach remain read-only; do not expand their tool lists.
 
 Confirm the requested identity and tenant before connecting, then select an approved subscription
 and exact disposable scope. Start read-only. Obtain separate approval for resource creation,
@@ -171,7 +168,7 @@ uncertainty rather than claiming zero cost from an empty listing or an unavailab
 
 ## Contract checks
 
-`node --test` covers both the preserved Intune v1 library and generic v2 structural contracts.
+`node --test` covers the supported agent inventory, shared coaching safety, and generic v2 library contracts.
 To include an actual generated artifact in the existing test runner, set `PROMPT_LIBRARY_ARTIFACT` to
 its exact local JSON path and run `node --test .\test\prompt-library.test.mjs`. This is optional
 development validation, not a runtime service; without that variable the live-artifact case is skipped.

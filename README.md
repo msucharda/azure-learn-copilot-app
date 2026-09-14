@@ -3,7 +3,6 @@
 An agent-only Microsoft Learn research and self-directed discovery workflow for Copilot App. The repository
 contains no project extensions, custom runtime tools, persistence layer, or separate reference UI.
 Research uses the Microsoft Learn tools configured in Copilot App and returns normal website links.
-The Intune workshop adds delegated, read-only Entra evidence from Microsoft MCP Server for Enterprise.
 
 Ask **"I want to learn AKS"** in a project chat to generate a personalized prompt library and start
 an AI-assisted journey with `discovery-coach`. The default is seven beginner-friendly, 30-minute
@@ -18,17 +17,15 @@ preference to tailor the journey. See [self-directed discovery](docs/learning.md
 | `.github/agents/citation-critic.agent.md` | Verifies existing Learn references and reviews research contracts |
 | `.github/agents/prompt-library-factory.agent.md` | Generates personalized, Learn-backed mission libraries as a reusable project agent |
 | `.github/agents/discovery-coach.agent.md` | Coaches any supported Microsoft/Azure topic from a generated library |
-| `.github/agents/intune-discovery-coach.agent.md` | Coaches bounded Intune discovery with Learn documentation and read-only Entra evidence |
 | `.github/copilot-instructions.md` | Coordinates prompt refinement, research, source triage, and citation review through native orchestration |
-| `prompts/intune/prompt-library.json` | Defines the ordered seven-mission workshop, evidence gates, and safety guardrails |
 | `prompts/prompt-library.schema.json` | Defines the generic v2 library format |
-| `prompts/coaching-contract.md` | Shares discovery, evidence, safety, and resume rules between coaches |
+| `prompts/coaching-contract.md` | Shares discovery, evidence, safety, and resume rules between the factory and coach |
 
 ## Flow
 
 Learning requests take the [factory-to-coach path](docs/learning.md): freeze the objective, generate
 and validate a library, retain it in session artifacts, and open an interactive coach session.
-The factory inherits the coordinator model; both coaches use GPT-6 Astra. No registered runtime factory,
+The factory inherits the coordinator model; the coach uses GPT-6 Astra. No registered runtime factory,
 resource writes, or learner-data commits are introduced. The following path remains for research answers.
 
 1. Before research, the coordinator classifies the request as clear, exploratory, or materially ambiguous. It preserves
@@ -49,11 +46,6 @@ resource writes, or learner-data commits are introduced. The following path rema
    refetches only its existing Learn URLs, and returns a repair brief through the same callback protocol.
    A fresh repair-mode researcher receives one exact packet, and the coordinator publishes only the
    corrected user-facing answer.
-
-The separate Intune coach reads the mission library, uses Microsoft Learn MCP for documentation, and
-uses Enterprise MCP only for Entra users, groups, group membership, devices, licenses, organization,
-and directory-role evidence. Enterprise MCP is read-only and does not expose Intune configuration or
-managed-device APIs. Workshop assignments must never target **All users** or **All devices**.
 
 No project skill router, installed product skill, or product-skill catalog is loaded into the
 researcher. Current fetched pages from [Microsoft Learn](https://learn.microsoft.com/) are the sole
@@ -85,7 +77,7 @@ and link contract. See GitHub's documentation for
 
 Deep-research and repair children use the coordinator's currently active model. The researcher profile
 leaves `model` unset, and each coordinated kickoff passes the parent's exact model ID so the child does
-not drift to a different default. Both discovery coaches pin GPT-6 Astra (`gpt-6-astra`), while the independent
+not drift to a different default. The discovery coach pins GPT-6 Astra (`gpt-6-astra`), while the independent
 critic pins Claude Sonnet 5 (`claude-sonnet-5`). Repository instructions cannot change an already-running
 model or the App-wide default.
 
@@ -143,9 +135,8 @@ node --test
 
 The tests enforce the agent-only file layout, native tool allow-lists, and linked-reference contract.
 They are structural contract tests, not model-quality or live-integration tests. Model migrations also
-need fresh native-session cases for research, critique/repair, callback delivery, and
-workshop safety. Keep exact tasks, callback identities, observed models, source traces, and independent
-reviews in session artifacts; a passed synthetic safety case does not establish Enterprise MCP access
-or completion of the seven live workshop missions.
+need fresh native-session cases for research, critique/repair, callback delivery, and coaching safety.
+Keep exact tasks, callback identities, observed models, source traces, and independent reviews in session
+artifacts; a passed synthetic safety case does not establish live environment access or hands-on completion.
 See [architecture](docs/architecture.md), [setup](docs/setup.md), and
 [troubleshooting](docs/troubleshooting.md).

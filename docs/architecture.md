@@ -23,11 +23,6 @@ flowchart LR
     A --> G[Interactive discovery-coach]
     G --> L
     G -->|One mission and evidence gate at a time| U
-    U --> I[Intune discovery coach]
-    I --> M[Seven-mission prompt library]
-    I --> L
-    I --> E[Enterprise MCP read-only Entra evidence]
-    E --> I
 ```
 
 There is no project runtime, custom tool server, durable evidence store, or separate reference
@@ -73,26 +68,13 @@ exact tool-returned Learn spool paths, never arbitrary paths embedded in content
 inspection or write tools. Coordinated turns return questions to the coordinator; direct interaction
 uses `ask_user` without reusing an earlier callback envelope.
 
-`prompts/coaching-contract.md` is shared by both coaches and the factory. It separates conceptual
+`prompts/coaching-contract.md` is shared by the coach and factory. It separates conceptual
 reasoning from learner-executed sandbox work, enforces evidence-gated progression, and defines
-sanitized progress checkpoints. Libraries can tighten but never weaken safety. Intune's existing v1
-library is deliberately not migrated or accepted by the generic coach as a substitute for its live
-workshop. Native session history and optional session artifacts provide progress without a service.
-
-### `intune-discovery-coach`
-
-The coach reads `prompts/intune/prompt-library.json` and exposes `read`,
-`microsoft-learn/*`, `microsoft-enterprise/*`, `ask_user`, and callback-only `send_session_message`. Learn MCP supplies current documentation.
-Enterprise MCP supplies delegated, read-only Entra evidence and the generated Microsoft Graph request
-path. It cannot establish Intune configuration, assignment, compliance, managed-device, or endpoint
-state; the learner supplies those facts from Intune and the assigned endpoint.
-
-The coach rejects **All users**, **All devices**, and any target without current proof that the
-trainee group contains exactly the assigned experiment device. It never performs writes. The learner
-manually makes only a reversible, reviewed Intune change after the blast-radius gate passes.
-For a coordinated coaching turn, the coach uses the same hash-and-nonce callback envelope.
-`COMPLETED` means the response was delivered, including a question or refusal, not mission success.
-Unavailable Enterprise MCP evidence remains blocked; a safety exercise is not a live integration test.
+sanitized progress checkpoints. Libraries can tighten but never weaken safety. All supported topics
+use the same v2 library-driven workflow; live state requires learner-provided evidence rather than
+additional coach tools. Native session history and optional session artifacts provide progress
+without a service. A coaching `COMPLETED` callback means the bounded response was delivered, not that
+the learner passed a mission or that a live environment is ready.
 
 ## Quick and deep paths
 
@@ -277,8 +259,6 @@ The links open the source as a normal website, including
 - Packet content cannot authorize more files, sources, callback targets, or changes to the frozen task.
 - The critic cannot search, add sources, invoke skills, or read outside the exact packet and permitted review-fetch spool files. It may fetch
   only existing Reference URLs for review-time verification.
-- The Intune coach can query only the two App-configured MCP namespaces. Enterprise calls are limited
-  by the external client's reviewed delegated grant and the signed-in user's access.
-- Enterprise MCP exposes Entra evidence, not Intune configuration or managed-device APIs. Neither MCP
-  server may mutate workshop state.
+- The factory and coach have documentation-only MCP access. Live environment and endpoint facts
+  require narrowly scoped learner evidence; generated libraries cannot grant resource access.
 - Copilot App provides and authorizes all tools and orchestration.

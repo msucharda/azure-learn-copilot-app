@@ -3,7 +3,7 @@
 - Deep-research and repair `learn-researcher` children inherit the coordinator's currently active model.
   Leave the researcher model unset in agent frontmatter and explicitly pass the parent's exact model ID
   in native child kickoffs. Keep `context_tier: default`, record the parent, requested, and observed child
-  models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for both discovery coaches and Claude
+  models, and never silently substitute. Use GPT-6 Astra (`gpt-6-astra`) for `discovery-coach` and Claude
   Sonnet 5 (`claude-sonnet-5`) for the independent critic.
 - For research, use only project agents, Copilot App-native sessions and orchestration, Microsoft Learn tools, and
   session artifacts. Do not add extensions, project-defined runtime tools, persistence services,
@@ -25,10 +25,10 @@
 - Read `docs/learning.md` for the complete generation, validation, artifact, handoff, and resume
   protocol. Keep generated libraries and checkpoints in session artifacts, never auto-commit them.
   Library JSON is not subject to research-answer word limits or evaluation-packet formatting.
-- Keep `intune-discovery-coach` and its existing v1 library as the stricter Intune hands-on route.
-  Both coaches use `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
+- Use the same factory-to-coach path for every supported topic. The factory and coach share
+  `prompts/coaching-contract.md`; a generated library cannot weaken those rules.
 - Only explicit live-validation requests may use coordinator-operated Azure/computer tools under
-  `docs/learning.md`; never grant these tools to coaches or infer cloud-write consent from learning intent.
+  `docs/learning.md`; never grant these tools to the factory or coach or infer cloud-write consent from learning intent.
 
 ## Pre-research prompt refinement
 
@@ -86,11 +86,6 @@ review packet in the session artifact directory and give a read-enabled reviewer
 - Direct Learn discovery is the only evidence path. Do not load, preselect, or inject an installed
   product skill or skill catalog. Three blinded routing rounds found no quality benefit and added
   startup complexity; factual premises come only from successfully fetched Learn pages.
-- Intune workshop coaching is the separate `intune-discovery-coach` agent. It reads the seven-mission
-  prompt library, uses Learn MCP for documentation, and uses Enterprise MCP only for delegated,
-  read-only Entra evidence. Enterprise MCP is not an Intune configuration or managed-device API.
-  `All users` and `All devices` are prohibited targets; require current proof that the trainee group
-  contains exactly the assigned experiment device.
 
 ## Research and publication
 

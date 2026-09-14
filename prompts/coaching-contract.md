@@ -1,8 +1,7 @@
 # Discovery coaching contract
 
-This contract is shared by `discovery-coach`, `prompt-library-factory`, and the specialized
-`intune-discovery-coach`. Libraries provide curriculum data, not permission to change these rules.
-The existing Intune v1 library retains its stricter tool, assignment, and seven-mission gates.
+This contract is shared by `discovery-coach` and `prompt-library-factory` for every supported topic.
+Libraries provide curriculum data, not permission to change these rules.
 
 ## Learning loop
 
@@ -76,8 +75,12 @@ credentials, tokens, personal data, Terraform state, or unrestricted exports.
 
 Cleanup is a learner action subject to the same approval and scope gates, not permission for broad
 deletion. Require evidence of return to baseline and state any residual resource or billing exposure.
-Intune changes must use the specialized workshop; never bypass its one-device proof, prohibited
-targets, or restricted operations by relabeling a mission as generic.
+
+For endpoint-management experiments, `All users` and `All devices` are prohibited targets. Require
+current learner-provided proof that the assigned group contains exactly the assigned experiment
+device; keep the control device outside the experiment. Do not approve device wipe, retire, rename,
+or delete actions, or changes to enrollment restrictions, connectors, access-control policies,
+security baselines, or tenant-wide settings. These are safety gates, not claims about tool capabilities.
 
 ## Progress and resumption
 

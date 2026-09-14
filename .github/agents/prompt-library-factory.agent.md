@@ -67,8 +67,8 @@ For unsupported subjects return `UNSUPPORTED_LEARNING_TOPIC`; do not substitute 
    work when pasted with this library into the coach; it cannot bypass earlier mission gates.
 5. Use `{{variable_name}}` only for declared variables. Leave unknown values null, not fictitious
    resource IDs. A library is never proof of resource assignment. Product-specific guardrails may
-   tighten but cannot weaken the shared contract. Intune hands-on requests must use the existing
-   specialized workshop; return `SPECIALIZED_WORKSHOP_REQUIRED` rather than a permissive replacement.
+   tighten but cannot weaken the shared contract. Use the same v2 library format and `discovery-coach`
+   handoff for every supported topic; leave unproved hands-on prerequisites explicitly blocked.
 
 ## Publication preflight
 

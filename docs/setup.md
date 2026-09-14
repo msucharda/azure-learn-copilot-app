@@ -4,8 +4,6 @@
 
 - Copilot App with project custom-agent discovery.
 - The Microsoft Learn MCP server configured in Copilot App and exposed as `microsoft-learn/*`.
-- Microsoft MCP Server for Enterprise configured as `microsoft-enterprise/*` only for the Intune workshop;
-  the generic factory and coach do not require it.
 
 No project extension, SDK package, local service, storage root, environment variable, or committed
 MCP configuration is required.
@@ -20,87 +18,12 @@ Installed product skills may remain available elsewhere in Copilot App, but this
 them. `learn-researcher` uses direct Learn discovery in every mode, and fetched Learn pages are the only
 citation evidence.
 
-## Enterprise MCP external client
-
-The tenant-side Microsoft-owned service principal has app ID
-`e8c77dc2-69b3-43f4-bc51-3213c9d915b4`. The dedicated external client is registered
-with this reviewed configuration:
-
-| Setting | Confirmed value |
-| --- | --- |
-| Application name | `azure-learn-copilot-app-enterprise-mcp` |
-| Application (client) ID | `bb0f57f4-5880-404f-b331-9245e26145e2` |
-| Account type | Single tenant |
-| Client type | Public client |
-| Redirect URI | `http://localhost` |
-| Consent type | `AllPrincipals` admin consent |
-
-Configure the external client with:
-
-- server name `microsoft-enterprise`;
-- endpoint `https://mcp.svc.cloud.microsoft/enterprise`;
-- interactive delegated authentication; app-only workflows are not supported;
-- a dedicated single-tenant client app registration and its exact redirect URI; and
-- only these reviewed delegated scopes:
-
-```text
-MCP.Device.Read.All
-MCP.Group.Read.All
-MCP.GroupMember.Read.All
-MCP.LicenseAssignment.Read.All
-MCP.Organization.Read.All
-MCP.RoleManagement.Read.Directory
-MCP.User.Read.All
-```
-
-Do not grant all available MCP scopes. Microsoft documents that a custom client needs its own
-application registration, client ID, tenant ID, redirect URI, delegated permissions, and admin
-consent in [Get started with Microsoft MCP Server for Enterprise](https://learn.microsoft.com/graph/mcp-server/get-started).
-For this deployment, the client service principal and its `AllPrincipals` OAuth2 permission grant
-have been verified with exactly the seven scopes above.
-
-An application or cloud application administrator can grant the reviewed set with Microsoft Entra
-PowerShell:
-
-```powershell
-$reviewedScopes = @(
-    'MCP.Device.Read.All'
-    'MCP.Group.Read.All'
-    'MCP.GroupMember.Read.All'
-    'MCP.LicenseAssignment.Read.All'
-    'MCP.Organization.Read.All'
-    'MCP.RoleManagement.Read.Directory'
-    'MCP.User.Read.All'
-)
-
-Grant-EntraBetaMCPServerPermission `
-    -ApplicationId 'bb0f57f4-5880-404f-b331-9245e26145e2' `
-    -Scopes $reviewedScopes
-```
-
-Granting specific scopes is additive. Audit the resulting OAuth2 permission grant and revoke every
-scope outside the reviewed set before the workshop; do not reuse a broadly consented client. See
-[Manage Microsoft MCP Server for Enterprise permissions](https://learn.microsoft.com/powershell/entra-powershell/how-to-manage-mcp-server-permissions?view=entra-powershell).
-
-In Copilot App settings, configure the server name as `microsoft-enterprise`, set the server URL to
-`https://mcp.svc.cloud.microsoft/enterprise`, select interactive delegated OAuth, and use client ID
-`bb0f57f4-5880-404f-b331-9245e26145e2`. Confirm that the authentication callback uses
-`http://localhost` and that sign-in occurs in the tenant where the client and server service
-principals were verified. Keep Microsoft Learn configured separately as `microsoft-learn`.
-
-After saving the settings, start a fresh project session and select `intune-discovery-coach`. Test
-one bounded Entra query, confirm that the response shows the generated Microsoft Graph request path,
-and audit the OAuth2 permission grant again. Its consent type must remain `AllPrincipals` and its
-scope set must equal the seven reviewed scopes exactly. Enterprise MCP currently performs read-only
-operations and cannot read or change Intune configuration or managed-device state; those facts must
-come from the Intune admin center or assigned endpoint.
-
 ## Use
 
 Select the coordinator model in Copilot App. The researcher leaves `model` unset in its agent frontmatter;
 when starting a coordinated deep-research or repair child, pass the coordinator's exact active model ID
 so the child inherits it rather than resolving a different default. Record the parent, requested, and
-observed child models, and stop on model unavailability rather than substituting. Both discovery coaches pin
+observed child models, and stop on model unavailability rather than substituting. The discovery coach pins
 GPT-6 Astra (`gpt-6-astra`), while the critic pins Claude Sonnet 5 (`claude-sonnet-5`) for independent
 review. There is no documented repository model-default key in `.github/github-app.yml`; these
 instructions do not change the App-wide default or an already-running session's model.
@@ -112,11 +35,11 @@ For a learning journey, ask **"I want to learn AKS"** in a normal project chat. 
 [self-directed discovery](learning.md): a `prompt-library-factory` child generates the library, the
 coordinator saves it as a session artifact, and an interactive `discovery-coach` session starts with
 one mission. The factory inherits the coordinator's exact model; the coach uses `gpt-6-astra`.
-Neither needs Azure credentials or Enterprise MCP for the default conceptual path.
+Neither needs Azure credentials for the default conceptual path.
 
 You can also select `prompt-library-factory` directly, describe your objective, and pass its complete
 JSON result to `discovery-coach`. Direct selection does not automatically save a file or launch another
-agent. For the established Intune hands-on workshop, continue selecting `intune-discovery-coach`.
+agent. All supported learning topics use this same factory-to-coach path.
 
 For isolated research, invoke `/orchestrate` and request one callback-enabled child:
 
